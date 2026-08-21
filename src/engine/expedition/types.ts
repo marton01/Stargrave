@@ -36,6 +36,15 @@ export type MissionSpec = {
   enemyScale: number
   roundLimit: number | null
   rewards: Reward[]
+  /**
+   * Is the fight aboard the ship itself?
+   *
+   * A landing that goes wrong costs a week, morale and often a crew member — but
+   * not hull, because the hull is in orbit and the fight is not. When they are
+   * already aboard that reasoning stops: losing there means they were loose in
+   * the ship, and the ship shows it.
+   */
+  aboard?: boolean
   /** Shown before launch, so the players can allocate power first. */
   briefing: Text
 }
@@ -141,6 +150,7 @@ export type ExpeditionEvent =
   | { k: 'missionSkipped' }
   | { k: 'missionForcedWin' }
   | { k: 'missionForcedLoss' }
+  | { k: 'boardingDamage' }
   | { k: 'dialSet'; dial: DialId; level: number }
   | { k: 'storageFull'; id: ResourceId; lost: number; max: number }
   | { k: 'puzzleSolved' }

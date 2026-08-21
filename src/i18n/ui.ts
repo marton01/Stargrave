@@ -97,7 +97,7 @@ const HU = {
     'A csata véget ér győzelemként: megkapod a küldetés teljes jutalmát, ereklyés küldetésnél az összes ereklyével. A legjobb forgatókönyv, harc nélkül.',
   rescueLose: 'Feladás teljes veszteséggel',
   rescueLoseText:
-    'A csata véget ér vereségként: egy hét, morál −2, és aki elesett, azért a hajó fizet. A legrosszabb forgatókönyv, harc nélkül.',
+    'A csata véget ér vereségként, a teljes árral: a csapat elesik (mindenki 1 életerővel jön haza), egy hét elmegy, morál −2, és egy legénységtag meghal. Hajóra törésnél a hajótest is sérül. Ez a legrosszabb forgatókönyv, harc nélkül.',
   rescueSkip: 'Partraszállás kihagyása',
   rescueSkipText:
     'Se jutalom, se veszteség: a helyszín lezárul, a csapat hazamegy. Ha csak túl akarsz lenni rajta.',
@@ -590,7 +590,7 @@ const EN: Catalog = {
     'The battle ends as a victory: the mission pays out in full, and on a relic run every relic counts as carried. The best case, without the fight.',
   rescueLose: 'Give it up, at full cost',
   rescueLoseText:
-    'The battle ends as a defeat: a week, morale −2, and the ship pays for whoever fell. The worst case, without the fight.',
+    'The battle ends as a defeat, at full cost: the party falls (everyone comes home at 1 hit point), a week goes, morale −2, and a crew member dies. In a boarding action the hull takes damage too. The worst case, without the fight.',
   rescueSkip: 'Skip the landing',
   rescueSkipText:
     'No reward and no loss: the site closes and the party comes home. For when you only want it over with.',

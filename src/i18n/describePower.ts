@@ -20,7 +20,9 @@ import {
   sanctumOutput,
   sensorOutput,
   shieldMitigation,
+  travelFuel,
   travelWeeks,
+  weeklyFromModules,
 } from '../engine/expedition/expedition'
 import type { ExpeditionState } from '../engine/expedition/types'
 import type { StationId, SystemId } from '../content/ship'
@@ -56,10 +58,19 @@ export function describeSystemYield(
     case 'engines': {
       const two = travelWeeks(s, 2)
       const three = travelWeeks(s, 3)
+      const burn = travelFuel(s)
+      const made = weeklyFromModules(s, 'fuel')
+      const net = Math.max(0, burn - made)
       return {
         text: hu
-          ? `Egy 2 hetes út ${two} hét, egy 3 hetes ${three} hét. Minden pont az első fölött egy hetet vág le.`
-          : `A two-week road takes ${two}, a three-week road ${three}. Every point above the first cuts a week.`,
+          ? `Egy 2 hetes út ${two} hét, egy 3 hetes ${three} hét — és ${burn} üzemanyag megy el ` +
+            `hetente útközben${made > 0 ? `, amiből a szintetizáló ${made}-et kiegyenlít: nettó ${net}` : ''}. ` +
+            'Minden pont az első fölött egy hetet vág le, a második fölött viszont egy üzemanyagot ' +
+            'hozzátesz: a lényeg a kettő szorzata.'
+          : `A two-week road takes ${two}, a three-week road ${three} — and ${burn} fuel goes a week ` +
+            `while under way${made > 0 ? `, of which the synthesiser offsets ${made}: ${net} net` : ''}. ` +
+            'Every point above the first cuts a week; every point above the second adds a unit of ' +
+            'fuel. What matters is the two multiplied.',
       }
     }
 

@@ -52,6 +52,11 @@ export function describeExpeditionEvent(event: ExpeditionEvent, lang: Lang): str
         : `Difficulty — ${pick(dial.name, lang)}: ${pick(level!.text, lang)}`
     }
 
+    case 'boardingDamage':
+      return hu
+        ? 'Végigmentek a hajón. A hajótest megsérült — a pajzs és a vértek annyit fogtak fel, amennyit tudtak.'
+        : 'They went through the ship. The hull is damaged — shields and wards took what they could.'
+
     case 'missionSkipped':
       return hu
         ? 'A partraszállást kihagytuk. Se zsákmány, se veszteség — a helyszín lezárva.'

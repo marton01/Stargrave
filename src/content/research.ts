@@ -53,11 +53,18 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     branch: 'technology',
     name: { hu: 'Üzemanyag-szintézis', en: 'Fuel synthesis' },
     description: {
-      hu: 'Üzemanyagot vonni ki a csillagközi porból. Hetente +1.',
-      en: 'Drawing fuel out of interstellar dust. +1 every week.',
+      hu:
+        'Üzemanyagot vonni ki a csillagközi porból. Hetente 1 egységet kiegyenlít út közben — ' +
+        'jó hajtómű-beállítással és navigátorokkal a Hídon az utazás ingyenessé tehető. ' +
+        'A tartályt nem tölti: állva nem termel.',
+      en:
+        'Drawing fuel out of interstellar dust. Offsets 1 unit for every week under way — with the ' +
+        'right engine setting and navigators on the Bridge, travel can be made free. It does not ' +
+        'fill the tank: standing still it makes nothing.',
     },
-    cost: 8,
-    weeks: 2,
+    // Priced up when it became "travel for nothing" rather than "+1 a week".
+    cost: 14,
+    weeks: 3,
     requires: [],
     effects: [{ k: 'module', id: 'fuelSynthesiser' }],
   },

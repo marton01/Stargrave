@@ -137,8 +137,8 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     id: 'engines',
     name: { hu: 'Hajtómű', en: 'Engines' },
     description: {
-      hu: 'Utazási sebesség: hány hét egy ugrás, és mennyi üzemanyagba kerül.',
-      en: 'Travel speed: how many weeks a jump takes, and how much fuel it burns.',
+      hu: 'Utazási sebesség és étvágy: hány hét egy ugrás, és hetente mennyi üzemanyagba kerül.',
+      en: 'Travel speed and thirst: how many weeks a jump takes, and what it burns a week.',
     },
     max: 3,
     icon: '➤',
@@ -400,8 +400,8 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     id: 'fuelSynthesiser',
     name: { hu: 'Üzemanyag-szintetizáló', en: 'Fuel synthesiser' },
     description: {
-      hu: 'Hetente +1 üzemanyag a semmiből.',
-      en: '+1 fuel every week, out of nothing.',
+      hu: 'Hetente 1 üzemanyagot kiegyenlít az út közben. A tartályt nem tölti: állva nem termel.',
+      en: 'Offsets 1 fuel for every week under way. It does not fill the tank: standing still it makes nothing.',
     },
     weekly: { id: 'fuel', amount: 1 },
   },

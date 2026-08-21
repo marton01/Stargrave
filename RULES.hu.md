@@ -56,7 +56,11 @@ Ez **közös döntés** — ez a játék legerősebb kooperatív eleme.
 
 - **Életfenntartás** — kötelező minimum a legénységszám szerint (négy emberre egy
   egység). Ha kevés, romlik a morál és fogy a legénység.
-- **Hajtómű** — hány hét egy ugrás, és mennyi üzemanyagba kerül.
+- **Hajtómű** — hány hét egy ugrás, és hetente mennyi üzemanyag megy el. Ez csere, nem
+  ingyen kapott sebesség: **az első pont fölött minden pont egy hetet vág le, a második
+  fölött viszont egy üzemanyagot hozzátesz** minden út közben töltött héthez. Egy 3 hetes
+  úton 2 energia két hét 2 üzemanyaggal (összesen 4), 3 energia egy hét 3-mal (összesen 3),
+  4 energia viszont ugyanaz az egy hét 4-ért. A Híd állomás minden hétből levon egyet.
 - **Pajzs** — védelem találkozásokon: ez dönti el, mennyit visz el a hajótestből egy
   kockázatos döntés.
 - **Labor** — Információ-termelés és kutatási sebesség.
@@ -106,6 +110,25 @@ megtagadja a parancsot.
 Fogy az élelem (három emberre egy egység hetente) és az üzemanyag (ha úton vagytok).
 Lefutnak az állomások. Halad a kutatás. Közeledik az utazás célja. És a Kapu
 számlálója eggyel csökken.
+
+**A fogyás nem vihető nullára.** Akárhogy optimalizálsz — Híd állomás, alacsony
+hajtóműenergia, engedékeny nehézségi tárcsa —, **út közben hetente legalább 1 üzemanyag
+elmegy**, és **élelemből is legalább 1 hetente**. Ez szándékos: a hajó jár, a legénység
+eszik. Nincs olyan beállítás, amivel az utazás ingyen lenne — csak olyan, amivel
+kevesebbe kerül.
+
+Egy kivétel van, és azt ki kell kutatni: az **Üzemanyag-szintézis** hetente egy egységet
+**kiegyenlít** út közben. Jó hajtómű-beállítással (alacsony energia) és navigátorokkal a
+Hídon a fogyás így **pontosan nullára** hozható — ez a kutatás értelme, és ezért drága.
+
+Amit viszont **soha nem tesz**: nem tölti a tartályt. Az üzemanyag a heti elszámolásból
+**nem nőhet**, se úton, se állva — a szintetizáló csak kiegyenlít, nem termel. Üzemanyagot
+továbbra is piacról, találkozásból és küldetés-jutalomból kapsz: azért el kell menni
+valahova.
+
+Ha nincs elég üzemanyag egy hétre: **az ugrás elakad** (a hátralévő idő egy héttel nő),
+a morál egyet csökken, és a tartály nullán marad. Ha nincs elég élelem, a legénység
+éhezik: morál −3, és van esély, hogy valaki meghal.
 
 ## Csillagtérkép
 

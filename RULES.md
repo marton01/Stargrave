@@ -56,7 +56,11 @@ game.
 
 - **Life support** — a mandatory minimum by crew size (one unit per four people). Too
   little and morale decays and people are lost.
-- **Engines** — how many weeks a jump takes, and how much fuel it burns.
+- **Engines** — how many weeks a jump takes and what it burns a week. A trade rather than
+  free speed: **every point above the first cuts a week, and every point above the second
+  adds a unit of fuel** to each week under way. On a three-week road, 2 power is two weeks
+  at 2 fuel (four in total), 3 power is one week at 3 (three in total), and 4 power is that
+  same single week for 4. The Bridge takes one off every week.
 - **Shields** — protection in encounters: this decides how much the hull pays for a
   risky choice.
 - **Lab** — Information output and research speed.
@@ -105,6 +109,24 @@ the crew refuses orders.
 Food is eaten (one unit per three people per week) and fuel burns if you are under
 way. Stations run. Research advances. Travel moves on. And the Gate counter drops by
 one.
+
+**Upkeep cannot be driven to zero.** However you optimise — a manned Bridge, low engine
+power, the gentlest upkeep dial — **at least 1 fuel goes for every week under way**, and
+**at least 1 food a week**. That is deliberate: the ship runs and the crew eats. No
+setting makes travel free; settings only make it cheaper.
+
+There is one exception, and it has to be researched: **Fuel synthesis** **offsets** one
+unit for every week under way. With a low engine setting and navigators on the Bridge the
+burn can be brought to **exactly zero** — that is what the project is for, and why it is
+expensive.
+
+What it never does is fill the tank. Fuel **cannot grow** out of the weekly accounting,
+under way or standing still — the synthesiser offsets, it does not produce. Fuel still
+comes from markets, encounters and mission rewards: for those you have to go somewhere.
+
+If there is not enough fuel for a week, **the jump stalls** (the journey gets a week
+longer), morale drops by one, and the tank sits at zero. If there is not enough food the
+crew goes hungry: morale −3, and somebody may die of it.
 
 ## Star map
 

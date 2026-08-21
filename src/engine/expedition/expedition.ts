@@ -260,9 +260,58 @@ export function armouryOutput(s: ExpeditionState): number {
   return stationStrength(s, 'armoury') >= 4 ? 2 : 1
 }
 
+/** What the installed modules produce of a resource every week, by themselves. */
+export function weeklyFromModules(s: ExpeditionState, id: ResourceId): number {
+  return s.modules.reduce((sum, m) => {
+    const weekly = MODULES[m].weekly
+    return sum + (weekly && weekly.id === id ? weekly.amount : 0)
+  }, 0)
+}
+
 /** Weeks a journey of `base` weeks takes at the current engine power. */
 export function travelWeeks(s: ExpeditionState, base: number): number {
   return Math.max(1, base - Math.max(0, s.power.engines - 1))
+}
+
+/**
+ * Fuel burned for each week under way.
+ *
+ * The Engines have always been described as setting both how long a jump takes
+ * *and* what it costs, and only the first half was true: fuel came from the
+ * Bridge alone, so power on the engines was free speed. It is a trade now —
+ * every point above the second burns another unit a week.
+ *
+ * Which makes the interesting number the *total*, not the rate. On a three-week
+ * road: 2 power is two weeks at 2 (four fuel), 3 power is one week at 3 (three
+ * fuel), and 4 power is that same one week at 4 — the same speed for more fuel.
+ * So there is a right amount of engine for a given journey, and hoarding power
+ * there is visibly wasteful rather than quietly optimal.
+ */
+export function travelFuel(s: ExpeditionState): number {
+  const thirst = 2 + Math.max(0, s.power.engines - 2)
+  // Gross: what the engines ask for, before anything the ship makes itself. The
+  // floor of one is the ship simply running — see `weeklyFuel` for the balance.
+  return Math.max(1, Math.round((thirst - bridgeOutput(s)) * dialValue(s.dials, 'upkeep')))
+}
+
+/**
+ * The fuel a week actually moves — and it is never positive.
+ *
+ * Two rules meet here. The engines always ask for at least one unit while under
+ * way, and the Fuel synthesiser gives some back; with a good engine setting and
+ * navigators on the Bridge the two can cancel exactly, which is the point of
+ * researching it — travel for nothing.
+ *
+ * But the tank never *fills* on its own. A synthesiser that accumulated while
+ * the ship stood still would quietly remove fuel from the game: the resource
+ * exists to make routes cost something. So it offsets consumption and stops
+ * there. Fuel still comes from markets, encounters and mission rewards — those
+ * are gains you went and got, not a number ticking up in the background.
+ */
+export function weeklyFuel(s: ExpeditionState): number {
+  const burn = s.travel ? travelFuel(s) : 0
+  const made = weeklyFromModules(s, 'fuel')
+  return Math.min(0, made - burn)
 }
 
 /** Hull risk the shields and wards absorb from an encounter. */
@@ -499,24 +548,26 @@ function weeklyResources(s: ExpeditionState): void {
     gain(s, 'food', -eaten)
   }
 
-  // Fuel: only while under way. The Bridge makes every jump cheaper.
-  if (s.travel) {
-    const burn = Math.max(1, Math.round((2 - bridgeOutput(s)) * dialValue(s.dials, 'upkeep')))
-    if (s.resources.fuel < burn) {
+  // Fuel: the week's balance, which is a cost or nothing — never an increase.
+  const fuelCost = -weeklyFuel(s)
+  if (fuelCost > 0) {
+    if (s.resources.fuel < fuelCost) {
       s.resources.fuel = 0
       log(s, { k: 'noFuel' })
       // Drifting: the jump stalls and the crew feels it.
-      s.travel.weeksLeft += 1
+      if (s.travel) s.travel.weeksLeft += 1
       gain(s, 'morale', -1)
     } else {
-      gain(s, 'fuel', -burn)
+      gain(s, 'fuel', -fuelCost)
     }
   }
 
-  // Modules that simply produce.
+  // Modules that simply produce. Fuel is not among them: what a synthesiser makes
+  // is already accounted for in `weeklyFuel`, where it can cancel a cost but not
+  // become an income.
   for (const id of s.modules) {
     const weekly = MODULES[id].weekly
-    if (weekly) gain(s, weekly.id, weekly.amount)
+    if (weekly && weekly.id !== 'fuel') gain(s, weekly.id, weekly.amount)
   }
 
   // Life support.
@@ -938,6 +989,7 @@ function missionFromFlavour(
       { k: 'resource', id: 'credits', amount: 6 },
       { k: 'archive', amount: 1 },
     ],
+    aboard: flavour === 'boarding',
     briefing:
       flavour === 'boarding'
         ? {
@@ -1035,6 +1087,19 @@ function settleBattle(s: ExpeditionState, as: 'victory' | 'defeat' | 'skip'): vo
   const battle = mission.battle
   if (as === 'victory' && battle.objective.k === 'collect') {
     battle.carried = battle.objective.count
+  }
+  if (as === 'defeat') {
+    // The worst case, and it has to actually be the worst case. Marking the
+    // battle lost while the party stands there unhurt cost a couple of morale and
+    // nothing else — gentler than really losing, which is not what a button
+    // labelled "at full cost" should do. The party falls: they come home at one
+    // hit point each, and the ship pays for a casualty like it would have.
+    for (const hero of battle.units) {
+      if (hero.side === 'hero' && hero.alive) {
+        hero.alive = false
+        hero.hp = 0
+      }
+    }
   }
   battle.outcome = as
   battle.phase = 'over'
@@ -1151,6 +1216,15 @@ function finishMission(s: ExpeditionState): void {
       s.gateWeeksLeft -= 1
       gain(s, 'morale', -2)
       if (result.casualties > 0) killCrew(s, 1)
+      // A fight lost *aboard* costs the ship as well. Everywhere else the hull is
+      // in orbit and cannot be scratched by a bad landing; here they were loose
+      // in the corridors, and the difficulty dial for encounter risk applies
+      // because this is the same kind of damage.
+      if (mission.spec.aboard) {
+        const damage = Math.max(1, Math.round(4 * dialValue(s.dials, 'encounterRisk')))
+        applyHullRisk(s, damage)
+        log(s, { k: 'boardingDamage' })
+      }
       node.resolved = true
     }
   } else {
