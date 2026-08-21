@@ -1,0 +1,10 @@
+﻿node_modules/
+dist/
+.vite/
+.smoke/
+*.local
+
+# A letöltött portré-eredetik (npm run assets:fit dolgozik belőlük). A játéknak
+# a public/assets alatti 256-os webp-ek kellenek, azok verziókövetve vannak; ez
+# a mappa 19 MB nyersanyag, aminek a kiszolgált oldalon nincs helye.
+assets-src/

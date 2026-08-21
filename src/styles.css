@@ -1,0 +1,1195 @@
+/* CSILLAGSÍR / STARGRAVE — styles
+ *
+ * Palette from the design: ash grey and deep blue as the ground (a cold, dead
+ * world), glowing amber for rune light (the magic that still burns), cold cyan
+ * for echoes and technology, muted red for danger.
+ */
+
+:root {
+  --bg: #0a0e15;
+  --bg-2: #111825;
+  --bg-3: #18202e;
+  --bg-4: #202a3a;
+  --line: #2a3546;
+  --line-soft: #1e2735;
+
+  --text: #ccd5e2;
+  --text-soft: #78879c;
+  --text-faint: #4e5b6d;
+
+  --rune: #e0a13c;
+  --rune-dim: #4a3517;
+  --echo: #49c8d2;
+  --echo-dim: #17444a;
+  --danger: #c8563f;
+  --danger-dim: #45201a;
+  --green: #6f9c58;
+
+  /* Sizes worth having in one place, because they are the two things that
+   * decide how big the game feels: how wide a card is (everything inside one
+   * is sized to match) and how big a portrait is.
+   *
+   * The card width is capped rather than fixed so that a narrow window shrinks
+   * the cards instead of pushing the hand into a fourth row — see `.card-row`,
+   * where seeing the whole hand at once matters more than any single card being
+   * comfortable. */
+  --card-width: 200px;
+  --portrait-size: 44px;
+
+  /* One knob for how big the whole interface is. `zoom` scales everything —
+   * text, spacing, the board, the cards — so every proportion stays exactly as
+   * designed and only the size changes, which is what makes it safer than
+   * raising a dozen font sizes by hand.
+   *
+   * The catch is `vh`: it is measured against the real window, not the zoomed
+   * one, so any height given in `vh` has to be divided by the zoom or the
+   * layout runs off the bottom of the screen. There are two, both below. */
+  --ui-zoom: 1.15;
+}
+
+/* A hand of thirteen cards needs about 1500px of room at the full card width.
+ * Below that the cards give way, in two steps, rather than the layout. */
+@media (max-width: 1500px) {
+  :root {
+    --card-width: 176px;
+  }
+}
+
+@media (max-width: 1240px) {
+  :root {
+    --card-width: 152px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+code {
+  font-family: 'Cascadia Code', Consolas, monospace;
+  background: var(--bg-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--rune);
+}
+
+kbd {
+  background: var(--bg-4);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 5px;
+  font-family: inherit;
+  font-size: 10.5px;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+.app {
+  display: grid;
+  grid-template-areas:
+    'topbar topbar'
+    'grid   side'
+    'action side';
+  grid-template-columns: 1fr minmax(300px, 340px);
+  grid-template-rows: auto 1fr auto;
+  zoom: var(--ui-zoom);
+  height: calc(100vh / var(--ui-zoom));
+}
+
+.topbar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 16px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.grid-area {
+  grid-area: grid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 14px;
+}
+
+.sidebar {
+  grid-area: side;
+  overflow-y: auto;
+  background: var(--bg-2);
+  border-left: 1px solid var(--line);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-area {
+  grid-area: action;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  max-height: calc(46vh / var(--ui-zoom));
+  overflow-y: auto;
+}
+
+/* ---------------------------------------------------------------- topbar */
+
+.topbar h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rune);
+}
+
+.subtitle {
+  display: block;
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+}
+
+.topbar-middle {
+  display: flex;
+  gap: 22px;
+}
+
+.topbar-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.meter-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-faint);
+}
+
+.meter-value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.meter-flux .meter-value {
+  color: var(--echo);
+}
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.setting select,
+.setting input {
+  background: var(--bg-3);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* The seed of a finished run, in the archive history. A button rather than plain
+ * text because it does something: it fills the seed field above, which is the
+ * only way back to a map you liked. Styled as quiet text, because the history is
+ * a list to read, not a row of controls. */
+.seed-recall {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--echo);
+  cursor: pointer;
+  border-bottom: 1px dotted var(--echo-dim);
+}
+
+.seed-recall:hover {
+  border-bottom-color: var(--echo);
+}
+
+.lang-switch {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lang-button {
+  background: var(--bg-3);
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 6px 9px;
+}
+
+.lang-button:hover {
+  color: var(--text);
+}
+
+.lang-button-on {
+  background: var(--echo-dim);
+  color: var(--echo);
+}
+
+/* ------------------------------------------------------------------ grid */
+
+/* The board is an SVG with a viewBox, so instead of being cut off when the
+ * window is short it is told to fit the space it has and scale its contents.
+ * Smaller tiles on a small screen are a fair price; a board with its bottom row
+ * out of view is not, because the whole point of the grid is that you can see
+ * the position. */
+.grid {
+  display: block;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  /* `width`/`height` come from the element's own attributes; overriding both to
+   * auto hands the sizing to the viewBox's aspect ratio, so the frame keeps
+   * hugging the board instead of leaving empty bands beside it. */
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.grid-selectable {
+  fill: rgba(73, 200, 210, 0.14);
+  stroke: var(--echo);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  pointer-events: none;
+  animation: breathe 1.9s ease-in-out infinite;
+}
+
+.grid-targetable {
+  fill: rgba(200, 86, 63, 0.2);
+  stroke: var(--danger);
+  stroke-width: 2;
+  pointer-events: none;
+  animation: breathe 1.2s ease-in-out infinite;
+}
+
+.grid-active {
+  fill: none;
+  stroke: var(--rune);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.grid-badge {
+  fill: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------- sidebar */
+
+.block h3 {
+  margin: 0 0 7px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--line-soft);
+  padding-bottom: 4px;
+}
+
+.block-log {
+  flex: 1;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+.order {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 7px;
+  border-radius: 3px;
+  border-left: 3px solid transparent;
+  font-size: 12px;
+}
+
+.order-hero {
+  border-left-color: var(--rune);
+}
+
+.order-enemy {
+  border-left-color: var(--danger);
+}
+
+.order-active {
+  background: var(--bg-4);
+  font-weight: 600;
+}
+
+.order-done {
+  opacity: 0.35;
+}
+
+.order-number {
+  min-width: 22px;
+  text-align: right;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.unit-card {
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 7px 8px;
+  margin-bottom: 6px;
+}
+
+.unit-active {
+  border-color: var(--danger);
+}
+
+.unit-dead {
+  opacity: 0.4;
+}
+
+.unit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.unit-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.unit-player,
+.label-muted {
+  font-size: 10px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.unit-state-text {
+  font-size: 11px;
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+.tone-rune {
+  color: var(--rune);
+}
+.tone-echo {
+  color: var(--echo);
+}
+.tone-danger {
+  color: var(--danger);
+}
+
+.initiative-badge {
+  background: var(--danger-dim);
+  color: var(--text);
+  border: 1px solid var(--danger);
+  border-radius: 9px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hp {
+  position: relative;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  transition: width 0.25s ease;
+}
+
+.hp-hero {
+  background: var(--green);
+}
+.hp-enemy {
+  background: #a2472f;
+}
+
+.hp-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  font-variant-numeric: tabular-nums;
+}
+
+.statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 5px;
+}
+
+.status {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--bg-4);
+  border: 1px solid var(--line);
+}
+
+.status-shield {
+  color: #93aed4;
+  border-color: #3c4d68;
+}
+.status-anchor {
+  color: var(--rune);
+  border-color: var(--rune-dim);
+}
+.status-runeMark {
+  color: var(--echo);
+  border-color: var(--echo-dim);
+}
+.status-prone,
+.status-blind,
+.status-weakened {
+  color: #b47fc6;
+  border-color: #4a2d54;
+}
+
+.intent {
+  margin-top: 5px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text);
+  background: rgba(200, 86, 63, 0.09);
+  border-left: 2px solid var(--danger);
+  padding: 4px 7px;
+  border-radius: 0 3px 3px 0;
+}
+
+.card-counts {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+.card-counts .counts-loss {
+  color: var(--danger);
+}
+
+.log {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 11.5px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.log-line {
+  color: var(--text-soft);
+}
+
+.log-line:first-child {
+  color: var(--text);
+}
+
+.log-round {
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--text-faint);
+  font-size: 11.5px;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------ action bar */
+
+.action-bar {
+  padding: 10px 14px 14px;
+}
+
+.player-label {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.instruction {
+  margin: 0 0 9px;
+  font-size: 12.5px;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
+.instruction strong {
+  color: var(--text);
+}
+
+.instruction.highlight {
+  color: var(--echo);
+  font-size: 13.5px;
+}
+
+.instruction.warning {
+  color: var(--danger);
+}
+
+/* The hand wraps rather than scrolling sideways: you must be able to see all
+ * your cards at once, otherwise you cannot plan. */
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-bottom: 6px;
+}
+
+.initiative-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.button {
+  background: var(--bg-4);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 7px 15px;
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.button:hover:not(:disabled) {
+  background: #2a3648;
+  border-color: #3d4c63;
+}
+
+.button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.button-primary {
+  background: var(--rune-dim);
+  border-color: var(--rune);
+  color: #f2dcb8;
+  font-weight: 600;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: #5e4420;
+}
+
+.button-small {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.button-on {
+  border-color: var(--echo);
+  color: var(--echo);
+}
+
+.button-help {
+  width: 34px;
+  padding: 7px 0;
+  font-weight: 700;
+  font-size: 15px;
+  border-color: var(--echo-dim);
+  color: var(--echo);
+}
+
+.button-help:hover {
+  border-color: var(--echo);
+}
+
+/* ----------------------------------------------------------------- cards */
+
+.card {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--card-width);
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    border-color 0.12s ease,
+    transform 0.12s ease;
+}
+
+.card-clickable {
+  cursor: pointer;
+}
+
+.card-clickable:hover {
+  border-color: var(--rune);
+  transform: translateY(-2px);
+}
+
+.card-selected {
+  border-color: var(--rune);
+  box-shadow: 0 0 0 1px var(--rune-dim);
+}
+
+.card-faded {
+  opacity: 0.45;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  background: var(--bg-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.card-initiative {
+  min-width: 30px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-soft);
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+  padding: 1px 3px;
+}
+
+.card-initiative-active {
+  color: #0a0e15;
+  background: var(--rune);
+}
+
+.card-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card-half {
+  padding: 8px 10px;
+  min-height: 74px;
+}
+
+.card-half-assigned {
+  background: rgba(73, 200, 210, 0.07);
+}
+
+.card-half-playable {
+  cursor: pointer;
+}
+
+.card-half-playable:hover {
+  background: rgba(73, 200, 210, 0.18);
+}
+
+.card-half-done {
+  opacity: 0.4;
+}
+
+.card-half-unaffordable {
+  background: rgba(200, 86, 63, 0.09);
+}
+
+.card-divider {
+  height: 1px;
+  background: var(--line);
+}
+
+.card-half-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  margin-bottom: 3px;
+}
+
+.card-marks {
+  display: flex;
+  gap: 5px;
+}
+
+.card-flux {
+  color: var(--echo);
+  font-weight: 700;
+}
+
+.card-lost {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.card-tick {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.card-half-text {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------------ help */
+
+.help-veil {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 6, 10, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  padding: 24px;
+}
+
+.help {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--echo);
+  border-radius: 6px;
+  width: min(940px, 100%);
+  height: min(880px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.help-header h2 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--echo);
+}
+
+.help-close {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 3px 9px;
+}
+
+.help-close:hover {
+  color: var(--text);
+  border-color: var(--danger);
+}
+
+.help-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.help-tab {
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 7px 13px;
+  margin-bottom: -1px;
+}
+
+.help-tab:hover {
+  color: var(--text);
+}
+
+.help-tab-active {
+  background: var(--bg-3);
+  border-color: var(--line);
+  border-bottom: 1px solid var(--bg-3);
+  color: var(--echo);
+  font-weight: 600;
+}
+
+.help-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 22px;
+  background: var(--bg-3);
+}
+
+.help-footer {
+  padding: 8px 18px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.help-prose {
+  max-width: 76ch;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+.help-wide {
+  max-width: none;
+}
+
+.help-prose h3 {
+  margin: 26px 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--rune);
+  border-bottom: 1px solid var(--line-soft);
+  padding-bottom: 5px;
+}
+
+.help-prose h3:first-child {
+  margin-top: 0;
+}
+
+.help-prose p {
+  margin: 0 0 11px;
+  color: var(--text);
+}
+
+.help-prose strong {
+  color: #fff;
+}
+
+.help-prose ul,
+.help-prose ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.help-prose li {
+  margin-bottom: 6px;
+}
+
+.help-prose blockquote {
+  margin: 0 0 14px;
+  padding: 8px 14px;
+  border-left: 2px solid var(--line);
+  color: var(--text-soft);
+  font-size: 12.5px;
+}
+
+.help-prose hr {
+  border: none;
+  border-top: 1px solid var(--line-soft);
+  margin: 20px 0;
+}
+
+.help-prose table,
+.help-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 0 14px;
+  font-size: 12.5px;
+}
+
+.help-prose th,
+.help-prose td,
+.help-table th,
+.help-table td {
+  border: 1px solid var(--line-soft);
+  padding: 6px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.help-prose th,
+.help-table th {
+  background: var(--bg-4);
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.help-note {
+  color: var(--text-soft) !important;
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.legend-item {
+  display: flex;
+  gap: 11px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 9px 11px;
+}
+
+.legend-item > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.legend-item strong {
+  display: block;
+  font-size: 13px;
+}
+
+.legend-item p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.legend-meta {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+.sample {
+  flex: 0 0 auto;
+  border-radius: 3px;
+}
+
+/* --------------------------------------------------------------- outcome */
+
+.outcome-veil {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 11, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.outcome {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--line);
+  border-radius: 6px;
+  padding: 26px 32px;
+  max-width: 460px;
+  text-align: center;
+}
+
+.outcome-victory {
+  border-top-color: var(--rune);
+}
+
+.outcome-defeat {
+  border-top-color: var(--danger);
+}
+
+.outcome h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  letter-spacing: 0.05em;
+}
+
+.outcome-victory h2 {
+  color: var(--rune);
+}
+
+.outcome-defeat h2 {
+  color: var(--danger);
+}
+
+.outcome p {
+  margin: 0 0 10px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.outcome-seed {
+  font-size: 11.5px;
+}
+
+.outcome .button-row {
+  justify-content: center;
+}
+
+/* Objective markers on the tactical grid. */
+.grid-exit {
+  fill: rgba(111, 156, 88, 0.16);
+  stroke: var(--green);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- portraits */
+
+/* Optional art (see ui/assets.ts). Absent files render no element at all, so
+   these rules only ever apply to pictures that really loaded. */
+.portrait {
+  flex: 0 0 auto;
+  width: var(--portrait-size);
+  height: var(--portrait-size);
+  border-radius: 5px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+}
+
+/* The picture under the cursor, shown big. It is rendered outside `.app` (see
+   Portrait.tsx) so the interface zoom cannot move it, and placed from the
+   thumbnail's own rectangle rather than by CSS, because the sidebar it lives in
+   scrolls and would clip anything positioned inside it. */
+.portrait-preview {
+  position: fixed;
+  width: 256px;
+  height: 256px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-3);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+  z-index: 40;
+}
+
+.button-sound {
+  min-width: 2.2rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.button-muted {
+  opacity: 0.55;
+}
+
+/* Optional card art: behind the text, dimmed hard, because the words are what
+   you actually play with. */
+.card-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.22;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* A positioned element paints above its static siblings, so the text has to be
+   lifted explicitly or the art would cover the words. */
+.card > *:not(.card-art) {
+  position: relative;
+  z-index: 1;
+}

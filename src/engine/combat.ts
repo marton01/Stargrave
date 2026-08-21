@@ -1,0 +1,161 @@
+// Damage, knockback, traps — the "physics" of combat.
+//
+// Every point of damage in the game goes through one function. That matters:
+// combos, Shield and status effects all meet in a single place, so none of them
+// can be quietly forgotten.
+
+import { applyStatus, hasStatus, log, partnerOf } from './state'
+import { distance, onMap, sameTile, unitAt, walkable } from './grid'
+import type { BattleState, Unit } from './types'
+
+export type DamageOptions = {
+  /** A melee hit? Rune Mark only grants its bonus for these. */
+  melee?: boolean
+  /** An area effect? Anchor grants extra damage only for these. */
+  area?: boolean
+}
+
+/**
+ * How much would this attack deal? Kept separate so the interface can show it
+ * to the player in advance — the "visible intent" principle cuts both ways.
+ */
+export function predictDamage(
+  s: BattleState,
+  attacker: Unit | null,
+  target: Unit,
+  basePower: number,
+  options: DamageOptions = {},
+): number {
+  let power = basePower
+
+  if (attacker) {
+    // The attacker's own statuses.
+    if (hasStatus(attacker, 'blind')) return 0
+    if (hasStatus(attacker, 'weakened')) power -= 1
+
+    // Bond: when the two heroes work close together they hit harder.
+    if (attacker.side === 'hero') {
+      const partner = partnerOf(s, attacker.id)
+      if (partner && distance(attacker.pos, partner.pos) <= 2) power += 1
+    }
+  }
+
+  // The target's statuses.
+  if (options.melee && attacker?.side === 'hero' && hasStatus(target, 'runeMark')) power += 2
+  if (options.area && hasStatus(target, 'anchor')) power += 1
+  if (hasStatus(target, 'prone')) power += 1
+
+  if (power <= 0) return 0
+
+  // Shield reduces the hit (and wears down in the process).
+  const shield = target.statuses.shield ?? 0
+  return Math.max(0, power - shield)
+}
+
+/** Apply damage. Returns the hit points actually removed. */
+export function dealDamage(
+  s: BattleState,
+  attacker: Unit | null,
+  target: Unit,
+  basePower: number,
+  options: DamageOptions = {},
+): number {
+  if (!target.alive) return 0
+
+  const damage = predictDamage(s, attacker, target, basePower, options)
+
+  // Shield wears down even when it absorbed the hit completely — that is the
+  // "armour gets used up" feel, and it stops a Shield 2 from lasting forever.
+  if (basePower > 0 && (target.statuses.shield ?? 0) > 0) {
+    const left = (target.statuses.shield ?? 0) - 1
+    if (left <= 0) delete target.statuses.shield
+    else target.statuses.shield = left
+  }
+
+  if (damage <= 0) {
+    if (basePower > 0) log(s, { k: 'shieldAbsorbed', target: target.name })
+    return 0
+  }
+
+  target.hp = Math.max(0, target.hp - damage)
+  log(s, {
+    k: 'damage',
+    attacker: attacker ? attacker.name : null,
+    target: target.name,
+    amount: damage,
+  })
+
+  if (target.hp === 0) {
+    target.alive = false
+    log(s, { k: 'defeated', unit: target.name })
+    // Rune Mark's reward: a marked enemy dying to a hero returns flux.
+    if (target.side === 'enemy' && attacker?.side === 'hero' && hasStatus(target, 'runeMark')) {
+      s.flux += 1
+      log(s, { k: 'runeMarkReward' })
+    }
+  }
+
+  return damage
+}
+
+/** Knockback: push the target directly away from the attacker. */
+export function knockback(s: BattleState, attacker: Unit, target: Unit, tiles: number): void {
+  if (!target.alive || hasStatus(target, 'anchor')) return
+
+  const dx = Math.sign(target.pos.x - attacker.pos.x)
+  const dy = Math.sign(target.pos.y - attacker.pos.y)
+  if (dx === 0 && dy === 0) return
+
+  for (let i = 0; i < tiles; i++) {
+    const next = { x: target.pos.x + dx, y: target.pos.y + dy }
+    if (!onMap(s.map, next)) break
+    if (!walkable(s.map, next)) break
+    if (unitAt(s.units, next)) break
+    target.pos = next
+    afterMove(s, target)
+    if (!target.alive) return
+  }
+}
+
+/** Did the unit step onto a trap? Call this after every movement. */
+export function checkTrap(s: BattleState, u: Unit): void {
+  const index = s.traps.findIndex((t) => sameTile(t.pos, u.pos))
+  if (index < 0) return
+  const trap = s.traps[index]!
+  s.traps.splice(index, 1)
+  log(s, { k: 'trapTriggered', unit: u.name })
+  dealDamage(s, null, u, trap.power)
+}
+
+/** Grant Shield. */
+export function grantShield(s: BattleState, target: Unit, power: number): void {
+  applyStatus(target, 'shield', power)
+  log(s, { k: 'shieldGained', unit: target.name, amount: power })
+}
+
+/** Heal. Does not bring a fallen unit back. */
+export function heal(s: BattleState, target: Unit, power: number): void {
+  if (!target.alive) return
+  const before = target.hp
+  target.hp = Math.min(target.maxHp, target.hp + power)
+  if (target.hp > before) log(s, { k: 'healed', unit: target.name, amount: target.hp - before })
+}
+
+/**
+ * Everything that happens because a unit changed tile. Movement, knockback and
+ * displacement all funnel through here so a pickup or a trap can never be
+ * forgotten at one of the call sites.
+ */
+export function afterMove(s: BattleState, u: Unit): void {
+  checkTrap(s, u)
+  if (!u.alive || u.side !== 'hero') return
+
+  const index = s.relics.findIndex((r) => sameTile(r, u.pos))
+  if (index >= 0) {
+    s.relics.splice(index, 1)
+    s.carried += 1
+    const needed = s.objective.k === 'collect' ? s.objective.count : 0
+    log(s, { k: 'relicPicked', unit: u.name, remaining: Math.max(0, needed - s.carried) })
+    if (needed > 0 && s.carried >= needed) log(s, { k: 'relicsComplete' })
+  }
+}

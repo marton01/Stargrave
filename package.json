@@ -1,0 +1,31 @@
+{
+  "name": "csillagsir",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "balance": "cross-env BALANCE=1 vitest run src/engine/balance.test.ts --disable-console-intercept",
+    "smoke": "node tools/smoke-test.mjs",
+    "assets:fit": "node tools/fit-portraits.mjs"
+  },
+  "dependencies": {
+    "marked": "^18.0.10",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "cross-env": "^10.1.0",
+    "playwright-core": "^1.62.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

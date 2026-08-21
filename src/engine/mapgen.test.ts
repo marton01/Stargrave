@@ -1,0 +1,100 @@
+// The one property a battlefield must never lose: you can get everywhere.
+//
+// A cut-in-two map is not a hard mission, it is an unfinishable one. The party
+// cannot reach the last enemy, or the exit, and nothing ends the battle except
+// running out of cards — so the mission is lost round by round with casualties,
+// and the only way out of it is calling off the whole expedition.
+//
+// Three things can make a hole in the ground, and each is tested here: the
+// obstacles the generator scatters, the floor it schedules to collapse, and the
+// rune pillar a player raises mid-battle.
+
+import { describe, expect, it } from 'vitest'
+import { allTiles, fullyConnected, setTerrain, terrainAt, tileKey, walkable, wouldDisconnect } from './grid'
+import { generateMap, generateMissionFeatures, MAP_HEIGHT, MAP_WIDTH } from './mapgen'
+import { createRng } from './rng'
+import type { BattleMap, Objective } from './types'
+
+const SEEDS = 400
+
+describe('generated battlefields', () => {
+  it('are fully connected', () => {
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      const rng = createRng(seed)
+      const { map, heroSpawns } = generateMap(rng, 4)
+      expect(fullyConnected(map, heroSpawns[0]!), `seed ${seed}`).toBe(true)
+    }
+  })
+
+  it('stay connected once every scheduled floor has given way', () => {
+    // The holes appear one after another over a mission, but they never heal, so
+    // late in a long mission all of them are open at once. That is the state the
+    // generator has to survive, not each hole on its own.
+    const objectives: Objective[] = [{ k: 'reachExit' }, { k: 'collect', count: 3 }]
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      for (const objective of objectives) {
+        const rng = createRng(seed)
+        const { map, heroSpawns, enemySpawns } = generateMap(rng, 4)
+        const { collapsing, relics, exit } = generateMissionFeatures(
+          rng,
+          map,
+          heroSpawns,
+          enemySpawns,
+          objective,
+        )
+        for (const tile of collapsing) setTerrain(map, tile.pos, 'chasm')
+
+        const where = `seed ${seed}, ${objective.k}, ${collapsing.length} holes`
+        expect(fullyConnected(map, heroSpawns[0]!), where).toBe(true)
+        // And the things the mission is about are still standing on ground.
+        for (const relic of relics) expect(walkable(map, relic), `${where}: relic`).toBe(true)
+        if (exit) expect(walkable(map, exit), `${where}: exit`).toBe(true)
+      }
+    }
+  })
+})
+
+describe('wouldDisconnect', () => {
+  /** A map that is two rooms joined by a single one-tile corridor. */
+  function pinchedMap(): BattleMap {
+    const map: BattleMap = {
+      width: MAP_WIDTH,
+      height: MAP_HEIGHT,
+      tiles: new Array<BattleMap['tiles'][number]>(MAP_WIDTH * MAP_HEIGHT).fill('wall'),
+    }
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < 3; x++) {
+        setTerrain(map, { x, y }, 'floor')
+        setTerrain(map, { x: x + 6, y }, 'floor')
+      }
+    }
+    // The only way across, at x = 3..5 on one row.
+    for (let x = 3; x <= 5; x++) setTerrain(map, { x, y: 1 }, 'floor')
+    return map
+  }
+
+  it('sees the pillar that would seal a corridor', () => {
+    const map = pinchedMap()
+    const from = { x: 0, y: 1 }
+    expect(fullyConnected(map, from)).toBe(true)
+    expect(wouldDisconnect(map, { x: 4, y: 1 }, 'pillar', from)).toBe(true)
+    // And it leaves the map exactly as it found it.
+    expect(terrainAt(map, { x: 4, y: 1 })).toBe('floor')
+    expect(fullyConnected(map, from)).toBe(true)
+  })
+
+  it('allows an obstacle that only narrows the way', () => {
+    const map = pinchedMap()
+    const from = { x: 0, y: 1 }
+    // A corner of a room: there is always a way around it.
+    expect(wouldDisconnect(map, { x: 0, y: 0 }, 'pillar', from)).toBe(false)
+  })
+
+  it('never reports a walkable kind as cutting anything off', () => {
+    const map = pinchedMap()
+    const from = { x: 0, y: 1 }
+    for (const c of allTiles(map).filter((c) => walkable(map, c))) {
+      expect(wouldDisconnect(map, c, 'ash', from), tileKey(c)).toBe(false)
+    }
+  })
+})

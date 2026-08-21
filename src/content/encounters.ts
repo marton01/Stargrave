@@ -1,0 +1,1231 @@
+// Encounters: the narrative engine of the expedition.
+//
+// These are where the stories come from. Each one is a situation, a handful of
+// choices with real costs, and consequences that last for the rest of the run.
+//
+// A note on the card costs. Some choices are paid with CARDS from the heroes'
+// decks — permanently lost, chosen by the players. That is deliberate: the
+// non-combat layer spends the same resource as the combat layer, so a decision
+// on the bridge is felt on the next landing. No new system to learn, and it
+// genuinely hurts.
+//
+// Everything here is data, and everything the player reads is bilingual.
+
+import type { Text, TrialSymbol } from '../engine/types'
+import type { ModuleId, ResourceId } from './ship'
+import type { CrewTraitId } from './crew'
+import type { PuzzleKind } from '../engine/puzzles/types'
+
+export type EncounterTag =
+  | 'drift'
+  | 'station'
+  | 'world'
+  | 'anomaly'
+  | 'ruins'
+  | 'distress'
+  | 'trade'
+
+export type EncounterCost =
+  | { k: 'resource'; id: ResourceId; amount: number }
+  | { k: 'weeks'; amount: number }
+  /** Lose cards carrying this symbol. The players choose which. */
+  | { k: 'cards'; symbol: TrialSymbol; count: number }
+
+export type EncounterEffect =
+  | { k: 'resource'; id: ResourceId; amount: number }
+  | { k: 'understanding'; amount: number }
+  | { k: 'module'; id: ModuleId }
+  | { k: 'crewJoin'; count: number }
+  | { k: 'crewLost'; count: number }
+  | { k: 'archive'; amount: number }
+  | { k: 'revealMap'; columns: number }
+  /** Hull damage, reduced by shield power and boarding wards. */
+  | { k: 'hullRisk'; amount: number }
+  | { k: 'startMission'; flavour: 'boarding' | 'ruins' | 'explore' }
+  | { k: 'startPuzzle'; kind?: PuzzleKind }
+
+export type ChoiceRequirement =
+  | { k: 'shieldsAtLeast'; value: number }
+  | { k: 'moduleInstalled'; id: ModuleId }
+  | { k: 'understandingAtLeast'; value: number }
+  | { k: 'crewWithTrait'; trait: CrewTraitId }
+  | { k: 'resourceAtLeast'; id: ResourceId; value: number }
+
+export type EncounterChoice = {
+  text: Text
+  costs: EncounterCost[]
+  effects: EncounterEffect[]
+  /** Shown once the choice has been taken. */
+  result: Text
+  requires?: ChoiceRequirement
+}
+
+export type Encounter = {
+  id: string
+  title: Text
+  text: Text
+  tags: EncounterTag[]
+  weight: number
+  /** Never repeats within one expedition. */
+  once?: boolean
+  /** Only appears once the Archive has opened it up. */
+  archiveGated?: boolean
+  choices: EncounterChoice[]
+}
+
+const walkAway: EncounterChoice = {
+  text: { hu: 'Továbbmegyünk.', en: 'We move on.' },
+  costs: [],
+  effects: [],
+  result: {
+    hu: 'A hajó fordul, és a dolog a hátsó képernyőkön marad.',
+    en: 'The ship turns, and the thing stays on the rear screens.',
+  },
+}
+
+export const ENCOUNTERS: Encounter[] = [
+  {
+    id: 'drifting-hulk',
+    title: { hu: 'Sodródó hajó', en: 'A drifting hulk' },
+    text: {
+      hu: 'Egy hajó fordul lassan a semmiben, fény nélkül. A jelzései harminc éve ismétlődnek, és nem hozzánk beszélnek.',
+      en: 'A ship turns slowly in the dark, unlit. Its beacons have been repeating for thirty years, and they are not speaking to us.',
+    },
+    tags: ['drift', 'station'],
+    weight: 10,
+    choices: [
+      {
+        text: { hu: 'Átszállunk.', en: 'We board it.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'hullRisk', amount: 3 },
+          { k: 'resource', id: 'credits', amount: 8 },
+          { k: 'resource', id: 'fuel', amount: 4 },
+          { k: 'archive', amount: 1 },
+        ],
+        result: {
+          hu: 'A raktér félig ép. Alkatrészt és üzemanyagot hoztok el, meg egy naplót, amit senki nem fejezett be.',
+          en: 'Half the hold is intact. You bring back parts and fuel, and a log nobody finished.',
+        },
+      },
+      {
+        text: {
+          hu: 'Először pajzsot fel, aztán át. (Pajzs 2+)',
+          en: 'Shields up first, then across. (Shields 2+)',
+        },
+        requires: { k: 'shieldsAtLeast', value: 2 },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'resource', id: 'credits', amount: 8 },
+          { k: 'resource', id: 'fuel', amount: 4 },
+          { k: 'resource', id: 'information', amount: 3 },
+          { k: 'archive', amount: 1 },
+        ],
+        result: {
+          hu: 'A pajzs fogta fel, ami a zsilipben várt. Mindent elhoztok, és semmit nem hagytok ott.',
+          en: 'The shields caught whatever was waiting in the airlock. You take everything and leave nothing behind.',
+        },
+      },
+      {
+        text: { hu: 'Csak a jelzést olvassuk le.', en: 'We only read the beacon.' },
+        costs: [],
+        effects: [{ k: 'resource', id: 'information', amount: 2 }],
+        result: {
+          hu: 'Nem segélykérés. Egy figyelmeztetés, és nem előre szól, hanem hátra.',
+          en: 'Not a distress call. A warning — and it is not pointing forward but back.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'distress-call',
+    title: { hu: 'Vészjelzés', en: 'A distress call' },
+    text: {
+      hu: 'Élő jel. Emberi hang, akadozva, egy rendszerből három hét kitérőre. Nem tudjuk, mióta szól.',
+      en: 'A live signal. A human voice, breaking up, from a system three weeks off course. We do not know how long it has been calling.',
+    },
+    tags: ['distress', 'drift'],
+    weight: 9,
+    choices: [
+      {
+        text: { hu: 'Odamegyünk.', en: 'We go.' },
+        costs: [
+          { k: 'weeks', amount: 3 },
+          { k: 'resource', id: 'fuel', amount: 3 },
+        ],
+        effects: [
+          { k: 'crewJoin', count: 2 },
+          { k: 'resource', id: 'morale', amount: 3 },
+          { k: 'archive', amount: 1 },
+        ],
+        result: {
+          hu: 'Ketten élnek. Nem kérdezik, hova tartunk — csak beszállnak és dolgozni kezdenek.',
+          en: 'Two of them are alive. They do not ask where we are going — they come aboard and start working.',
+        },
+      },
+      {
+        text: {
+          hu: 'Válaszolunk, de nem térünk el.',
+          en: 'We answer, but we hold our course.',
+        },
+        costs: [],
+        effects: [{ k: 'resource', id: 'morale', amount: -2 }],
+        result: {
+          hu: 'A hang megköszöni. Aztán elhallgat, és a hídon senki nem szól három napig.',
+          en: 'The voice thanks us. Then it stops, and nobody on the bridge speaks for three days.',
+        },
+      },
+      {
+        text: { hu: 'Kikapcsoljuk a vevőt.', en: 'We shut the receiver off.' },
+        costs: [],
+        effects: [{ k: 'resource', id: 'morale', amount: -3 }],
+        result: {
+          hu: 'Csend. Ez a fajta csend nem üres.',
+          en: 'Silence. This kind of silence is not empty.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'alien-technology',
+    title: { hu: 'Idegen technológia', en: 'Alien technology' },
+    text: {
+      hu: 'Egy szerkezet, ami még mindig működik. Nem tudjuk, mit tesz. Beilleszthető a hajó rendszerébe — de nem tudjuk, mit visz el érte.',
+      en: 'A device that is still running. We do not know what it does. It would fit into the ship’s systems — but we do not know what it takes in return.',
+    },
+    tags: ['anomaly', 'ruins'],
+    weight: 8,
+    choices: [
+      {
+        text: { hu: 'Beépítjük vakon.', en: 'We install it blind.' },
+        costs: [],
+        effects: [
+          { k: 'module', id: 'reactorTap' },
+          { k: 'resource', id: 'morale', amount: -2 },
+          { k: 'hullRisk', amount: 2 },
+        ],
+        result: {
+          hu: 'A reaktor kimenete megnőtt. Valami közben halkan számol a falban, és nem tudjuk, mit.',
+          en: 'Reactor output is up. Something in the wall is quietly counting, and we do not know what.',
+        },
+      },
+      {
+        text: {
+          hu: 'Előbb a Labor elemzi. (Információ 6)',
+          en: 'The Lab analyses it first. (6 Information)',
+        },
+        requires: { k: 'resourceAtLeast', id: 'information', value: 6 },
+        costs: [
+          { k: 'resource', id: 'information', amount: 6 },
+          { k: 'weeks', amount: 1 },
+        ],
+        effects: [
+          { k: 'module', id: 'runeAmplifier' },
+          { k: 'understanding', amount: 2 },
+        ],
+        result: {
+          hu: 'Nem reaktor. Erősítő — és most tudjuk, mit erősít. A rúnamag ettől kezdve többet ad.',
+          en: 'Not a reactor. An amplifier — and now we know what it amplifies. The rune core gives more from here on.',
+        },
+      },
+      {
+        text: {
+          hu: 'Az idegen származású legénységtag megnézi. (jellemvonás kell)',
+          en: 'The crew member of alien descent takes a look. (trait required)',
+        },
+        requires: { k: 'crewWithTrait', trait: 'alienBorn' },
+        costs: [],
+        effects: [
+          { k: 'module', id: 'echoVault' },
+          { k: 'understanding', amount: 3 },
+          { k: 'archive', amount: 2 },
+        ],
+        result: {
+          hu: 'Egy pillantás elég neki. „Ez nem gép. Ez emlékezet." És megmutatja, hol nyílik.',
+          en: '“This is not a machine. This is memory.” One look is enough, and they show us where it opens.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'refugees',
+    title: { hu: 'Menekültek', en: 'Refugees' },
+    text: {
+      hu: 'Egy bolygó felszínén negyven ember áll a leszállópályán, csomagokkal. Nem tudják, hogy nincs hova menni.',
+      en: 'Forty people stand on a landing strip with their bags. They do not know there is nowhere to go.',
+    },
+    tags: ['world'],
+    weight: 8,
+    choices: [
+      {
+        text: { hu: 'Felvesszük, akit lehet.', en: 'We take aboard who we can.' },
+        costs: [{ k: 'resource', id: 'food', amount: 8 }],
+        effects: [
+          { k: 'crewJoin', count: 2 },
+          { k: 'resource', id: 'morale', amount: 2 },
+        ],
+        result: {
+          hu: 'Kettő közülük ért a hajóhoz. A többi marad, és ezt mindenki tudja a fedélzeten.',
+          en: 'Two of them know ships. The rest stay, and everyone aboard knows it.',
+        },
+      },
+      {
+        text: {
+          hu: 'Élelmet hagyunk nekik, de nem visszük őket.',
+          en: 'We leave them food but not passage.',
+        },
+        costs: [{ k: 'resource', id: 'food', amount: 6 }],
+        effects: [
+          { k: 'resource', id: 'credits', amount: 6 },
+          { k: 'resource', id: 'morale', amount: -1 },
+        ],
+        result: {
+          hu: 'Amit adhattak, azt odaadták. Egy térképet is, amin egy hely be van körözve.',
+          en: 'They gave what they could, including a chart with one place circled.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'trader-swarm',
+    title: { hu: 'Kereskedő-raj', en: 'A trader swarm' },
+    text: {
+      hu: 'Húsz kicsi hajó, egymáshoz kötözve. Nem kérdezik, kik vagyunk. Csak azt, mit adunk.',
+      en: 'Twenty small ships lashed together. They do not ask who we are. Only what we have.',
+    },
+    tags: ['trade', 'station'],
+    weight: 10,
+    choices: [
+      {
+        text: {
+          hu: 'Információt adunk el. (6 Információ → 14 kredit)',
+          en: 'We sell information. (6 Information → 14 credits)',
+        },
+        requires: { k: 'resourceAtLeast', id: 'information', value: 6 },
+        costs: [{ k: 'resource', id: 'information', amount: 6 }],
+        effects: [{ k: 'resource', id: 'credits', amount: 14 }],
+        result: {
+          hu: 'Nem kérdezik, honnan van. Ez az egyetlen jó dolog bennük.',
+          en: 'They do not ask where it came from. That is the one good thing about them.',
+        },
+      },
+      {
+        text: {
+          hu: 'Üzemanyagot vásárolunk. (10 kredit → 8 üzemanyag)',
+          en: 'We buy fuel. (10 credits → 8 fuel)',
+        },
+        requires: { k: 'resourceAtLeast', id: 'credits', value: 10 },
+        costs: [{ k: 'resource', id: 'credits', amount: 10 }],
+        effects: [{ k: 'resource', id: 'fuel', amount: 8 }],
+        result: {
+          hu: 'Drága, és mindketten tudjuk, hogy nincs máshol.',
+          en: 'Expensive, and both sides know there is nowhere else.',
+        },
+      },
+      {
+        text: {
+          hu: 'Élelmet vásárolunk. (8 kredit → 12 élelem)',
+          en: 'We buy food. (8 credits → 12 food)',
+        },
+        requires: { k: 'resourceAtLeast', id: 'credits', value: 8 },
+        costs: [{ k: 'resource', id: 'credits', amount: 8 }],
+        effects: [{ k: 'resource', id: 'food', amount: 12 }],
+        result: {
+          hu: 'Szárított, névtelen, és elég három hétre.',
+          en: 'Dried, nameless, and enough for three weeks.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'ancient-signal',
+    title: { hu: 'Ősi jelzés', en: 'An ancient signal' },
+    text: {
+      hu: 'Nem rádió. A rúnamag rezonál rá. Valami hív, és a hívás nem szavakból áll.',
+      en: 'Not radio. The rune core resonates with it. Something is calling, and the call is not made of words.',
+    },
+    tags: ['anomaly', 'ruins'],
+    weight: 9,
+    choices: [
+      {
+        text: { hu: 'Lemegyünk és megfejtjük.', en: 'We go down and decipher it.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [{ k: 'startPuzzle' }],
+        result: {
+          hu: 'A szerkezet ott áll, ahol a jel ered. Csak ki kell nyitni.',
+          en: 'The mechanism stands where the signal begins. It only has to be opened.',
+        },
+      },
+      {
+        text: {
+          hu: 'Erővel törjük fel. (2 lap ⚒ szimbólummal)',
+          en: 'We force it open. (2 cards with ⚒)',
+        },
+        costs: [{ k: 'cards', symbol: 'force', count: 2 }],
+        effects: [
+          { k: 'resource', id: 'credits', amount: 10 },
+          { k: 'resource', id: 'information', amount: 3 },
+        ],
+        result: {
+          hu: 'Kinyílt. Valami eltörött közben, és nem a szerkezetben.',
+          en: 'It opened. Something broke doing it, and not in the mechanism.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'dead-garden',
+    title: { hu: 'Halott kert', en: 'A dead garden' },
+    text: {
+      hu: 'Egy kilométeres kupola, és benne minden növény egyszerre halt meg, ugyanabban a pillanatban. Néhány mag még él.',
+      en: 'A dome a kilometre across, and inside it every plant died at once, in the same instant. A few seeds are still alive.',
+    },
+    tags: ['world', 'ruins'],
+    weight: 8,
+    choices: [
+      {
+        text: { hu: 'Magot gyűjtünk.', en: 'We gather seed.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'resource', id: 'food', amount: 14 },
+          { k: 'resource', id: 'morale', amount: 1 },
+        ],
+        result: {
+          hu: 'Az egyik legénységtag elkezdett palántát nevelni a gépteremben. Senki nem szólt rá.',
+          en: 'One of the crew has started raising seedlings in the engine room. Nobody has told them to stop.',
+        },
+      },
+      {
+        text: {
+          hu: 'Megvizsgáljuk, mi ölte meg. (2 lap ◈ szimbólummal)',
+          en: 'We study what killed it. (2 cards with ◈)',
+        },
+        costs: [{ k: 'cards', symbol: 'insight', count: 2 }],
+        effects: [
+          { k: 'understanding', amount: 3 },
+          { k: 'resource', id: 'information', amount: 4 },
+        ],
+        result: {
+          hu: 'Nem méreg, nem hideg, nem kór. Egyszerűen abbamaradt bennük valami, amit addig valaki tartott.',
+          en: 'Not poison, not cold, not disease. Something in them simply stopped — something that until then had been held.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'silent-choir',
+    title: { hu: 'A néma kórus', en: 'The silent choir' },
+    text: {
+      hu: 'Nyolc Kórus-fantom lebeg egy körben, mozdulatlanul, egymás felé fordulva. Nem támadnak. Énekelnek, csak nem hallható.',
+      en: 'Eight Choir Wraiths hang in a circle, motionless, facing one another. They do not attack. They are singing; it simply cannot be heard.',
+    },
+    tags: ['anomaly'],
+    weight: 7,
+    choices: [
+      {
+        text: { hu: 'Hallgatjuk.', en: 'We listen.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'understanding', amount: 4 },
+          { k: 'resource', id: 'morale', amount: -3 },
+        ],
+        result: {
+          hu: 'Egy óra után mindenki lement a hídról. De most már tudjuk, mit hallottak, akik itt éltek.',
+          en: 'After an hour everyone had left the bridge. But now we know what the people who lived here heard.',
+        },
+      },
+      {
+        text: { hu: 'Megzavarjuk a kört.', en: 'We break the circle.' },
+        costs: [],
+        effects: [{ k: 'startMission', flavour: 'boarding' }],
+        result: {
+          hu: 'Az ének megszakadt. Mind a nyolc egyszerre fordult felénk.',
+          en: 'The song stopped. All eight turned towards us at once.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'gate-echo',
+    title: { hu: 'A Kapu visszhangja', en: 'An echo of the Gate' },
+    text: {
+      hu: 'Egy második kapu, kisebb, és zárva. A rúnái ugyanazok, mint amin bejöttünk — csak a sorrend más.',
+      en: 'A second gate, smaller, and shut. Its runes are the same as the one we came through — only the order differs.',
+    },
+    tags: ['ruins', 'anomaly'],
+    weight: 7,
+    once: true,
+    choices: [
+      {
+        text: { hu: 'Megfejtjük a sorrendet.', en: 'We work out the order.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [{ k: 'startPuzzle', kind: 'runeDecode' }],
+        result: {
+          hu: 'Tizenkét rúna, és egy helyes sorrend. A hajó rezonál, ahogy közeledünk hozzá.',
+          en: 'Twelve runes and one correct order. The ship resonates as we get closer to it.',
+        },
+      },
+      {
+        text: {
+          hu: 'Összevetjük az otthoni Kapuval. (Megértés 3+)',
+          en: 'We compare it with the Gate back home. (Understanding 3+)',
+        },
+        requires: { k: 'understandingAtLeast', value: 3 },
+        costs: [],
+        effects: [
+          { k: 'understanding', amount: 3 },
+          { k: 'revealMap', columns: 2 },
+          { k: 'archive', amount: 2 },
+        ],
+        result: {
+          hu: 'Nem kijárat. Bejárat — és nem mi nyitottuk ki elsőnek.',
+          en: 'Not an exit. An entrance — and we were not the first to open it.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'scavenger-claim',
+    title: { hu: 'Dúlók követelése', en: 'A scavenger claim' },
+    text: {
+      hu: 'Négy hajó áll az útban. Nem lőnek. Az egyik ad egy számot, és vár.',
+      en: 'Four ships block the way. They do not fire. One of them sends a number and waits.',
+    },
+    tags: ['station', 'drift'],
+    weight: 8,
+    choices: [
+      {
+        text: { hu: 'Fizetünk. (12 kredit)', en: 'We pay. (12 credits)' },
+        requires: { k: 'resourceAtLeast', id: 'credits', value: 12 },
+        costs: [{ k: 'resource', id: 'credits', amount: 12 }],
+        effects: [{ k: 'revealMap', columns: 1 }],
+        result: {
+          hu: 'Elállnak, és mellékesen elárulják, mi van előttünk. Ennyit legalább megért.',
+          en: 'They move aside, and mention in passing what lies ahead. That much it was worth.',
+        },
+      },
+      {
+        text: { hu: 'Átmegyünk rajtuk.', en: 'We go through them.' },
+        costs: [],
+        effects: [{ k: 'startMission', flavour: 'boarding' }],
+        result: {
+          hu: 'A zsilipünkhöz jönnek. Ez már nem hajócsata, hanem folyosóharc.',
+          en: 'They come to our airlock. This is no longer a ship fight but a corridor fight.',
+        },
+      },
+      {
+        text: {
+          hu: 'Megmutatjuk a pajzsot. (Pajzs 3)',
+          en: 'We show them the shields. (Shields 3)',
+        },
+        requires: { k: 'shieldsAtLeast', value: 3 },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'morale', amount: 1 },
+          { k: 'resource', id: 'credits', amount: 4 },
+        ],
+        result: {
+          hu: 'Számolnak, és nem érdemes nekik. Az egyikük még hagy is valamit, mintegy bocsánatkérésül.',
+          en: 'They do the arithmetic and it does not add up for them. One even leaves something behind, by way of apology.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'crystal-forest',
+    title: { hu: 'Kristályerdő', en: 'A crystal forest' },
+    text: {
+      hu: 'Nem növények. Nem is ásványok. Ötven méter magasak, és minden reggel máshol állnak.',
+      en: 'Not plants. Not minerals either. Fifty metres tall, and every morning they stand somewhere else.',
+    },
+    tags: ['world', 'anomaly'],
+    weight: 8,
+    choices: [
+      {
+        text: { hu: 'Bemegyünk és felmérjük.', en: 'We go in and survey it.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [{ k: 'startMission', flavour: 'explore' }],
+        result: {
+          hu: 'A csapat leszáll. A talaj nem mindenhol tartja meg őket.',
+          en: 'The party lands. The ground does not hold everywhere.',
+        },
+      },
+      {
+        text: { hu: 'Csak mintát veszünk a pereméről.', en: 'We only sample the edge.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'information', amount: 3 },
+          { k: 'resource', id: 'credits', amount: 5 },
+        ],
+        result: {
+          hu: 'A minta a laborban tovább nő. Ezt még senki nem meri jelenteni.',
+          en: 'The sample keeps growing in the lab. Nobody has dared to write that up yet.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'the-watcher',
+    title: { hu: 'A figyelő', en: 'The watcher' },
+    text: {
+      hu: 'Egy istengép-töredék áll a rom közepén, és forog velünk. Nem támad. Követ.',
+      en: 'A godmachine shard stands at the centre of the ruin, turning to follow us. It does not attack. It watches.',
+    },
+    tags: ['ruins'],
+    weight: 7,
+    choices: [
+      {
+        text: { hu: 'Kikerüljük, és dolgozunk.', en: 'We work around it.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'startMission', flavour: 'explore' },
+          { k: 'resource', id: 'morale', amount: -1 },
+        ],
+        result: {
+          hu: 'A csapat lemegy, és egész idő alatt hátrafelé figyel.',
+          en: 'The party goes down, and spends the whole time watching their backs.',
+        },
+      },
+      {
+        text: { hu: 'Kiütjük.', en: 'We put it down.' },
+        costs: [],
+        effects: [{ k: 'startMission', flavour: 'ruins' }],
+        result: {
+          hu: 'Egyet lépett előre. Csak egyet.',
+          en: 'It took one step forward. Only one.',
+        },
+      },
+      {
+        text: {
+          hu: 'Megkérdezzük. (Megértés 8+)',
+          en: 'We ask it. (Understanding 8+)',
+        },
+        requires: { k: 'understandingAtLeast', value: 8 },
+        costs: [],
+        effects: [
+          { k: 'understanding', amount: 4 },
+          { k: 'archive', amount: 3 },
+        ],
+        result: {
+          hu: 'Válaszol. Nem hanggal. És az, amit mond, nem rólunk szól, hanem arról, hogy mit hagytak itt őrizni.',
+          en: 'It answers. Not with sound. And what it says is not about us, but about what it was left here to guard.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'sealed-vault',
+    title: { hu: 'Lezárt kamra', en: 'A sealed vault' },
+    text: {
+      hu: 'Nincs zsanér, nincs zár, nincs kilincs. Egy fal, ami tudja, hogy ott vagyunk.',
+      en: 'No hinge, no lock, no handle. A wall that knows we are here.',
+    },
+    tags: ['ruins'],
+    weight: 9,
+    choices: [
+      {
+        text: { hu: 'Megfejtjük.', en: 'We solve it.' },
+        costs: [],
+        effects: [{ k: 'startPuzzle' }],
+        result: {
+          hu: 'A minta ott van a felszínen. Csak nem betűkből áll.',
+          en: 'The pattern is right there on the surface. It is simply not made of letters.',
+        },
+      },
+      {
+        text: {
+          hu: 'Erővel. (3 lap ⚒ szimbólummal)',
+          en: 'By force. (3 cards with ⚒)',
+        },
+        costs: [{ k: 'cards', symbol: 'force', count: 3 }],
+        effects: [
+          { k: 'resource', id: 'credits', amount: 14 },
+          { k: 'hullRisk', amount: 2 },
+        ],
+        result: {
+          hu: 'Bejutottunk. A kamra tartalma megvan, de valami odabent nem tetszett neki.',
+          en: 'We got in. The vault’s contents are ours, though something inside took it badly.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'wounded-wraith',
+    title: { hu: 'Sebzett fantom', en: 'A wounded wraith' },
+    text: {
+      hu: 'Egy Kórus-fantom beszorult egy összeomlott folyosóba. Nem tud kijönni, és nem hal meg.',
+      en: 'A Choir Wraith is caught in a collapsed corridor. It cannot get out, and it does not die.',
+    },
+    tags: ['ruins', 'anomaly'],
+    weight: 6,
+    choices: [
+      {
+        text: { hu: 'Kiengedjük.', en: 'We let it out.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'morale', amount: 2 },
+          { k: 'understanding', amount: 1 },
+        ],
+        result: {
+          hu: 'Nem támad. Elindul valamerre, és az útvonala nem véletlen.',
+          en: 'It does not attack. It sets off somewhere, and its heading is not random.',
+        },
+      },
+      {
+        text: { hu: 'Tanulmányozzuk, amíg ott van.', en: 'We study it while it is stuck.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'resource', id: 'information', amount: 6 },
+          { k: 'understanding', amount: 2 },
+          { k: 'resource', id: 'morale', amount: -2 },
+        ],
+        result: {
+          hu: 'Hat nap alatt megtudtuk, miből áll. A hetediken senki nem akart bemenni hozzá.',
+          en: 'In six days we learned what it is made of. On the seventh nobody wanted to go in.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'fuel-bloom',
+    title: { hu: 'Üzemanyag-virágzás', en: 'A fuel bloom' },
+    text: {
+      hu: 'A gázköd egy szakaszában sűrűbb minden, mint kellene. Kimeríthető, de közel kell menni.',
+      en: 'One stretch of the nebula is denser than it has any right to be. Harvestable, but you have to go close.',
+    },
+    tags: ['anomaly', 'drift'],
+    weight: 9,
+    choices: [
+      {
+        text: { hu: 'Bemerítünk.', en: 'We dip in.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'fuel', amount: 12 },
+          { k: 'hullRisk', amount: 3 },
+        ],
+        result: {
+          hu: 'A tankok tele. A külső burkolat kevésbé.',
+          en: 'The tanks are full. The outer plating rather less so.',
+        },
+      },
+      {
+        text: {
+          hu: 'Óvatosan, pajzs alatt. (Pajzs 2+)',
+          en: 'Carefully, under shields. (Shields 2+)',
+        },
+        requires: { k: 'shieldsAtLeast', value: 2 },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [{ k: 'resource', id: 'fuel', amount: 10 }],
+        result: {
+          hu: 'Lassabb, és nem kerül semmibe. Néha ilyen egyszerű.',
+          en: 'Slower, and it costs nothing. Sometimes it really is that simple.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'broken-sentinel',
+    title: { hu: 'Törött őrszem', en: 'A broken sentinel' },
+    text: {
+      hu: 'Egy Rúnaőrző fekszik a padlón, kettétörve. A rúnái még izzanak. Nem mozdul.',
+      en: 'A Rune Sentinel lies broken on the floor. Its runes still glow. It does not move.',
+    },
+    tags: ['ruins'],
+    weight: 8,
+    choices: [
+      {
+        text: { hu: 'Szétbontjuk alkatrészért.', en: 'We strip it for parts.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'credits', amount: 9 },
+          { k: 'resource', id: 'hull', amount: 4 },
+        ],
+        result: {
+          hu: 'A páncélzata jobb, mint a miénk. Most már a miénk.',
+          en: 'Its plating is better than ours. Now it is ours.',
+        },
+      },
+      {
+        text: {
+          hu: 'Megjavítjuk, és hagyjuk, hogy őrizzen. (2 lap ⚒)',
+          en: 'We repair it and let it guard. (2 cards with ⚒)',
+        },
+        costs: [{ k: 'cards', symbol: 'force', count: 2 }],
+        effects: [
+          { k: 'module', id: 'boardingWards' },
+          { k: 'understanding', amount: 1 },
+        ],
+        result: {
+          hu: 'Feláll, és nem minket néz. A zsilipeinkbe azóta rúnák vannak égve.',
+          en: 'It stands up, and it is not looking at us. There have been runes burned into our airlocks ever since.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'the-archivist',
+    title: { hu: 'Az archivista', en: 'The archivist' },
+    text: {
+      hu: 'Egy állomás, egyetlen lakóval. Nem kereskedik. Cserél: tudást tudásért.',
+      en: 'A station with a single occupant. They do not trade. They exchange: knowledge for knowledge.',
+    },
+    tags: ['station'],
+    weight: 8,
+    choices: [
+      {
+        text: {
+          hu: 'Elmondjuk, mit láttunk. (8 Információ → megértés)',
+          en: 'We tell them what we have seen. (8 Information → understanding)',
+        },
+        requires: { k: 'resourceAtLeast', id: 'information', value: 8 },
+        costs: [{ k: 'resource', id: 'information', amount: 8 }],
+        effects: [
+          { k: 'understanding', amount: 4 },
+          { k: 'archive', amount: 2 },
+        ],
+        result: {
+          hu: 'Végighallgat, aztán elmondja, mit hallgatott el az előző expedíció.',
+          en: 'They hear us out, then tell us what the previous expedition left unsaid.',
+        },
+      },
+      {
+        text: {
+          hu: 'Eladjuk, amit tudunk. (10 Információ → 20 kredit)',
+          en: 'We sell what we know. (10 Information → 20 credits)',
+        },
+        requires: { k: 'resourceAtLeast', id: 'information', value: 10 },
+        costs: [{ k: 'resource', id: 'information', amount: 10 }],
+        effects: [{ k: 'resource', id: 'credits', amount: 20 }],
+        result: {
+          hu: 'Fizet, és közben úgy néz ránk, mint aki tudja, mit adtunk el.',
+          en: 'They pay, and look at us like someone who knows exactly what we sold.',
+        },
+      },
+      {
+        text: { hu: 'Kérdezzük a Csillagsírról.', en: 'We ask about the Stargrave.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'understanding', amount: 2 },
+          { k: 'revealMap', columns: 3 },
+        ],
+        result: {
+          hu: 'Elmondja, merre van. Aztán megkérdezi, biztosan oda akarunk-e menni.',
+          en: 'They tell us the way. Then they ask whether we are sure we want to go.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'mutiny-whisper',
+    title: { hu: 'Suttogás a fedélzeten', en: 'A whisper below decks' },
+    text: {
+      hu: 'Nem lázadás. Még nem. Csak egy kérdés, amit hangosan is kimondtak: minek megyünk tovább?',
+      en: 'Not a mutiny. Not yet. Just a question somebody said out loud: why are we still going?',
+    },
+    tags: ['drift'],
+    weight: 7,
+    choices: [
+      {
+        text: {
+          hu: 'Elmondjuk nekik, mit tudunk. (Megértés 3+)',
+          en: 'We tell them what we know. (Understanding 3+)',
+        },
+        requires: { k: 'understandingAtLeast', value: 3 },
+        costs: [],
+        effects: [{ k: 'resource', id: 'morale', amount: 4 }],
+        result: {
+          hu: 'A hídon csend lett, de más csend. Mindenki visszament a helyére.',
+          en: 'The bridge went quiet, but a different quiet. Everyone went back to their post.',
+        },
+      },
+      {
+        text: {
+          hu: 'Extra fejadagot osztunk.',
+          en: 'We hand out extra rations.',
+        },
+        requires: { k: 'resourceAtLeast', id: 'food', value: 8 },
+        costs: [{ k: 'resource', id: 'food', amount: 8 }],
+        effects: [{ k: 'resource', id: 'morale', amount: 3 }],
+        result: {
+          hu: 'Egy jó vacsora. Ez most elég volt.',
+          en: 'One good dinner. That was enough for now.',
+        },
+      },
+      {
+        text: { hu: 'Nem foglalkozunk vele.', en: 'We let it pass.' },
+        costs: [],
+        effects: [{ k: 'resource', id: 'morale', amount: -2 }],
+        result: {
+          hu: 'A kérdés nem tűnt el. Csak lejjebb ment.',
+          en: 'The question did not go away. It only went further down.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'old-expedition',
+    title: { hu: 'Egy korábbi expedíció', en: 'An earlier expedition' },
+    text: {
+      hu: 'Egy hajó, ami ugyanolyan, mint a miénk. Ugyanaz a típus, ugyanaz a jelölés. Csak régebbi.',
+      en: 'A ship exactly like ours. Same class, same markings. Only older.',
+    },
+    tags: ['drift', 'ruins'],
+    weight: 6,
+    once: true,
+    choices: [
+      {
+        text: { hu: 'Átmegyünk a naplóért.', en: 'We go across for the log.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'understanding', amount: 3 },
+          { k: 'archive', amount: 3 },
+          { k: 'resource', id: 'morale', amount: -2 },
+        ],
+        result: {
+          hu: 'A napló utolsó bejegyzése a mi hetünkkel egyezik. Nem a dátum — a szám.',
+          en: 'The last entry in the log matches our week. Not the date — the number.',
+        },
+      },
+      {
+        text: { hu: 'Kifosztjuk, és nem olvasunk semmit.', en: 'We strip it and read nothing.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'fuel', amount: 8 },
+          { k: 'resource', id: 'food', amount: 10 },
+          { k: 'resource', id: 'hull', amount: 4 },
+        ],
+        result: {
+          hu: 'Praktikus döntés. Senki nem beszél róla utána.',
+          en: 'A practical decision. Nobody talks about it afterwards.',
+        },
+      },
+      {
+        text: { hu: 'Hagyjuk békén.', en: 'We leave it be.' },
+        costs: [],
+        effects: [{ k: 'resource', id: 'morale', amount: 2 }],
+        result: {
+          hu: 'A legénység egy része szerint ez volt a helyes. A hajó lassan hátrafordul.',
+          en: 'Part of the crew thinks that was right. The ship turns slowly away.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'living-ship',
+    title: { hu: 'A hajó megszólal', en: 'The ship speaks' },
+    text: {
+      hu: 'A rúnamag mintát ad ki, ami nem a mi kódunk. Aztán megismétli, lassabban, mintha várná, hogy értsük.',
+      en: 'The rune core puts out a pattern that is not our code. Then it repeats it, slower, as if waiting to be understood.',
+    },
+    tags: ['drift', 'anomaly'],
+    weight: 5,
+    once: true,
+    archiveGated: true,
+    choices: [
+      {
+        text: { hu: 'Válaszolunk ugyanazon a nyelven.', en: 'We answer in the same language.' },
+        costs: [{ k: 'cards', symbol: 'insight', count: 2 }],
+        effects: [
+          { k: 'understanding', amount: 5 },
+          { k: 'archive', amount: 3 },
+        ],
+        result: {
+          hu: 'Két hétig beszélgetünk. A végén az egyik legénységtag megkérdezi, hogy a hajó mindig itt volt-e.',
+          en: 'We talk for two weeks. At the end one of the crew asks whether the ship was always here.',
+        },
+      },
+      {
+        text: { hu: 'Lekapcsoljuk a rúnamagot.', en: 'We shut the rune core down.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'morale', amount: -1 },
+          { k: 'resource', id: 'information', amount: 4 },
+        ],
+        result: {
+          hu: 'A minta megszűnt. A laborban megvan a felvétel, és senki nem hallgatja vissza.',
+          en: 'The pattern stopped. The lab has the recording, and nobody plays it back.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'children-of-ash',
+    title: { hu: 'A hamu gyermekei', en: 'Children of the ash' },
+    text: {
+      hu: 'Egy telep, ami nem tudja, hogy a galaxis meghalt. Kilencven éve élnek itt, és tanítják egymást.',
+      en: 'A settlement that does not know the galaxy is dead. They have lived here ninety years, teaching each other.',
+    },
+    tags: ['world'],
+    weight: 8,
+    choices: [
+      {
+        text: { hu: 'Elmondjuk nekik.', en: 'We tell them.' },
+        costs: [],
+        effects: [
+          { k: 'crewJoin', count: 1 },
+          { k: 'resource', id: 'morale', amount: -2 },
+          { k: 'understanding', amount: 2 },
+        ],
+        result: {
+          hu: 'Egy fiatal velünk jön. A többiek maradnak, és most már tudják.',
+          en: 'One of the young ones comes with us. The rest stay, and now they know.',
+        },
+      },
+      {
+        text: { hu: 'Nem mondjuk el.', en: 'We do not tell them.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'food', amount: 10 },
+          { k: 'resource', id: 'credits', amount: 6 },
+        ],
+        result: {
+          hu: 'Vendégként fogadnak, és úgy is búcsúznak. Ez nehezebb volt, mint ahogy hangzik.',
+          en: 'They receive us as guests, and see us off as guests. That was harder than it sounds.',
+        },
+      },
+      {
+        text: {
+          hu: 'Tanítunk nekik valamit, ami hasznos.',
+          en: 'We teach them something useful.',
+        },
+        costs: [{ k: 'weeks', amount: 2 }],
+        effects: [
+          { k: 'resource', id: 'morale', amount: 4 },
+          { k: 'archive', amount: 2 },
+          { k: 'crewJoin', count: 1 },
+        ],
+        result: {
+          hu: 'Két hét, és van vízszűrőjük. Az egyik mérnökük velünk jön, mert most már tudja, mit nem tud.',
+          en: 'Two weeks, and they have water filters. One of their engineers comes with us, because now they know what they do not know.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'the-long-dark',
+    title: { hu: 'A hosszú sötét', en: 'The long dark' },
+    text: {
+      hu: 'Négy csillagrendszer, és egyikben sincs semmi. Az érzékelők üresen jönnek vissza. Ez sem jó jel.',
+      en: 'Four star systems, and nothing in any of them. The sensors come back empty. That is not a good sign either.',
+    },
+    tags: ['drift'],
+    weight: 9,
+    choices: [
+      {
+        text: {
+          hu: 'Teljes energiát az érzékelőkre. (2 hét)',
+          en: 'Full power to sensors. (2 weeks)',
+        },
+        costs: [{ k: 'weeks', amount: 2 }],
+        effects: [
+          { k: 'revealMap', columns: 3 },
+          { k: 'resource', id: 'information', amount: 3 },
+        ],
+        result: {
+          hu: 'Két hét pásztázás, és most már látjuk, hova érdemes menni. És hova nem.',
+          en: 'Two weeks of scanning, and now we can see where it is worth going. And where it is not.',
+        },
+      },
+      {
+        text: { hu: 'Csak megyünk tovább.', en: 'We simply keep going.' },
+        costs: [],
+        effects: [{ k: 'resource', id: 'morale', amount: -1 }],
+        result: {
+          hu: 'Semmi nem történt. Két héten át. Ez viselte meg a legénységet a legjobban.',
+          en: 'Nothing happened. For two weeks. That is what wore the crew down most.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'rune-storm',
+    title: { hu: 'Rúnavihar', en: 'A rune storm' },
+    text: {
+      hu: 'A tér maga izzik. Nem sugárzás — írás, ami túl gyorsan változik ahhoz, hogy elolvassuk.',
+      en: 'Space itself is glowing. Not radiation — writing, changing too fast to read.',
+    },
+    tags: ['anomaly', 'drift'],
+    weight: 8,
+    choices: [
+      {
+        text: { hu: 'Átvágunk rajta.', en: 'We cut straight through.' },
+        costs: [],
+        effects: [
+          { k: 'hullRisk', amount: 4 },
+          { k: 'resource', id: 'information', amount: 5 },
+        ],
+        result: {
+          hu: 'A burkolat felizzott, és a laborban most van ötezer sor olvashatatlan felvétel.',
+          en: 'The plating glowed white, and the lab now has five thousand lines of unreadable recording.',
+        },
+      },
+      {
+        text: {
+          hu: 'Megkerüljük. (2 hét, 3 üzemanyag)',
+          en: 'We go around. (2 weeks, 3 fuel)',
+        },
+        costs: [
+          { k: 'weeks', amount: 2 },
+          { k: 'resource', id: 'fuel', amount: 3 },
+        ],
+        effects: [],
+        result: {
+          hu: 'Hosszabb, de a hajó egyben marad. Néha ez a jó válasz.',
+          en: 'Longer, but the ship stays whole. Sometimes that is the right answer.',
+        },
+      },
+      {
+        text: {
+          hu: 'Megállunk és felvesszük. (2 lap ◈)',
+          en: 'We stop and record it. (2 cards with ◈)',
+        },
+        costs: [{ k: 'cards', symbol: 'insight', count: 2 }],
+        effects: [
+          { k: 'understanding', amount: 3 },
+          { k: 'hullRisk', amount: 2 },
+        ],
+        result: {
+          hu: 'Egy szakaszt sikerült lelassítani annyira, hogy olvasható legyen. Egy név van benne, és nem a miénk.',
+          en: 'We slowed one stretch enough to read it. There is a name in it, and it is not ours.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'the-first-door',
+    title: { hu: 'Az első ajtó', en: 'The first door' },
+    text: {
+      hu: 'A rom nem rom. Ez egy bejárat, és a felirat rajta nem figyelmeztet, hanem üdvözöl. Valakit, aki nem jött el.',
+      en: 'The ruin is not a ruin. It is an entrance, and the inscription does not warn. It welcomes. Someone who never came.',
+    },
+    tags: ['ruins'],
+    weight: 6,
+    once: true,
+    choices: [
+      {
+        text: { hu: 'Elolvassuk a feliratot.', en: 'We read the inscription.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [{ k: 'startPuzzle', kind: 'glyphs' }],
+        result: {
+          hu: 'Nyolc jel, és mindegyik két dolgot jelent egyszerre.',
+          en: 'Eight signs, and every one of them means two things at once.',
+        },
+      },
+      {
+        text: { hu: 'Bemegyünk.', en: 'We go in.' },
+        costs: [],
+        effects: [{ k: 'startMission', flavour: 'explore' }],
+        result: {
+          hu: 'Az ajtó kinyílik magától. Ez rosszabb, mintha zárva lett volna.',
+          en: 'The door opens by itself. That is worse than if it had been locked.',
+        },
+      },
+      walkAway,
+    ],
+  },
+
+  {
+    id: 'starless-vigil',
+    title: { hu: 'Csillagtalan őrhely', en: 'A starless vigil' },
+    text: {
+      hu: 'Egy megfigyelőállomás, kifelé fordított műszerekkel. Nem a galaxist figyelte. Azt, ami kívül van.',
+      en: 'An observation post with its instruments turned outwards. It was not watching the galaxy. It was watching what is outside it.',
+    },
+    tags: ['station', 'anomaly'],
+    weight: 6,
+    archiveGated: true,
+    choices: [
+      {
+        text: {
+          hu: 'Megnézzük, mit vett fel utoljára.',
+          en: 'We look at what it recorded last.',
+        },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'understanding', amount: 4 },
+          { k: 'resource', id: 'morale', amount: -2 },
+          { k: 'archive', amount: 2 },
+        ],
+        result: {
+          hu: 'Az utolsó felvétel nyolc másodperc, és nincs benne semmi. Pontosan ez a lényeg.',
+          en: 'The last recording is eight seconds long and contains nothing. That is precisely the point.',
+        },
+      },
+      {
+        text: {
+          hu: 'A műszereket leszereljük. (Kohó kell)',
+          en: 'We take the instruments. (Forge needed)',
+        },
+        requires: { k: 'moduleInstalled', id: 'deepSensors' },
+        costs: [],
+        effects: [
+          { k: 'revealMap', columns: 4 },
+          { k: 'resource', id: 'information', amount: 5 },
+        ],
+        result: {
+          hu: 'A mi érzékelőink ehhez képest gyertyák. Most már messzebb látunk, mint terveztük.',
+          en: 'Next to these our sensors are candles. We can see further now than we planned to.',
+        },
+      },
+      walkAway,
+    ],
+  },
+]
+
+const ENCOUNTER_INDEX = new Map(ENCOUNTERS.map((e) => [e.id, e]))
+
+export function encounter(id: string): Encounter {
+  const e = ENCOUNTER_INDEX.get(id)
+  if (!e) throw new Error(`No such encounter: ${id}`)
+  return e
+}
+
+/** Which encounters can appear at a node with these tags? */
+export function encountersFor(
+  tags: readonly EncounterTag[],
+  used: readonly string[],
+  archiveOpen: boolean,
+): Encounter[] {
+  return ENCOUNTERS.filter((e) => {
+    if (e.once && used.includes(e.id)) return false
+    if (e.archiveGated && !archiveOpen) return false
+    return e.tags.some((t) => tags.includes(t))
+  })
+}

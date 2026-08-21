@@ -1,0 +1,77 @@
+# Build the game and publish it to GitHub Pages.
+#
+# The game is entirely client-side — every save lives in the browser's own
+# localStorage and nothing is ever asked of a server — so a static host is not a
+# compromise here, it is the whole requirement.
+#
+# The one thing a static host at a subpath needs is the base path: a project site
+# is served from https://<user>.github.io/<repo>/, and a build that assumes `/`
+# comes up as a blank page with 404s in the console. It is worked out below
+# instead of being written down, so renaming the repository cannot break it.
+#
+# Before the first run: Settings → Pages → Build and deployment → Source →
+# "GitHub Actions". Without that the deploy step has nothing to publish to.
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and a newer push wins.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The two checks that need nothing but Node. The browser smoke test is not
+      # run here: it drives a real Chrome against a dev server, which is a
+      # different kind of job from publishing a build.
+      - run: npm run typecheck
+      - run: npm test
+
+      - name: Work out the base path
+        run: |
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          # A user or organisation site (<owner>.github.io) is served from the
+          # root; everything else is a project site under /<repo>/.
+          if [ "$repo" = "$owner.github.io" ]; then
+            echo "VITE_BASE=/" >> "$GITHUB_ENV"
+          else
+            echo "VITE_BASE=/$repo/" >> "$GITHUB_ENV"
+          fi
+
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
