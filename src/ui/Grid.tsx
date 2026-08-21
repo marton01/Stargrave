@@ -12,6 +12,7 @@ import { HERO_CLASSES } from '../content/heroes'
 import {
   CollapsingShape,
   ExitShape,
+  InstallationShape,
   PillarShape,
   RelicShape,
   Shape,
@@ -156,6 +157,27 @@ export function Grid({
           />
         )
       })}
+
+      {/* the ship's own modules, when the fight is aboard */}
+      {state.installations.map((installation) => (
+        <g
+          key={`inst${tileKey(installation.pos)}`}
+          transform={`translate(${installation.pos.x * TILE} ${installation.pos.y * TILE})`}
+        >
+          <g transform={`scale(${TILE})`}>
+            <InstallationShape hurt={installation.hp < installation.maxHp} />
+          </g>
+          <rect x={TILE * 0.2} y={TILE - 7} width={TILE * 0.6} height={3} rx={1.5} fill="rgba(0,0,0,0.6)" />
+          <rect
+            x={TILE * 0.2}
+            y={TILE - 7}
+            width={TILE * 0.6 * (installation.hp / installation.maxHp)}
+            height={3}
+            rx={1.5}
+            fill="var(--echo)"
+          />
+        </g>
+      ))}
 
       {/* objective features: relics to collect, the way out, floor about to go.
           The marks themselves live in shapes.tsx so the help can draw them too. */}

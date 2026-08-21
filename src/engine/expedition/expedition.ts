@@ -24,7 +24,7 @@ import {
   SYSTEM_ORDER,
   lifeSupportNeeded,
 } from '../../content/ship'
-import type { ResourceId, StationId, SystemId } from '../../content/ship'
+import type { ModuleId, ResourceId, StationId, SystemId } from '../../content/ship'
 import { encounter, encountersFor } from '../../content/encounters'
 import { dialValue, normaliseDials } from '../../content/difficulty'
 import type { DialId } from '../../content/difficulty'
@@ -151,8 +151,16 @@ export function stationActive(s: ExpeditionState, station: StationId): boolean {
   return s.power[def.needs] > 0 && crewAt(s, station).length > 0
 }
 
-/** How well staffed, counting speciality match and traits. */
-function stationStrength(s: ExpeditionState, station: StationId): number {
+/**
+ * How well staffed, counting speciality match and traits.
+ *
+ * One point for a body, two for the right speciality, plus whatever the traits
+ * are worth. Every station's output reads this at a granularity where those two
+ * are different — that had to be fixed once: with divisors of three and four, one
+ * navigator in the Sanctum was worth exactly one medic, which is not what the
+ * rules promise.
+ */
+export function stationStrength(s: ExpeditionState, station: StationId): number {
   const def = STATIONS[station]
   const crew = crewAt(s, station)
   return crew.reduce((sum, c) => {
@@ -199,7 +207,11 @@ export function projectWeek(s: ExpeditionState): Partial<Record<ResourceId, numb
 /** Information the Lab produces in a week. Scales with power. */
 export function labOutput(s: ExpeditionState): number {
   if (!stationActive(s, 'lab')) return 0
-  return 1 + s.power.lab + Math.max(0, traitBonus(crewAt(s, 'lab'), 'research'))
+  return (
+    s.power.lab +
+    Math.floor(stationStrength(s, 'lab') / 2) +
+    Math.max(0, traitBonus(crewAt(s, 'lab'), 'research'))
+  )
 }
 
 /**
@@ -211,7 +223,7 @@ export function labOutput(s: ExpeditionState): number {
  */
 export function forgeOutput(s: ExpeditionState): number {
   if (!stationActive(s, 'forge')) return 0
-  return 1 + Math.floor((s.power.forge + stationStrength(s, 'forge')) / 2)
+  return 1 + Math.floor(s.power.forge / 2) + Math.floor(stationStrength(s, 'forge') / 2)
 }
 
 /** Columns of star map the Sensors reveal each week. */
@@ -239,25 +251,31 @@ export function medbayOutput(s: ExpeditionState): number {
  */
 export function archiveOutput(s: ExpeditionState): number {
   if (!stationActive(s, 'archive')) return 0
-  return stationStrength(s, 'archive') >= 4 ? 2 : 1
+  // One slot only, so the step has to be reachable by one person: a matching
+  // scientist gets the extra week the station is described as giving, and anybody
+  // else just keeps the lights on.
+  return stationStrength(s, 'archive') >= 2 ? 2 : 1
 }
 
 /** Fuel the Bridge saves on every week under way. */
 export function bridgeOutput(s: ExpeditionState): number {
   if (!stationActive(s, 'bridge')) return 0
-  return 1 + Math.floor(stationStrength(s, 'bridge') / 4)
+  // Nobody but a navigator saves fuel here: a body in the chair keeps the station
+  // "running" and trims nothing.
+  return Math.floor(stationStrength(s, 'bridge') / 2)
 }
 
 /** Morale the Sanctum holds the ship at, above the baseline. */
 export function sanctumOutput(s: ExpeditionState): number {
   if (!stationActive(s, 'sanctum')) return 0
-  return 2 + Math.floor(stationStrength(s, 'sanctum') / 3)
+  return 1 + Math.floor(stationStrength(s, 'sanctum') / 2)
 }
 
 /** Flux the Armoury adds to the landing party. */
 export function armouryOutput(s: ExpeditionState): number {
   if (!stationActive(s, 'armoury') || s.power.runeCore <= 0) return 0
-  return stationStrength(s, 'armoury') >= 4 ? 2 : 1
+  // Same shape as the Archive: one slot, so the step is the speciality itself.
+  return stationStrength(s, 'armoury') >= 2 ? 2 : 1
 }
 
 /** What the installed modules produce of a resource every week, by themselves. */
@@ -1017,7 +1035,11 @@ function missionFromFlavour(
  * included, not the one halfway through the fight.
  */
 function buildBattle(s: ExpeditionState, spec: MissionSpec, seed: number) {
+  // A boarding action puts some of the ship's own modules on the board. Which
+  // ones is not a choice: what is installed is what is standing there.
+  const atStake = spec.aboard ? Math.max(0, Math.round(dialValue(s.dials, 'boardingStakes'))) : 0
   return startMission({
+    installations: s.modules.slice(0, atStake),
     seed,
     difficulty: Math.max(
       1,
@@ -1205,6 +1227,13 @@ function finishMission(s: ExpeditionState): void {
   if (mission.k === 'battle') {
     const result = missionResult(mission.battle)
     s.heroes = result.heroes
+    // Whatever they tore apart is gone, win or lose: the briefing promised that,
+    // and it is the reason a boarding action is worth defending rather than just
+    // surviving.
+    for (const lost of result.modulesLost) {
+      s.modules = s.modules.filter((id) => id !== lost)
+      log(s, { k: 'moduleLost', module: MODULES[lost as ModuleId]?.name ?? { hu: 'modul', en: 'module' } })
+    }
     if (result.outcome === 'victory') {
       log(s, { k: 'missionWon' })
       applyRewards(s, mission.spec.rewards)

@@ -10,6 +10,8 @@
 import { clone, livingEnemies, livingHeroes, heroes, log, tickStatuses, unitById } from './state'
 import { buildEncounter, enemyType, intentOf } from '../content/enemies'
 import { card, cardsOfClass } from '../content/cards'
+import { MODULES } from '../content/ship'
+import type { ModuleId } from '../content/ship'
 import { createRng } from './rng'
 import { afterMove, dealDamage, heal } from './combat'
 import { enemyTurn } from './enemyAi'
@@ -37,6 +39,7 @@ import type {
   Hero,
   HeroClassId,
   MissionKind,
+  Installation,
   Objective,
   TerrainKind,
   Unit,
@@ -71,6 +74,11 @@ export type BattleSetup = {
   missionKind: MissionKind
   /** Flux the ship's rune core supplied for this mission. */
   flux?: number
+  /**
+   * The ship's modules to stand on the board, for a boarding action. Empty or
+   * absent everywhere else — a landing on a planet has no ship to wreck.
+   */
+  installations?: string[]
   /** Hard round limit; the mission fails when it runs out. */
   roundLimit?: number | null
   /** Hero state carried in from the expedition. */
@@ -133,6 +141,30 @@ export function startMission(setup: BattleSetup): BattleState {
 
   const { map, heroSpawns, enemySpawns } = generateMap(setupRng, Math.max(typeIds.length, 1))
   const features = generateMissionFeatures(setupRng, map, heroSpawns, enemySpawns, setup.objective)
+
+  // Modules go on floor tiles away from where the party lands: far enough that
+  // they can actually be lost, close enough that defending them is a choice
+  // rather than a sprint.
+  const installations: Installation[] = []
+  const moduleIds = setup.installations ?? []
+  if (moduleIds.length > 0) {
+    const home = heroSpawns[0] ?? { x: 0, y: 0 }
+    const spots = setupRng
+      .shuffle(
+        allTiles(map).filter(
+          (c) =>
+            walkable(map, c) &&
+            distance(c, home) >= 3 &&
+            !enemySpawns.some((e) => sameTile(e, c)) &&
+            !features.relics.some((r) => sameTile(r, c)) &&
+            !(features.exit && sameTile(features.exit, c)),
+        ),
+      )
+      .slice(0, moduleIds.length)
+    for (let i = 0; i < spots.length; i++) {
+      installations.push({ pos: spots[i]!, id: moduleIds[i]!, hp: 4, maxHp: 4 })
+    }
+  }
 
   const slots: { heroClass: HeroClassId; playerSlot: 1 | 2 }[] = [
     { heroClass: 'runesmith', playerSlot: 1 },
@@ -202,6 +234,8 @@ export function startMission(setup: BattleSetup): BattleState {
     carried: 0,
     exit: features.exit,
     collapsing: features.collapsing,
+    installations,
+    setupInstallations: moduleIds,
     roundLimit: setup.roundLimit ?? null,
     log: [],
     outcome: null,
@@ -405,10 +439,44 @@ function collapseFloor(s: BattleState): void {
   s.collapsing = survivors
 }
 
+/** The module's name, tolerating an id the content no longer knows. */
+function moduleName(id: string) {
+  return MODULES[id as ModuleId]?.name ?? { hu: 'modul', en: 'module' }
+}
+
+/**
+ * Enemies standing next to the ship's modules tear at them.
+ *
+ * Deliberately not an AI decision: the enemy pathing chases heroes, and teaching
+ * it to weigh a module against a hero would make it either stupid or unreadable.
+ * A positional rule is legible instead — if one of them is next to the reactor
+ * tap at the end of the round, the reactor tap suffers, and everybody can see it
+ * coming a round ahead.
+ */
+function wreckInstallations(s: BattleState): void {
+  const left: Installation[] = []
+  for (const installation of s.installations) {
+    const hands = livingEnemies(s).filter((e) => distance(e.pos, installation.pos) <= 1).length
+    if (hands === 0) {
+      left.push(installation)
+      continue
+    }
+    installation.hp -= hands
+    if (installation.hp > 0) {
+      left.push(installation)
+      log(s, { k: 'installationHit', module: moduleName(installation.id), hp: installation.hp })
+    } else {
+      log(s, { k: 'installationLost', module: moduleName(installation.id) })
+    }
+  }
+  s.installations = left
+}
+
 function endRound(s: BattleState): void {
   for (const u of s.units) {
     if (u.alive) tickStatuses(u)
   }
+  wreckInstallations(s)
   for (const e of livingEnemies(s)) e.intent = null
   collapseFloor(s)
 
@@ -553,6 +621,11 @@ export type MissionResult = {
   enemiesDefeated: number
   /** Did anybody fall or burn out? The ship pays for that. */
   casualties: number
+  /**
+   * Modules torn apart during a boarding action. Gone for the rest of the
+   * expedition — the briefing said so.
+   */
+  modulesLost: string[]
   heroes: CarriedHero[]
 }
 
@@ -567,6 +640,10 @@ export function missionResult(s: BattleState): MissionResult {
     relicsCollected: s.carried,
     enemiesDefeated: s.units.filter((u) => u.side === 'enemy' && !u.alive).length,
     casualties: heroes(s).filter((h) => !h.alive).length,
+    // Whatever is no longer standing was destroyed: the list only shrinks.
+    modulesLost: (s.setupInstallations ?? []).filter(
+      (id) => !s.installations.some((i) => i.id === id),
+    ),
     heroes: heroes(s).map((h) => ({
       heroClass: h.heroClass,
       // A hero who fell or burned out comes back at 1 hit point: the ship

@@ -157,6 +157,31 @@ export function CollapsingShape() {
   )
 }
 
+/**
+ * One of the ship's modules, standing on the board in a boarding action.
+ *
+ * A box with a rune light in it — deliberately unlike anything that moves, so it
+ * never reads as a unit you can order about.
+ */
+export function InstallationShape({ hurt }: { hurt: boolean }) {
+  return (
+    <g>
+      <rect
+        x="0.16"
+        y="0.2"
+        width="0.68"
+        height="0.6"
+        rx="0.06"
+        fill="var(--bg-4)"
+        stroke={hurt ? 'var(--danger)' : 'var(--echo)'}
+        strokeWidth="0.045"
+      />
+      <rect x="0.28" y="0.32" width="0.44" height="0.1" fill={hurt ? 'var(--danger)' : 'var(--echo)'} opacity="0.7" />
+      <circle cx="0.5" cy="0.6" r="0.08" fill={hurt ? 'var(--danger)' : 'var(--echo)'} opacity="0.8" />
+    </g>
+  )
+}
+
 /** A trap marker. */
 export function TrapShape() {
   return (

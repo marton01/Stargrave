@@ -161,7 +161,13 @@ export function describeStationYield(
     }
     case 'sanctum': {
       const v = sanctumOutput(s)
-      return v > 0 ? (hu ? `+${v} morál-cél` : `+${v} to the morale target`) : null
+      // Named as a target on purpose: morale walks one step a week towards it, so
+      // "+2" here is not "+2 morale this week".
+      return v > 0
+        ? hu
+          ? `+${v} a morál-célhoz (a morál hetente 1 lépést tesz a cél felé)`
+          : `+${v} to the morale target (morale moves one step a week towards it)`
+        : null
     }
     case 'armoury': {
       const v = armouryOutput(s)

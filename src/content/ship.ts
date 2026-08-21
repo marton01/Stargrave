@@ -275,8 +275,8 @@ export const STATIONS: Record<StationId, StationDef> = {
     id: 'archive',
     name: { hu: 'Archívum', en: 'Archive' },
     effect: {
-      hu: 'A futó kutatás hetente egy extra héttel haladhat.',
-      en: 'The running research project advances an extra week.',
+      hu: 'A futó kutatás hetente egy extra héttel haladhat — ehhez tudós kell ide. Más szakma csak életben tartja az állomást.',
+      en: 'The running research advances an extra week — that needs a scientist here. Anybody else merely keeps the station alive.',
     },
     domain: 'research',
     needs: 'lab',
@@ -311,8 +311,8 @@ export const STATIONS: Record<StationId, StationDef> = {
     id: 'armoury',
     name: { hu: 'Fegyverzet', en: 'Armoury' },
     effect: {
-      hu: 'A partraszálló csapat +1 Fluxussal indul, ha a Rúnamag is kap energiát.',
-      en: 'The landing party starts with +1 Flux, provided the rune core has power.',
+      hu: 'A partraszálló csapat +1 Fluxussal indul, ha a Rúnamag is kap energiát — testőrrel +2.',
+      en: 'The landing party starts with +1 Flux if the rune core has power — with a guard here, +2.',
     },
     domain: 'engineering',
     needs: 'shields',

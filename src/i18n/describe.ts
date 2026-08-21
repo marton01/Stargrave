@@ -70,6 +70,16 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
         ? `Csapda felállítva (${event.power} sebzés).`
         : `Trap set (${event.power} damage).`
 
+    case 'installationHit':
+      return hu
+        ? `${pick(event.module, lang)}: szétverik. ${event.hp} tartalék maradt benne.`
+        : `${pick(event.module, lang)}: they are tearing it apart. ${event.hp} left in it.`
+
+    case 'installationLost':
+      return hu
+        ? `${pick(event.module, lang)} elpusztult. Az expedíció hátralévő részében nincs meg.`
+        : `${pick(event.module, lang)} is destroyed. It is gone for the rest of the expedition.`
+
     case 'terrainEdited':
       return hu
         ? 'A terepet kézzel módosítottuk. (Javítás, nem lépés.)'

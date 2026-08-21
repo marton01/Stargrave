@@ -446,6 +446,9 @@ const HU = {
   helpNodes: 'Csomópontok a csillagtérképen',
   helpTerrain: 'Terep',
   helpMarkers: 'Küldetés-jelölők',
+  markerInstallation: 'Hajómodul',
+  markerInstallationText:
+    'Csak akkor van a rácson, ha a hajót támadják: a saját moduljaid állnak ott. Minden kör végén annyit sérülnek, ahány ellenfél a szomszédjukban áll — nem támadni kell őket megvédeni, hanem elzavarni onnan azt, aki mellettük áll. Ami elpusztul, az az EXPEDÍCIÓ VÉGÉIG hiányzik, akkor is, ha a csatát megnyered. Hogy hány modul áll ki, azt a nehézségi tárcsa dönti (akár nulla).',
   markerRelic: 'Ereklye',
   markerRelicText:
     'Fel kell venni: rálépsz, és a csapat viszi. Az „Ereklyék összeszedése" küldetéseken ' +
@@ -938,6 +941,9 @@ const EN: Catalog = {
   helpNodes: 'Nodes on the star map',
   helpTerrain: 'Terrain',
   helpMarkers: 'Mission markers',
+  markerInstallation: 'Ship module',
+  markerInstallationText:
+    'Only on the board when the ship is boarded: those are your own modules standing there. At the end of every round each takes a point for every enemy beside it — defending one is a matter of clearing the tile next to it, not of attacking it. Whatever is destroyed is gone for the REST OF THE EXPEDITION, even if you win the battle. How many are put at risk is a difficulty dial (zero included).',
   markerRelic: 'Relic',
   markerRelicText:
     'Picked up by stepping on it, then carried. On "collect the relics" missions this is what you ' +

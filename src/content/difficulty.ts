@@ -21,6 +21,7 @@ export type DialId =
   | 'upkeep'
   | 'puzzleTries'
   | 'gateTime'
+  | 'boardingStakes'
 
 /** When a change starts to matter. Honest, because some cannot apply at once. */
 export type DialScope = 'nextLanding' | 'nextWeek' | 'nextExpedition'
@@ -248,6 +249,52 @@ export const DIALS: DialDef[] = [
       { value: 0, text: { hu: 'Ahogy tervezve van: a feladvány nehézsége adja.', en: 'As designed: the puzzle’s difficulty decides.' } },
       { value: -1, text: { hu: '−1 próba. Végig kell gondolni, mielőtt beadod.', en: '−1 try. Think it through before you submit.' } },
       { value: -2, text: { hu: '−2 próba. Egy elrontott tipp gyakran a küldetés.', en: '−2 tries. One bad guess often is the mission.' } },
+    ],
+  },
+  {
+    id: 'boardingStakes',
+    name: { hu: 'Hajóra törés tétje', en: 'Stakes when boarded' },
+    about: {
+      hu: 'Hány hajómodul áll a rácson, amikor a hajót támadják — az ellenség szétveri őket, és ami elpusztul, az az expedíció végéig hiányzik.',
+      en: 'How many of the ship’s modules stand on the board when it is boarded — enemies tear at them, and whatever is destroyed is gone for the rest of the expedition.',
+    },
+    scope: 'nextLanding',
+    levels: [
+      {
+        value: 0,
+        text: {
+          hu: 'Egy sem. A hajóra törés csak egy csata: a modulok nincsenek veszélyben.',
+          en: 'None. A boarding action is just a battle: the modules are not at risk.',
+        },
+      },
+      {
+        value: 1,
+        text: {
+          hu: 'Egy modul. Meg lehet védeni, ha az ember odaér.',
+          en: 'One module. Defensible, if you get there.',
+        },
+      },
+      {
+        value: 2,
+        text: {
+          hu: 'Ahogy tervezve van: két modul áll a rácson, és általában csak az egyiket lehet megvédeni.',
+          en: 'As designed: two modules stand on the board, and usually only one of them can be held.',
+        },
+      },
+      {
+        value: 3,
+        text: {
+          hu: 'Három modul. Szét kell válni, és valamit fel kell adni.',
+          en: 'Three modules. You have to split up and give something up.',
+        },
+      },
+      {
+        value: 4,
+        text: {
+          hu: 'Négy modul. Egy elrontott hajóra törés hetekre visszavet — a kutatásod egy része a rácson áll.',
+          en: 'Four modules. One botched boarding sets you back weeks — part of your research is standing on that board.',
+        },
+      },
     ],
   },
   {

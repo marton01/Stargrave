@@ -211,6 +211,8 @@ export type LogEvent =
   | { k: 'trapPlaced'; power: number }
   | { k: 'pillarRaised' }
   | { k: 'terrainEdited'; kind: TerrainKind }
+  | { k: 'installationHit'; module: Text; hp: number }
+  | { k: 'installationLost'; module: Text }
   | { k: 'shieldGained'; unit: Text; amount: number }
   | { k: 'healed'; unit: Text; amount: number }
   | { k: 'statusApplied'; unit: Text; status: StatusKind }
@@ -335,6 +337,22 @@ export type BattleState = {
   exit: Coord | null
   /** Tiles about to give way, for exploration pressure. */
   collapsing: Collapsing[]
+
+  /**
+   * The ship's own modules, standing on the board.
+   *
+   * Only in a boarding action, and only because the briefing promised it: "the
+   * modules stand on the grid — whatever is destroyed is gone for the rest of the
+   * expedition". It was a promise with nothing behind it until this existed.
+   *
+   * They are not units: they do not act, they cannot be healed, and nothing
+   * targets them by choice. An enemy standing next to one at the end of a round
+   * tears at it — so the threat is positional, and defending is a matter of not
+   * letting them stand there.
+   */
+  installations: Installation[]
+  /** What was placed at the start, so the result can say what is missing. */
+  setupInstallations?: string[]
   /** Hard round limit; when it runs out the mission fails. */
   roundLimit: number | null
   outcome: 'victory' | 'defeat' | null
@@ -361,4 +379,13 @@ export type Objective =
 export type MissionKind = 'combat' | 'exploration'
 
 /** A tile that is about to give way. When it hits zero it becomes a chasm. */
+/** One of the ship's modules, on the grid, with something left in it. */
+export type Installation = {
+  pos: Coord
+  /** The module id from content/ship.ts — destroying it removes that module. */
+  id: string
+  hp: number
+  maxHp: number
+}
+
 export type Collapsing = { pos: Coord; roundsLeft: number }

@@ -151,6 +151,7 @@ export type ExpeditionEvent =
   | { k: 'missionForcedWin' }
   | { k: 'missionForcedLoss' }
   | { k: 'boardingDamage' }
+  | { k: 'moduleLost'; module: Text }
   | { k: 'dialSet'; dial: DialId; level: number }
   | { k: 'storageFull'; id: ResourceId; lost: number; max: number }
   | { k: 'puzzleSolved' }

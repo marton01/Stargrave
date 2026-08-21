@@ -22,6 +22,7 @@ import { HERO_CLASSES } from '../content/heroes'
 import {
   CollapsingShape,
   ExitShape,
+  InstallationShape,
   PillarShape,
   RelicShape,
   Shape,
@@ -289,6 +290,7 @@ function gamePiecesText(t: ReturnType<typeof useLang>['t'], s: ReturnType<typeof
   parts.push(t.terrainTrap, t.terrainTrapText)
   parts.push(t.markerRelic, t.markerRelicText, t.markerExit, t.markerExitText)
   parts.push(t.markerCollapsing, t.markerCollapsingText)
+  parts.push(t.markerInstallation, t.markerInstallationText)
   parts.push(t.badgeBond, t.badgeBondText, t.badgeInitiative, t.badgeInitiativeText)
   parts.push(t.badgeShield, t.badgeShieldText)
   for (const kind of NODE_ORDER) parts.push(t[KIND_KEY[kind]] as string, t[NODE_TEXT[kind]] as string)
@@ -533,6 +535,16 @@ function GamePieces() {
           <div>
             <strong className="tone-rune">{t.markerRelic}</strong>
             <p>{t.markerRelicText}</p>
+          </div>
+        </div>
+
+        <div className="legend-item">
+          <MarkerSample>
+            <InstallationShape hurt={false} />
+          </MarkerSample>
+          <div>
+            <strong className="tone-echo">{t.markerInstallation}</strong>
+            <p>{t.markerInstallationText}</p>
           </div>
         </div>
 
