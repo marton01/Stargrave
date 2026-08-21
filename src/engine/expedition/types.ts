@@ -13,6 +13,7 @@ import type { EncounterTag } from '../../content/encounters'
 import type { PuzzleKind, Puzzle } from '../puzzles/types'
 import type { BattleState, MissionKind, Objective, Text, TrialSymbol } from '../types'
 import type { CarriedHero } from '../battle'
+import type { DialId, Dials } from '../../content/difficulty'
 
 // ---------------------------------------------------------------- rewards
 
@@ -115,6 +116,8 @@ export type ExpeditionEvent =
   | { k: 'expeditionStart'; weeks: number }
   | { k: 'weekPassed'; week: number; gateLeft: number }
   | { k: 'darkeningRose'; level: number }
+  | { k: 'darkeningEased'; level: number }
+  | { k: 'gateShifted'; amount: number; left: number }
   | { k: 'resourceGain'; id: ResourceId; amount: number }
   | { k: 'resourceLoss'; id: ResourceId; amount: number }
   | { k: 'lifeSupportStrained' }
@@ -132,6 +135,14 @@ export type ExpeditionEvent =
   | { k: 'missionLaunched'; briefing: Text }
   | { k: 'missionWon' }
   | { k: 'missionLost' }
+  | { k: 'missionRestarted' }
+  | { k: 'missionRerolled' }
+  | { k: 'missionWithdrawn' }
+  | { k: 'missionSkipped' }
+  | { k: 'missionForcedWin' }
+  | { k: 'missionForcedLoss' }
+  | { k: 'dialSet'; dial: DialId; level: number }
+  | { k: 'storageFull'; id: ResourceId; lost: number; max: number }
   | { k: 'puzzleSolved' }
   | { k: 'puzzleFailed' }
   | { k: 'encounterChoice'; result: Text }
@@ -156,6 +167,14 @@ export type EndingId =
   | 'intervene'
   /** Understanding 3: the deepest one. */
   | 'communion'
+  /**
+   * The end of the whole game, not of one expedition.
+   *
+   * Not reachable on a first run by design: it needs the Archive to have seen
+   * every other ending, the last unlock bought, and this run to have understood
+   * enough. Five expeditions know five things; this one asks what they add up to.
+   */
+  | 'theAnswer'
 
 export type LossReason = 'hull' | 'morale' | 'gateClosed' | 'abandoned'
 
@@ -179,26 +198,53 @@ export type Screen =
 /** A choice the players have taken but not yet paid for with cards. */
 export type PendingEncounter = {
   id: string
-  /** Which choice index, once picked. */
+  /**
+   * The choice being *considered*, not yet taken.
+   *
+   * Picking a choice no longer commits to it: it opens the full account of what
+   * it costs and what it does, and only a confirmation resolves it. Reading what
+   * an option means must never be the same act as taking it.
+   */
   chosen: number | null
   /** Cards picked so far, as "heroClass:cardId". */
   payment: string[]
   /** Once resolved, the result text to show. */
   resolvedText: Text | null
+  /** The next scene of this situation, opened when this one is closed. */
+  then?: string | null
 }
 
 // ---------------------------------------------------------------- state
 
 export type ExpeditionLength = 'short' | 'medium' | 'long'
 
+
+
 export type ExpeditionState = {
   seed: number
   rngStep: number
   length: ExpeditionLength
+  /**
+   * The difficulty dials, as chosen for this run. See content/difficulty.ts.
+   *
+   * They live in the expedition rather than in a settings object because a run
+   * should keep the terms it was played under: a save from a gentler week must
+   * not silently become harder because the dial moved afterwards.
+   */
+  dials: Dials
   week: number
   gateTotal: number
   gateWeeksLeft: number
   darkening: number
+  /**
+   * How far a decision has pushed the Darkening off its natural course.
+   *
+   * The level itself is a function of how much of the Gate's time is spent, so
+   * writing to it directly never lasted: the next recalculation put it back.
+   * A decision that makes the dark come sooner — or holds it off — moves this
+   * instead, and it is added to the computed level for good.
+   */
+  darkeningShift: number
 
   resources: Record<ResourceId, number>
   /** Reactor output actually available this week. */
@@ -228,6 +274,20 @@ export type ExpeditionState = {
   /** Encounter ids already used, so `once` holds. */
   usedEncounters: string[]
 
+  /**
+   * What this expedition has done that something later can notice.
+   *
+   * Two lists, because they have two lifetimes. `flags` last until the
+   * expedition ends: a creature let out of a wreck, a world warned, a name
+   * given. `marks` outlive it — they are seeded from the Archive at launch and
+   * banked back into it at the end, so a decision can be answered a run later.
+   *
+   * Both are plain string ids so that content can invent one without touching
+   * the engine, and both are saved with everything else.
+   */
+  flags: string[]
+  marks: string[]
+
   screen: Screen
   log: ExpeditionLogEntry[]
   outcome: ExpeditionOutcome | null
@@ -247,11 +307,19 @@ export type ArchiveUnlockId =
   | 'encounters-deep'
   | 'module-cache'
   | 'longer-gate'
+  /** The closing arc. Only offered once every other ending has been seen. */
+  | 'last-question'
 
 export type ArchiveState = {
   version: number
   points: number
   unlocked: ArchiveUnlockId[]
+  /** The long memory: marks carried between expeditions (see ExpeditionState). */
+  marks: string[]
+  /** Set once the closing ending has been reached. The game has an end. */
+  completed?: boolean
+  /** Endings actually reached, so the Archive can show what is left to find. */
+  endingsSeen: EndingId[]
   history: {
     week: number
     understanding: number

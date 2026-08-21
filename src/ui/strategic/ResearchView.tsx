@@ -109,6 +109,24 @@ function ProjectRow({
         </span>
       </div>
       <p className="project-desc">{s(project.description)}</p>
+      {/* What a project needs, by name. "Requirement missing" without saying which
+          one leaves the player to guess at a tree they cannot see. */}
+      {project.requires.length > 0 && !done && (
+        <p className="project-requires">
+          {t.researchNeeds}{' '}
+          {project.requires.map((id, index) => {
+            const met = state.research.completed.includes(id)
+            return (
+              <span key={id} className={met ? 'requires-met' : 'requires-unmet'}>
+                {index > 0 && ', '}
+                {met ? '✓ ' : '○ '}
+                {s(researchProject(id).name)}
+              </span>
+            )
+          })}
+        </p>
+      )}
+
       {done ? (
         <span className="project-state good">{t.researchDone}</span>
       ) : missing.length > 0 ? (

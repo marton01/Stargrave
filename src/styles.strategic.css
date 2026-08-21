@@ -648,6 +648,74 @@
   gap: 8px;
 }
 
+/* The account of a proposed decision: the two-step confirmation's whole reason
+ * for existing. Costs on one side, effects on the other, both from the same data
+ * the engine will apply. */
+.proposal {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--rune);
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+
+.proposal-choice {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.account {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.account-compact {
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.account-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  margin-bottom: 5px;
+}
+
+.account ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.account-empty {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+.tone-gain {
+  color: var(--green);
+}
+
+.tone-loss {
+  color: var(--danger);
+}
+
+.tone-plain {
+  color: var(--text-soft);
+}
+
 .choice {
   display: flex;
   flex-direction: column;
@@ -804,7 +872,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  min-height: calc(60vh / var(--ui-zoom));
 }
 
 .over-panel {
@@ -1063,6 +1131,370 @@
 .undo-button {
   margin-left: auto;
   align-self: center;
+}
+
+/* The way out of a broken landing. Quiet until asked for: a small button in the
+ * objective bar, and a panel that only opens on purpose. */
+.rescue-open {
+  margin-left: 8px;
+  align-self: center;
+  opacity: 0.6;
+}
+
+.rescue-open:hover {
+  opacity: 1;
+}
+
+/* What a system's current allocation buys, under its description. The numbers
+ * come from the engine; this is only where they are put. */
+.power-yield {
+  font-size: 11.5px;
+  color: var(--echo);
+  margin-top: 2px;
+}
+
+.power-yield-warn {
+  color: var(--danger);
+}
+
+.station-yield {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--green);
+}
+
+/* ------------------------------------------------------------ difficulty */
+
+/* One dial per pressure, five steps each, and under every dial a sentence about
+ * what the chosen step means. The sentence is the feature: a number without it
+ * is the "normal / hard" problem again. */
+.dials-veil {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 11, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 35;
+  padding: 24px;
+}
+
+.dials {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--echo);
+  border-radius: 6px;
+  width: min(760px, 100%);
+  /* Measured against the veil, not the window.
+   *
+   * `90vh` here was wrong twice over: `vh` is the unzoomed window, and the panel
+   * lives inside `.app`, which is zoomed — so the box came out taller than the
+   * screen and the header and the buttons hung off both ends. The veil is a fixed
+   * box the size of the viewport with its own padding, so a percentage of it is
+   * the honest measure. Same as `.help`. */
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 12px;
+}
+
+.dials-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 8px;
+}
+
+.dials-head h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--echo);
+}
+
+.dials-intro {
+  margin: 0 20px 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+.dials-list {
+  overflow-y: auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dial {
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+
+.dial-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.dial-head strong {
+  font-size: 13.5px;
+}
+
+.dial-scope {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  margin-left: auto;
+}
+
+.dial-about {
+  margin: 2px 0 8px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.dial-steps {
+  display: flex;
+  gap: 4px;
+}
+
+.dial-step {
+  flex: 1;
+  background: var(--bg-4);
+  border: 1px solid var(--line);
+  color: var(--text-soft);
+  border-radius: 3px;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dial-step:hover {
+  border-color: var(--echo);
+}
+
+/* The designed setting is marked, so "back to normal" is visible without
+ * reading. */
+.dial-step-default {
+  border-style: dashed;
+}
+
+.dial-step-on {
+  background: var(--echo-dim);
+  border-color: var(--echo);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.dial-meaning {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--echo);
+}
+
+.dial-meaning-default {
+  color: var(--text-soft);
+}
+
+.dials-buttons {
+  padding: 12px 20px 0;
+  flex-wrap: wrap;
+}
+
+/* What a research project needs first, by name. */
+.project-requires {
+  margin: 0 0 6px;
+  font-size: 11.5px;
+}
+
+.requires-met {
+  color: var(--green);
+}
+
+.requires-unmet {
+  color: var(--text-faint);
+}
+
+/* Difficulty, on the ship, changeable mid-run. */
+.difficulty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.difficulty-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+}
+
+.difficulty-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  flex: 1;
+  min-width: 200px;
+}
+
+/* The terrain palette, above the board while the repair tool is out. */
+.palette {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 16px;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--rune-dim);
+}
+
+.palette-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+}
+
+.palette-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-left: auto;
+}
+
+.rescue-veil {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 11, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  padding: 24px;
+}
+
+.rescue {
+  background: var(--bg-2);
+  border: 1px solid var(--danger-dim);
+  border-radius: 4px;
+  padding: 16px 18px;
+  max-width: 620px;
+}
+
+.rescue-intro {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.rescue-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 0;
+}
+
+.rescue-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.rescue-text strong {
+  font-size: 12.5px;
+}
+
+.rescue-text span {
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+.rescue-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.rescue-close {
+  margin-top: 6px;
+}
+
+/* The endings, as a collection. Its own class names rather than the Heart's
+ * `.ending`, which is a full card with the ending's text in it — here a line is
+ * enough, and one of them deliberately says nothing at all. */
+.endings {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.endings-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 3px;
+  background: var(--bg-3);
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+
+.endings-mark {
+  text-align: center;
+  color: var(--line);
+}
+
+.endings-need {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+/* Seen: it has a name, and the name is the point. */
+.endings-seen {
+  color: var(--text);
+}
+
+.endings-seen .endings-mark {
+  color: var(--echo);
+}
+
+.endings-final {
+  border: 1px solid var(--rune-dim);
+}
+
+.endings-final.endings-seen {
+  border-color: var(--rune);
+}
+
+.endings-final.endings-seen .endings-mark,
+.endings-final.endings-seen .endings-name {
+  color: var(--rune);
+}
+
+/* A purchase asked for twice: the two buttons sit where the one used to. */
+.offer-confirm {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.heart-warning {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--danger);
 }
 
 /* ------------------------------------------------------- change summary */
@@ -1546,7 +1978,24 @@
  * ceiling than on the standalone screen, and the grid pane scrolls if it still
  * does not fit. A grid you have to hunt for is a grid you misclick. */
 .app-mission .action-area {
-  max-height: 34vh;
+  /* Divided by the zoom for the same reason as every other `vh` in the app. */
+  max-height: calc(34vh / var(--ui-zoom));
+}
+
+/* Folded hand: the action area gives up its height and the board grows into it.
+ *
+ * Two class names in the selector on purpose. The rule above is `.app-mission
+ * .action-area`, which is more specific than a single class — a plain
+ * `.action-area-folded` loses to it and the panel simply does not fold. This ties
+ * on specificity and wins on order, which is the only way it can hold.
+ *
+ * Not `display: none` either: the grid row keeps its place, so the board takes
+ * the space instead of the whole layout jumping. */
+.action-area.action-area-folded {
+  max-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border-top: none;
 }
 
 .app-mission .grid-area {

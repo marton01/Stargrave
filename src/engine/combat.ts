@@ -16,6 +16,19 @@ export type DamageOptions = {
 }
 
 /**
+ * Are the two heroes close enough to hit harder? The Bond: 2 tiles or less.
+ *
+ * Exported because the interface has to be able to say so. A rule that adds a
+ * point of damage and is written down only in the help is a rule players meet as
+ * a surprise in the log — which is exactly what happened.
+ */
+export function bondActive(s: BattleState, unit: Unit | null): boolean {
+  if (!unit || unit.side !== 'hero') return false
+  const partner = partnerOf(s, unit.id)
+  return partner !== undefined && partner.alive && distance(unit.pos, partner.pos) <= 2
+}
+
+/**
  * How much would this attack deal? Kept separate so the interface can show it
  * to the player in advance — the "visible intent" principle cuts both ways.
  */
@@ -34,10 +47,7 @@ export function predictDamage(
     if (hasStatus(attacker, 'weakened')) power -= 1
 
     // Bond: when the two heroes work close together they hit harder.
-    if (attacker.side === 'hero') {
-      const partner = partnerOf(s, attacker.id)
-      if (partner && distance(attacker.pos, partner.pos) <= 2) power += 1
-    }
+    if (bondActive(s, attacker)) power += 1
   }
 
   // The target's statuses.

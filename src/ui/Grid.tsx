@@ -9,7 +9,15 @@ import { allTiles, distance, fromTileKey, terrainAt, tileKey, unitAt } from '../
 import { ENEMY_TYPES, intentOf } from '../content/enemies'
 import { GRID_LINE, TERRAIN_COLOR, TILE } from './gridStyle'
 import { HERO_CLASSES } from '../content/heroes'
-import { PillarShape, Shape, TrapShape, type ShapeKey } from './shapes'
+import {
+  CollapsingShape,
+  ExitShape,
+  PillarShape,
+  RelicShape,
+  Shape,
+  TrapShape,
+  type ShapeKey,
+} from './shapes'
 import type { BattleState, Unit } from '../engine/types'
 
 export function unitShape(u: Unit): ShapeKey {
@@ -34,6 +42,23 @@ export type GridProps = {
   activeId: string | undefined
   /** When targeting an area effect, preview a radius this large. */
   previewRadius: number | null
+  /**
+   * What the pending attack would actually take off each target, by unit id.
+   *
+   * The card says "Attack 3" and the hit can be a 4 or a 1: the Bond between the
+   * heroes, a Rune Mark, Shield, being prone — every one of them lands here and
+   * none of them was visible before. `predictDamage` exists in the engine
+   * precisely so this can be shown, and until now nothing showed it.
+   */
+  damagePreview: Map<string, number>
+  /**
+   * Terrain editing: every tile is clickable and nothing else is.
+   *
+   * The repair tool from the "stuck?" panel. While it is on, a click means "put
+   * this ground here" rather than "act on this tile", so the two must not be
+   * live at the same time.
+   */
+  editing: boolean
   onTile: (tileKey: string) => void
   onUnit: (unitId: string) => void
 }
@@ -44,6 +69,8 @@ export function Grid({
   selectableUnits,
   activeId,
   previewRadius,
+  damagePreview,
+  editing,
   onTile,
   onUnit,
 }: GridProps) {
@@ -130,18 +157,16 @@ export function Grid({
         )
       })}
 
-      {/* objective features: relics to collect, the way out, floor about to go */}
+      {/* objective features: relics to collect, the way out, floor about to go.
+          The marks themselves live in shapes.tsx so the help can draw them too. */}
       {state.collapsing.map((tile) => (
         <g
           key={`col${tileKey(tile.pos)}`}
           transform={`translate(${tile.pos.x * TILE} ${tile.pos.y * TILE})`}
         >
-          <path
-            d={`M${TILE * 0.15},${TILE * 0.5} L${TILE * 0.35},${TILE * 0.3} L${TILE * 0.5},${TILE * 0.6} L${TILE * 0.7},${TILE * 0.35} L${TILE * 0.88},${TILE * 0.55}`}
-            fill="none"
-            stroke="rgba(200,86,63,0.75)"
-            strokeWidth={2}
-          />
+          <g transform={`scale(${TILE})`}>
+            <CollapsingShape />
+          </g>
           <text x={TILE - 9} y={TILE - 6} className="grid-badge">
             {tile.roundsLeft}
           </text>
@@ -149,39 +174,17 @@ export function Grid({
       ))}
 
       {state.exit && (
-        <g transform={`translate(${state.exit.x * TILE} ${state.exit.y * TILE})`}>
-          <rect
-            className="grid-exit"
-            x={3}
-            y={3}
-            width={TILE - 6}
-            height={TILE - 6}
-            rx={4}
-          />
-          <path
-            d={`M${TILE * 0.32},${TILE * 0.5} L${TILE * 0.68},${TILE * 0.5} M${TILE * 0.55},${TILE * 0.36} L${TILE * 0.68},${TILE * 0.5} L${TILE * 0.55},${TILE * 0.64}`}
-            fill="none"
-            stroke="var(--green)"
-            strokeWidth={2.5}
-            strokeLinecap="round"
-          />
+        <g transform={`translate(${state.exit.x * TILE} ${state.exit.y * TILE}) scale(${TILE})`}>
+          <ExitShape />
         </g>
       )}
 
       {state.relics.map((relic) => (
-        <g key={`relic${tileKey(relic)}`} transform={`translate(${relic.x * TILE} ${relic.y * TILE})`}>
-          <circle
-            cx={TILE / 2}
-            cy={TILE / 2}
-            r={TILE * 0.22}
-            fill="none"
-            stroke="var(--rune)"
-            strokeWidth={2}
-          />
-          <polygon
-            points={`${TILE / 2},${TILE * 0.34} ${TILE * 0.66},${TILE / 2} ${TILE / 2},${TILE * 0.66} ${TILE * 0.34},${TILE / 2}`}
-            fill="var(--rune)"
-          />
+        <g
+          key={`relic${tileKey(relic)}`}
+          transform={`translate(${relic.x * TILE} ${relic.y * TILE}) scale(${TILE})`}
+        >
+          <RelicShape />
         </g>
       ))}
 
@@ -258,6 +261,23 @@ export function Grid({
                 fill={u.side === 'hero' ? '#6a9955' : '#b8543f'}
               />
 
+              {/* what this hit would take off, when one is being aimed */}
+              {damagePreview.has(u.id) && (
+                <g>
+                  <circle
+                    cx={TILE / 2}
+                    cy={TILE / 2}
+                    r={12}
+                    fill="rgba(8,11,17,0.85)"
+                    stroke="var(--rune)"
+                    strokeWidth={1.5}
+                  />
+                  <text x={TILE / 2} y={TILE / 2 + 4.5} className="grid-damage">
+                    {damagePreview.get(u.id)}
+                  </text>
+                </g>
+              )}
+
               {/* initiative badge: shows when this enemy will act */}
               {initiative !== null && (
                 <g>
@@ -309,12 +329,26 @@ export function Grid({
           )
         })}
 
+      {/* while editing, every tile shows that it can be changed */}
+      {editing &&
+        tiles.map((c) => (
+          <rect
+            key={`e${tileKey(c)}`}
+            className="grid-editable"
+            x={c.x * TILE + 1}
+            y={c.y * TILE + 1}
+            width={TILE - 2}
+            height={TILE - 2}
+            rx={3}
+          />
+        ))}
+
       {/* click surface */}
       {tiles.map((c) => {
         const key = tileKey(c)
         const here = unitAt(state.units, c)
-        const unitSelectable = here ? selectableUnits.has(here.id) : false
-        const tileSelectable = selectableTiles.has(key)
+        const unitSelectable = editing ? false : here ? selectableUnits.has(here.id) : false
+        const tileSelectable = editing || selectableTiles.has(key)
         const clickable = unitSelectable || tileSelectable
         return (
           <rect

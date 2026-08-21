@@ -65,6 +65,18 @@ Ez **közös döntés** — ez a játék legerősebb kooperatív eleme.
 - **Rúnamag** — **ebből lesz a partraszálló csapat Fluxusa.** Amit ide adtál, azzal
   fognak harcolni. Ez köti össze a két réteget.
 
+**Számít-e, hogy mennyit adsz?** Igen, egy kivétellel — és a hajó képernyőjén minden
+rendszer alatt ott áll, hogy a mostani beosztás **mit ad most**, számmal. Nem kell
+kitalálni, megéri-e a negyedik pont.
+
+- **Lineárisan számít**: Hajtómű (minden pont az első fölött egy hetet vág le egy útból),
+  Pajzs (annyi hajótest-kockázatot fog fel), Labor (+1 információ hetente pontonként),
+  Érzékelők (annyi oszlopot fed fel), Rúnamag (annyi Fluxus a partraszálló csapatnak),
+  Kohó (az energia és a legénység együtt, félpontonként).
+- **Küszöb, nem skála**: az **Életfenntartás**. A szükséges szint alatt romlik a morál és
+  fogyhat a legénység; a szint **fölött egyetlen pont sem ad semmit**. Ott spórolni kell,
+  nem tartalékolni.
+
 ### Állomások
 
 A legénységtagokat állomásokra osztod be. Egy állomás akkor működik, ha **energiája
@@ -73,6 +85,13 @@ is van és legénység is áll rajta** — ez a kettős korlát adja a szűköss
 Minden legénységtagnak van szakterülete; a hozzá tartozó állomáson lényegesen
 hatékonyabb. A jellemvonások (bátor, kétkedő, idegen származású, veterán…) a morált,
 a kutatást vagy az idegen technológiát befolyásolják.
+
+**Számít-e, hogy hány ember áll rajta?** Az első ember kell ahhoz, hogy egyáltalán
+működjön. A második pedig **mindenhol ad valamit**: a Kohó többet javít, a Gyógyító
+többet gyógyít, a Szentély magasabbra teszi a morál-célt, a Híd több üzemanyagot spórol,
+az Archívum két hét kutatást ugrik egy helyett, a Fegyverzet egy plusz Fluxust ad. A
+szakmailag illő ember kétszer annyit számít, mint egy másik — és az állomás kártyáján ott
+látszik, mit termel **most**.
 
 ### Morál
 
@@ -102,6 +121,27 @@ amiket a térképen látsz.
 
 Amit az Érzékelők nem fedtek fel, azt kérdőjel jelöli. Az energia, amit az
 érzékelőkre adsz, szó szerint azt dönti el, mennyire mész vakon.
+
+### Döntések
+
+A találkozásokban a választás **két lépés**: rákattintasz, és megjelenik a teljes
+elszámolás — *amit kér* és *amit ad* —, és csak ezután van Így legyen / Mégse. Ez
+szándékos: egy opció megértése és a megválasztása nem lehet ugyanaz a mozdulat. Ugyanígy
+kétlépéses a piaci vásárlás és a Csillagsírban a végkifejlet választása is; a csatában
+pedig visszavonás van (Ctrl+Z).
+
+**A kártyaáldozat.** Néhány döntés nem erőforrásba kerül, hanem **lapokba a hősök
+paklijából, véglegesen**. Ilyenkor az elszámolás megmondja, hány lap és melyik jelűek
+(⚒ erő, ◈ belátás), és te választod ki, melyiket adod. Ez a legdrágább ár a játékban: a
+hídon meghozott döntést a következő partraszálláson fizeted meg.
+
+**A döntéseknek van folytatása.** Egy helyzet nem mindig ér véget egy bekezdéssel:
+lehet, hogy a válaszod nyomot hagy, és **később visszatér** — ugyanabban az expedícióban
+egy másik csomóponton, vagy akár egy **következő expedícióban**, mert az Archívum azt is
+számon tartja. Amit kiengedtél, megtalál. Akinek nem segítettél, arról olvasnak.
+
+Ezért nincs „semmitmondó" döntés: ha egy zárósor azt írja, hogy valami elindult
+valamerre, akkor az elindult valamerre.
 
 ### Kredit — miből lesz, mire megy
 
@@ -178,6 +218,75 @@ Amikor egy hős jön: a játék megkérdezi, **melyik lap felső felét** haszn�
 lap **alsó** fele lesz a párja), aztán rákattintasz a végrehajtandó félre. **A sorrend
 a tiéd** — előbb mozogsz, vagy előbb ütsz? Ha a hatás célt kér, a rácson felvillannak
 a lehetőségek.
+
+### Fluxus — a közös erő
+
+Minden lapnak **két fele** van: egy **felső** és egy **alsó**, és a körödben az egyik lap
+felső, a másik lap alsó felét játszod ki. A legtöbb lapfél ingyen van — néhány erősebbre
+viszont **rá van írva egy ár**, egy `◈` jel és egy szám. **Ezt az árat fizeti a Fluxus.**
+
+**Tehát vannak lapfelek, amelyek csak akkor játszhatók ki, ha van elég Fluxus.** Ha nincs,
+az a fél egyszerűen nem választható — a lap másik fele (a mozgás, a vért) attól még
+használható. És a Fluxus **másra nem is kell**: se mozgásra, se gyógyításra, se semmi
+egyébre. Egyetlen dolgot csinál: megnyitja az árcédulás lapfeleket.
+
+A készlet **közös**: egy szám, ami a fejlécben `FLUXUS (KÖZÖS)` néven látszik, és
+**mindkét játékos ugyanabból veszi el**. Nem életerő és nem magától visszatöltődő mana:
+egy partraszállásra kaptok egy adagot, és az addig tart, ameddig tart.
+
+**Honnan jön?** A hajóról — ez az a szál, ami a két réteget összefűzi:
+
+- **A Rúnamagra adott energia.** Amennyi egységet a hajón a Rúnamagra tettél, annyi
+  Fluxussal indul a csapat. Ez a döntés fő része: a Rúnamagra adott energia nem termel
+  semmit a hajón, csak *odalent* számít.
+- **A Fegyverzet állomás** +1 Fluxust ad, ha energiája is van és ember is áll rajta
+  (jól betöltve +2).
+- **A Rúnaerősítő modul** +2-t (kutatásból).
+- **A nehézségi tárcsa** „Induló Fluxus" beállítása +3 és −2 között módosítja.
+
+**Csata közben** két helyről szerezhetsz még:
+
+- **Fluxus-csapolás** (Visszhang-olvasó lap): Támadás 1 hatótáv 3, **és +2 Fluxus a közös
+  készletbe**. Ez az egyetlen lap, ami termel.
+- **Rúnajel**: ha egy megjelölt ellenfél a hősök keze által esik el, **+1 Fluxus**.
+
+**Mire kell?** Összesen öt lapfélen van árcédula — ezek a csata „nagy ágyúi":
+
+| Lap | Mit ad | Ár |
+|---|---|---|
+| **Kohó dühe** (Rúnakovács) | Támadás 4, hatótáv 1 | 1 |
+| **Földrengés** (Rúnakovács) | Támadás 2 **minden** szomszédos ellenségre, és Ledöntés | 2 |
+| **Rontásgyűrű** (Visszhang-olvasó) | Támadás 2 **minden** ellenségre 2 hatótávon belül | 1 |
+| **Hamuköd** (Visszhang-olvasó) | Elvakítás minden ellenségre 2 hatótávon belül — **a támadásaik nem sebeznek** | 1 |
+| **Visszhang** (Visszhang-olvasó) | Játszd újra egy elhasznált lapod felső felét | 2 |
+
+A felületen az ár a lapon látszik (`◈2`), és ha a készletben nincs annyi, **az a lapfél
+nem kattintható** — a játék nem engedi kijátszani, amit nem tudsz kifizetni.
+
+**Miért közös?** Mert így a Fluxus nem erőforrás, hanem **beszélgetés**. Két Fluxusnál a
+Rúnakovács Földrengése (2) és a Visszhang-olvasó Visszhangja (2) közül **csak az egyik**
+játszható ki — és azt meg kell beszélni. Ez a játék legsűrűbb kooperatív pillanata.
+
+**Egy példa.** A hajón 2 energiát adtál a Rúnamagra, a Fegyverzet működik: a csapat
+**3 Fluxussal** száll le. A második körben négy Hamvadó váz körülveszi a Rúnakovácsot.
+
+- *Földrengés* (2 Fluxus): mind a négy sebződik és le is dől — marad **1 Fluxus**.
+- Vagy *Rontásgyűrű* (1) a másik hőssel + *Kohó dühe* (1) a Rúnaőrzőre — marad **1**.
+- Vagy semmi drágát: a maradék 3 megmarad a Rúnaőrzőre, aki a következő körben lép.
+
+Ha közben a Visszhang-olvasó eljátssza a *Fluxus-csapolást*, a készlet visszamegy 3-ra,
+és mindkettő belejátszható. Ezért ér a csapolás többet, mint amennyit a sebzése mutat.
+
+**Amit érdemes tudni:**
+
+- **Nem töltődik újra körönként.** Egy partraszállásra egy adag.
+- **Nem visszük haza.** A megmaradt Fluxus a küldetés végén elveszik — nincs értelme
+  „tartalékolni" az utolsó körre, ha most kellene.
+- **A Rúnamag energiája hetente újra eldönthető.** Egy harci küldetés előtt érdemes
+  átcsoportosítani rá, egy felderítés előtt kevésbé.
+
+A körben kijátszott lapfelek közül néhányra **ár van írva** (`◈` és egy szám): azok csak
+akkor játszhatók ki, ha van elég **Fluxus** a közös készletben. Lásd lentebb.
 
 ### Miért csak két lap?
 
@@ -289,6 +398,26 @@ előkészített raktárt, stabilabb Kaput.
 **Nem erősödést old fel, hanem tartalmat.** A világ gazdagodik, nem könnyebbé válik —
 ezért a huszadik futam is izgalmas. A megértés akkor is pontot ér, ha az expedíció
 elveszett: semmi nem megy kárba.
+
+### Mikor van vége a teljes játéknak?
+
+Egy expedíció háromféleképpen zárul: elérted a Csillagsírt és **választottál egy
+végkifejletet**, elbuktál, vagy a Kapu bezárult. A *játéknak* viszont külön vége van, és
+ez a cél:
+
+**Öt végkifejlet van**, és a megértés kapuzza őket — kettő megértés nélkül is elérhető,
+a többi 1., 2. és 3. szinttől. Az Archívum mutatja, melyiket láttad már. Ez a gyűjtemény
+az igazi haladás: nem az, hogy erősebb legyél, hanem hogy mind az ötöt lásd, mert csak
+együtt állnak össze.
+
+**Amikor mind az öt megvan** — és legalább két szálat végig is vittél, tehát nem csak
+láttad a következményeket, hanem tettél is velük valamit —, az Archívumban megjelenik
+**Az utolsó kérdés**. Ez a legdrágább feloldás, és nem ad új játékelemet: egy **hatodik
+végkifejletet** nyit meg, amit csak a 3. megértés-szinten lehet megválaszolni a
+Csillagsírban.
+
+Az a hatodik a játék vége. Utána az Archívum **készen** áll — nem elveszve, hanem
+befejezve. Addig annyi expedícióra mehetsz, amennyire akarsz; utána is, de már nem kell.
 
 ## Tippek
 

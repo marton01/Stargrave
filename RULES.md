@@ -65,6 +65,18 @@ game.
 - **Rune core** — **this becomes the landing party's Flux.** Whatever you give it is
   what they fight with. This is what ties the two layers together.
 
+**Does the amount matter?** Yes, with one exception — and the ship screen states, under
+every system, what the current allocation **buys right now**, as a number. There is no
+guessing whether a fourth point earns its keep.
+
+- **Scales linearly**: Engines (every point above the first cuts a week off a journey),
+  Shields (absorbs that much hull risk), Lab (+1 information a week per point), Sensors
+  (reveals that many columns), Rune core (that much Flux for the landing party), Forge
+  (power and crew together, half a point each).
+- **A threshold, not a scale**: **Life support**. Below what the crew needs, morale falls
+  and people can die; **above it, not one point does anything**. That is a system to spend
+  exactly on, never to stockpile.
+
 ### Stations
 
 You post crew members to stations. A station only works if it **has power AND has crew
@@ -73,6 +85,12 @@ standing on it** — that double constraint is where the scarcity lives.
 Every crew member has a speciality and is considerably more effective on the matching
 station. Traits (brave, sceptical, of alien descent, veteran…) affect morale, research
 or alien technology.
+
+**Does the number of people matter?** The first one is what makes a station run at all.
+The second now **adds something everywhere**: the Forge repairs more, the Medbay heals
+more, the Sanctum holds morale higher, the Bridge saves more fuel, the Archive skips two
+weeks of research instead of one, the Armoury gives an extra Flux. Someone whose
+speciality fits counts double — and the station's card shows what it is producing **now**.
 
 ### Morale
 
@@ -102,6 +120,27 @@ the map uses.
 
 Anything the Sensors have not revealed shows as a question mark. The power you give
 the sensors literally decides how blind you travel.
+
+### Decisions
+
+In an encounter, taking a choice is **two steps**: you click it, the full account
+appears — *what it asks* and *what it gives* — and only then is there a confirmation, or
+a way back. That is deliberate: understanding an option must not be the same act as
+taking it. Buying at a market and choosing an ending at the Stargrave work the same way,
+and a battle has an undo (Ctrl+Z).
+
+**Paying with cards.** A few decisions are not paid in supplies but in **cards from the
+heroes' decks, permanently**. The account says how many and which symbol (⚒ force,
+◈ insight), and you choose which ones to hand over. It is the most expensive price in
+the game: a decision on the bridge is paid for on the next landing.
+
+**Decisions continue.** A situation does not always end in one paragraph. Your answer can
+leave a trace and **come back later** — at another node in the same expedition, or in a
+**later expedition**, because the Archive remembers that too. What you let out will find
+you. The people you did not help are read about.
+
+So there are no empty decisions: if a closing line says something set off somewhere,
+then something set off somewhere.
 
 ### Credits — where they come from, where they go
 
@@ -179,6 +218,78 @@ When a hero's turn comes: the game asks which card's **top** half you use (the o
 card's **bottom** half becomes its partner), then you click the half you want to
 resolve. **The order is yours** — do you move first or strike first? If the effect
 needs a target, the options light up on the grid.
+
+### Flux — the shared force
+
+Every card has **two halves**, a **top** and a **bottom**, and on your turn you play the
+top of one card and the bottom of the other. Most halves are free — a few of the stronger
+ones have **a price printed on them**, a `◈` and a number. **Flux is what pays that
+price.**
+
+**So there are card halves that can only be played if there is enough Flux.** When there
+is not, that half simply cannot be picked — the card's other half (the movement, the
+shield) still can. And Flux is good for **nothing else**: not movement, not healing, not
+anything besides this. It does one thing: it opens the halves with a price tag.
+
+The pool is **shared**: one number, shown in the header as `FLUX (SHARED)`, and **both
+players spend from the same one**. It is not hit points and not mana that refills by
+itself: a landing party is given a batch, and it lasts as long as it lasts.
+
+**Where it comes from** — the ship, and this is the thread that ties the two layers
+together:
+
+- **The power you gave the rune core.** However many units sit on the rune core is how
+  much Flux the party lands with. That is the point of the choice: power on the rune core
+  produces nothing aboard, and counts only *down there*.
+- **The Armoury station** gives +1 when it has both power and hands (+2 when well
+  staffed).
+- **The Rune amplifier module** gives +2 (from research).
+- **The difficulty dial** "Starting Flux" shifts it by +3 to −2.
+
+**During a battle** there are two more sources:
+
+- **Flux Tap** (Echo-reader card): Attack 1 at range 3, **and +2 Flux into the shared
+  pool**. It is the only card that produces any.
+- **Rune Mark**: when a marked enemy falls to a hero, **+1 Flux**.
+
+**What it buys.** Five card halves carry a price tag — the heavy artillery of a battle:
+
+| Card | What it does | Cost |
+|---|---|---|
+| **Forge Wrath** (Runesmith) | Attack 4, range 1 | 1 |
+| **Earthquake** (Runesmith) | Attack 2 against **every** adjacent enemy, and knock down | 2 |
+| **Hex Ring** (Echo-reader) | Attack 2 against **every** enemy within range 2 | 1 |
+| **Ash Veil** (Echo-reader) | Blind every enemy within range 2 — **their attacks deal nothing** | 1 |
+| **Echo** (Echo-reader) | Replay the top half of one of your spent cards | 2 |
+
+The price is printed on the card in play (`◈2`), and if the pool does not hold that much,
+**the half is not clickable** — the game will not let you play what you cannot pay for.
+
+**Why shared?** Because it makes Flux a **conversation** rather than a resource. At two
+Flux, the Runesmith's Earthquake and the Echo-reader's Echo are an either/or, and it has
+to be talked through. That is the densest cooperative moment in the game.
+
+**An example.** You gave the rune core 2 power and the Armoury is running: the party lands
+with **3 Flux**. In round two, four Ash Husks surround the Runesmith.
+
+- *Earthquake* (2 Flux): all four take damage and go down — **1 Flux** left.
+- Or *Hex Ring* (1) with the other hero plus *Forge Wrath* (1) on the Rune Sentinel —
+  **1** left.
+- Or nothing expensive: all 3 kept for the Rune Sentinel, who acts next round.
+
+If the Echo-reader plays *Flux Tap* meanwhile, the pool is back at 3 and both are
+playable. That is why the Tap is worth more than its damage suggests.
+
+**Worth knowing:**
+
+- **It does not refill each round.** One batch per landing.
+- **It does not come home.** Leftover Flux is gone when the mission ends — there is no
+  point hoarding it for a last round if it is needed now.
+- **The rune core's power can be reallocated every week.** Move power onto it before a
+  fight; less so before an exploration run.
+
+Some of the halves you play have **a price on them** (`◈` and a number): those can only be
+played if the shared **Flux** pool holds enough. See below.
 
 ### Why only two cards?
 
@@ -288,6 +399,26 @@ encounters, a prepared cache, a steadier Gate.
 **It unlocks content, not power.** The world grows richer rather than easier — which is
 why the twentieth run is still worth playing. Understanding earns points even when the
 expedition is lost: nothing is wasted.
+
+### When does the whole game end?
+
+An expedition ends one of three ways: you reach the Stargrave and **choose an ending**,
+you fail, or the Gate closes. The *game*, though, has an end of its own, and that is the
+goal:
+
+**There are five endings**, gated by understanding — two are reachable with none at all,
+the rest from tiers 1, 2 and 3. The Archive shows which you have seen. That collection is
+the real progress: not becoming stronger, but seeing all five, because they only add up
+together.
+
+**Once you have all five** — and have followed at least two threads to their end, so you
+have not merely watched consequences but done something about them — **The last question**
+appears in the Archive. It is the most expensive unlock and it grants no new game piece:
+it opens a **sixth ending**, answerable only at understanding tier 3, at the Stargrave.
+
+That sixth one is the end of the game. After it the Archive is **finished** — not lost,
+finished. Until then you can run as many expeditions as you like; after it too, though you
+will not need to.
 
 ## Tips
 

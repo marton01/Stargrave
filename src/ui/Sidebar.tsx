@@ -9,6 +9,7 @@ import { describeLogEvent } from '../i18n/describe'
 import { enemies, heroes } from '../engine/state'
 import { intentOf } from '../content/enemies'
 import { STATUS_NAMES } from '../content/statuses'
+import { bondActive } from '../engine/combat'
 import { portrait } from './assets'
 import { Portrait } from './Portrait'
 import { useLang } from '../i18n/LangContext'
@@ -104,6 +105,11 @@ export function Sidebar({ state }: { state: BattleState }) {
               <>
                 <HpBar unit={h} />
                 <StatusBadges unit={h} />
+                {bondActive(state, h) && (
+                  <div className="bond" title={t.bondHint}>
+                    {t.bondActive}
+                  </div>
+                )}
                 <div className="card-counts">
                   <span title={t.inHand}>✋ {h.hand.length}</span>
                   <span title={t.inDiscard}>⟳ {h.discard.length}</span>

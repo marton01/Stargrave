@@ -24,6 +24,7 @@ import { CREW_TRAITS, SPECIALITY_NAMES } from '../../content/crew'
 import { portrait } from '../assets'
 import { Portrait } from '../Portrait'
 import { understandingTier } from '../../content/research'
+import { describeStationYield, describeSystemYield } from '../../i18n/describePower'
 import { useLang } from '../../i18n/LangContext'
 import type { ExpeditionState } from '../../engine/expedition/types'
 import type { StationId, SystemId } from '../../content/ship'
@@ -38,7 +39,7 @@ export function ShipView({
   state: ExpeditionState
   dispatch: (action: ExpeditionAction) => void
 }) {
-  const { t, s } = useLang()
+  const { t, s, lang } = useLang()
   const used = powerUsed(state)
   const free = state.reactorOutput - used
   const crew = livingCrew(state)
@@ -53,12 +54,15 @@ export function ShipView({
             {t.reactor} {state.reactorOutput} · {t.powerAllocated} {used} · {t.powerFree} {free}
           </span>
         </header>
-        <p className="panel-intro">{t.powerIntro}</p>
+        <p className="panel-intro">{t.powerIntro(state.reactorOutput, free)}</p>
+
+
 
         <div className="power-rows">
           {SYSTEM_ORDER.map((id) => (
             <PowerRow
               key={id}
+              state={state}
               system={id}
               value={state.power[id]}
               free={free}
@@ -98,6 +102,10 @@ export function ShipView({
                   </span>
                 </div>
                 <p className="station-effect">{s(def.effect)}</p>
+                {(() => {
+                  const output = describeStationYield(state, id, lang)
+                  return output ? <p className="station-yield">{output}</p> : null
+                })()}
                 <p className="station-needs">
                   {s(SYSTEMS[def.needs].name)} · {s(SPECIALITY_NAMES[def.speciality])} ·{' '}
                   {here.length}/{def.slots}
@@ -181,6 +189,7 @@ function PowerRow({
   warn,
   highlight,
   onSet,
+  state,
 }: {
   system: SystemId
   value: number
@@ -188,9 +197,13 @@ function PowerRow({
   warn: boolean
   highlight: boolean
   onSet: (value: number) => void
+  state: ExpeditionState
 }) {
-  const { s } = useLang()
+  const { s, lang } = useLang()
   const def = SYSTEMS[system]
+  // What this allocation is actually buying, in numbers. This is the line that
+  // makes the screen a decision rather than a row of pips.
+  const output = describeSystemYield(state, system, lang)
 
   return (
     <div className={`power-row ${highlight ? 'power-row-key' : ''} ${warn ? 'power-row-warn' : ''}`}>
@@ -198,6 +211,7 @@ function PowerRow({
       <div className="power-text">
         <span className="power-name">{s(def.name)}</span>
         <span className="power-desc">{s(def.description)}</span>
+        <span className={`power-yield ${output.warn ? 'power-yield-warn' : ''}`}>{output.text}</span>
       </div>
       <div className="power-pips">
         {Array.from({ length: def.max }, (_, i) => (

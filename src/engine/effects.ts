@@ -25,8 +25,14 @@ import {
 import { card } from '../content/cards'
 import type { BattleState, Effect, Hero, PendingChoice } from './types'
 
-/** What does this effect ask of the player? null when it asks nothing. */
-function requirement(
+/**
+ * What does this effect ask of the player? null when it asks nothing.
+ *
+ * Exported so a test can ask what a card would offer without playing it — which
+ * is the only way to check that "range 4" really means every enemy within four
+ * tiles that can be seen.
+ */
+export function requirement(
   s: BattleState,
   h: Hero,
   effect: Effect,

@@ -4,6 +4,7 @@
 // events, so switching language rewrites the whole record of the run — including
 // the week-three lines you read in the other language.
 
+import { dialDef } from '../content/difficulty'
 import { RESOURCES, STATIONS } from '../content/ship'
 import { pick } from './ui'
 import type { Lang } from '../engine/types'
@@ -17,6 +18,63 @@ export function describeExpeditionEvent(event: ExpeditionEvent, lang: Lang): str
       return hu
         ? `Átmentünk a Kapun. ${event.weeks} hét, aztán bezárul.`
         : `We are through the Gate. ${event.weeks} weeks, then it closes.`
+
+    case 'darkeningEased':
+      return hu
+        ? `A Sötétedés visszalépett a ${event.level}. szintre. A reaktor többet ad, és odalent minden enged egy kicsit.`
+        : `The Darkening has fallen back to level ${event.level}. The reactor gives more, and everything below eases a little.`
+
+    case 'missionRestarted':
+      return hu
+        ? 'Újrakezdtük a partraszállást. Ugyanaz a helyszín, elölről.'
+        : 'We started the landing again. The same ground, from the beginning.'
+
+    case 'missionRerolled':
+      return hu
+        ? 'Új helyszínt kaptunk ugyanarra a feladatra — az előző nem volt bejárható.'
+        : 'A different site for the same task — the last one could not be crossed.'
+
+    case 'missionWithdrawn':
+      return hu
+        ? 'Visszaléptünk a partraszállás előttre. A helyszín érintetlen.'
+        : 'We pulled back to before the landing. The site is untouched.'
+
+    case 'storageFull':
+      return hu
+        ? `${pick(RESOURCES[event.id].name, lang)}: a tároló tele (${event.max}), ${event.lost} elveszett.`
+        : `${pick(RESOURCES[event.id].name, lang)}: the hold is full (${event.max}), ${event.lost} lost.`
+
+    case 'dialSet': {
+      const dial = dialDef(event.dial)
+      const level = dial.levels[event.level - 1]
+      return hu
+        ? `Nehézség — ${pick(dial.name, lang)}: ${pick(level!.text, lang)}`
+        : `Difficulty — ${pick(dial.name, lang)}: ${pick(level!.text, lang)}`
+    }
+
+    case 'missionSkipped':
+      return hu
+        ? 'A partraszállást kihagytuk. Se zsákmány, se veszteség — a helyszín lezárva.'
+        : 'The landing was skipped. No spoils and no losses — the site is closed.'
+
+    case 'missionForcedWin':
+      return hu
+        ? 'A partraszállást teljesítettként számoltuk el, harc nélkül.'
+        : 'The landing was booked as completed, without the fight.'
+
+    case 'missionForcedLoss':
+      return hu
+        ? 'A partraszállást feladtuk. Úgy fizetünk érte, mint egy vereségért.'
+        : 'The landing was given up. It is paid for like a defeat.'
+
+    case 'gateShifted':
+      return hu
+        ? event.amount >= 0
+          ? `A Kapu tovább tart nyitva: ${event.amount} héttel. ${event.left} hét van még.`
+          : `A Kapu hamarabb zárul: ${-event.amount} héttel. ${event.left} hét van még.`
+        : event.amount >= 0
+          ? `The Gate holds ${event.amount} weeks longer. ${event.left} weeks left.`
+          : `The Gate closes ${-event.amount} weeks sooner. ${event.left} weeks left.`
 
     case 'weekPassed':
       return hu

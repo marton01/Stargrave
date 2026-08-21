@@ -16,6 +16,12 @@ export type ArchiveUnlock = {
   cost: number
   name: Text
   description: Text
+  /**
+   * Not offered until the Archive can answer this. Used by the closing arc,
+   * which must not be buyable before the endings it is an answer to have been
+   * seen — the point of it is that it comes last.
+   */
+  offeredWhen?: (archive: ArchiveState) => boolean
 }
 
 export const ARCHIVE_UNLOCKS: ArchiveUnlock[] = [
@@ -100,13 +106,74 @@ export const ARCHIVE_UNLOCKS: ArchiveUnlock[] = [
       en: 'Four more weeks on every expedition. Not easier — just more time to understand.',
     },
   },
+  {
+    id: 'last-question',
+    cost: 20,
+    name: { hu: 'Az utolsó kérdés', en: 'The last question' },
+    description: {
+      hu:
+        'Öt expedíció öt választ hozott haza, és egyik sem illik a másikra. Az Archívum most ' +
+        'összeolvassa őket, és feltesz egy kérdést, amit eddig nem lehetett. A következő ' +
+        'expedíció a Csillagsírban válaszolhat rá — ha addig eleget értetek meg. ' +
+        'Feltétele: mind az öt végkifejlet, és legalább két végigvitt szál.',
+      en:
+        'Five expeditions brought home five answers, and none of them fits the others. The ' +
+        'Archive reads them together now, and asks a question that could not be asked before. ' +
+        'The next expedition can answer it at the Stargrave — if it understands enough by then. ' +
+        'It asks for all five endings, and for at least two threads followed to their end.',
+    },
+    // The whole point is that it comes last, and that it is asked of something.
+    // Two conditions, and they are different in kind: every ending has to have
+    // been *seen* — five answers to compare — and at least two threads have to
+    // have been *followed* to their end. Watching the game finish five ways is
+    // not the same as having done anything about what you found.
+    offeredWhen: (archive) =>
+      ENDINGS_BEFORE_LAST.every((id) => archive.endingsSeen.includes(id)) &&
+      deepMarksHeld(archive) >= DEEP_MARKS_NEEDED,
+  },
 ]
+
+/**
+ * The marks the closing arc reads.
+ *
+ * These are the ends of threads: what a crew did *after* a consequence found
+ * them — followed the guide it had once refused, closed the gate another crew
+ * opened, asked a choir for nothing. They are deliberately the terminus of their
+ * chains, which is why nothing else asks about them: the last question does.
+ *
+ * That is also what stops the content from growing a tail of promises. A mark
+ * either has an encounter that answers it, or it is one of these and the endgame
+ * answers it. `consequences.test.ts` allows no third case.
+ */
+export const DEEP_MARKS = [
+  'followed-at-last',
+  'closed-the-second-gate',
+  'asked-for-nothing',
+] as const
+
+/** How many of them the Archive needs before the last question can be asked. */
+export const DEEP_MARKS_NEEDED = 2
+
+export function deepMarksHeld(archive: ArchiveState): number {
+  return DEEP_MARKS.filter((mark) => archive.marks.includes(mark)).length
+}
+
+/** The five an expedition can reach on its own; `theAnswer` is the sixth. */
+export const ENDINGS_BEFORE_LAST = [
+  'flee',
+  'blindRuin',
+  'witness',
+  'intervene',
+  'communion',
+] as const satisfies readonly EndingId[]
 
 export function newArchive(): ArchiveState {
   return {
     version: ARCHIVE_VERSION,
     points: 0,
     unlocked: [],
+    marks: [],
+    endingsSeen: [],
     history: [],
     bestUnderstanding: 0,
     expeditionsRun: 0,
@@ -137,6 +204,13 @@ export function bankExpedition(archive: ArchiveState, expedition: ExpeditionStat
     ...archive,
     version: ARCHIVE_VERSION,
     points: archive.points + expedition.archiveEarned + understandingPoints,
+    // The long memory: whatever this run marked, later runs can answer.
+    marks: [...new Set([...archive.marks, ...expedition.marks])],
+    endingsSeen:
+      outcome?.k === 'ending' && !archive.endingsSeen.includes(outcome.id)
+        ? [...archive.endingsSeen, outcome.id]
+        : archive.endingsSeen,
+    completed: archive.completed || (outcome?.k === 'ending' && outcome.id === 'theAnswer'),
     history: [
       ...archive.history,
       {
@@ -151,9 +225,16 @@ export function bankExpedition(archive: ArchiveState, expedition: ExpeditionStat
   }
 }
 
+/** Which unlocks the Archive is willing to show at all. */
+export function offeredUnlocks(archive: ArchiveState): ArchiveUnlock[] {
+  return ARCHIVE_UNLOCKS.filter((u) => !u.offeredWhen || u.offeredWhen(archive))
+}
+
 export function canUnlock(archive: ArchiveState, id: ArchiveUnlockId): boolean {
   if (archive.unlocked.includes(id)) return false
-  return archive.points >= unlockDef(id).cost
+  const def = unlockDef(id)
+  if (def.offeredWhen && !def.offeredWhen(archive)) return false
+  return archive.points >= def.cost
 }
 
 export function purchaseUnlock(archive: ArchiveState, id: ArchiveUnlockId): ArchiveState {
@@ -168,6 +249,7 @@ export function purchaseUnlock(archive: ArchiveState, id: ArchiveUnlockId): Arch
 // ---------------------------------------------------------------- endings
 
 export const ENDING_TITLES: Record<EndingId, Text> = {
+  theAnswer: { hu: 'A válasz', en: 'The answer' },
   flee: { hu: 'Visszafordulás', en: 'Turning back' },
   blindRuin: { hu: 'Vak pusztítás', en: 'Blind ruin' },
   witness: { hu: 'A tanú', en: 'The witness' },
@@ -176,6 +258,24 @@ export const ENDING_TITLES: Record<EndingId, Text> = {
 }
 
 export const ENDING_TEXTS: Record<EndingId, Text> = {
+  theAnswer: {
+    hu:
+      'Nem kérdeztek. Álltok a Csillagsír peremén azzal az öt válasszal, amit öt expedíció hozott ' +
+      'haza — a visszafordulással, a rombolással, a tanúsággal, a beavatkozással és az ' +
+      'együtthangzással —, és most először látszik, hogy nem öt válasz volt, hanem egy kérdés öt ' +
+      'oldalról. Ami odalent van, nem befejezte őket: *megkérdezte* tőlük ugyanezt, és ők nem ' +
+      'tudtak felelni. Ti feleltek. Nem szóval, nem fegyverrel: azzal, amit megértettetek. ' +
+      'A Kapu nyitva marad, mert már nem kell rajta átmenni: ami a túloldalon volt, most itt is van. ' +
+      'Az Archívum bezárul, és nem azért, mert elveszett — hanem mert kész.',
+    en:
+      'They never asked. You stand on the rim of the Stargrave with the five answers five ' +
+      'expeditions carried home — turning back, ruin, witness, intervention, communion — and for ' +
+      'the first time it is clear that they were never five answers but one question seen from five ' +
+      'sides. What lies below did not finish them: it *asked* them this, and they could not reply. ' +
+      'You reply. Not with words and not with weapons, but with what you understood. The Gate stays ' +
+      'open, because there is no longer anywhere to cross to: what was on the other side is here now. ' +
+      'The Archive closes — not because it was lost, but because it is finished.',
+  },
   flee: {
     hu:
       'Ott álltok a Csillagsír peremén, és nem értitek, mit láttok. Ami odalent van, az nem gép és nem lény, ' +

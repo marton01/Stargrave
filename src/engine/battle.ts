@@ -13,7 +13,19 @@ import { card, cardsOfClass } from '../content/cards'
 import { createRng } from './rng'
 import { afterMove, dealDamage, heal } from './combat'
 import { enemyTurn } from './enemyAi'
-import { allTiles, distance, neighbours, sameTile, setTerrain, tileKey, unitAt, walkable } from './grid'
+import {
+  allTiles,
+  distance,
+  fromTileKey,
+  neighbours,
+  onMap,
+  sameTile,
+  setTerrain,
+  terrainAt,
+  tileKey,
+  unitAt,
+  walkable,
+} from './grid'
 import { generateMap, generateMissionFeatures } from './mapgen'
 import { HERO_CLASSES } from '../content/heroes'
 import { resolveEffects } from './effects'
@@ -26,6 +38,7 @@ import type {
   HeroClassId,
   MissionKind,
   Objective,
+  TerrainKind,
   Unit,
 } from './types'
 
@@ -79,6 +92,15 @@ export type Action =
   | { k: 'skipHalf'; half: 'top' | 'bottom' }
   | { k: 'endTurn' }
   | { k: 'advanceEnemy' }
+  /**
+   * Change the ground under a tile.
+   *
+   * Not a game move: a repair tool, reached from the "stuck?" panel, for the
+   * board that generation got wrong. It is an ordinary battle action on purpose,
+   * so the undo history covers it like everything else — a slip of the hand while
+   * fixing a map should not be its own new kind of accident.
+   */
+  | { k: 'editTerrain'; tile: string; kind: TerrainKind }
 
 // ------------------------------------------------------------ randomness
 
@@ -434,8 +456,23 @@ function checkOutcome(s: BattleState): boolean {
     return true
   }
 
-  const heroOnExit = () =>
-    s.exit !== null ? livingHeroes(s).find((h) => sameTile(h.pos, s.exit!)) : undefined
+  /**
+   * Is the whole party out?
+   *
+   * One hero standing on the extraction point used to end the mission and leave
+   * the other one down there, which is not what "get out" means. The exit is a
+   * single tile and two units cannot share it, so the rule is that every hero
+   * still alive has to be ON it or NEXT to it: the party is at the extraction
+   * point together, and whoever is left behind keeps the mission open.
+   */
+  const partyAtExit = () => {
+    if (s.exit === null) return false
+    return livingHeroes(s).every((h) => distance(h.pos, s.exit!) <= 1)
+  }
+
+  /** How many are there, for the objective read-out. */
+  const atExitCount = () =>
+    s.exit === null ? 0 : livingHeroes(s).filter((h) => distance(h.pos, s.exit!) <= 1).length
 
   switch (s.objective.k) {
     case 'eliminate':
@@ -446,9 +483,8 @@ function checkOutcome(s: BattleState): boolean {
       break
 
     case 'reachExit': {
-      const who = heroOnExit()
-      if (who) {
-        log(s, { k: 'exitReached', unit: who.name })
+      if (partyAtExit()) {
+        log(s, { k: 'exitReached', count: atExitCount() })
         finish(s, 'victory')
         return true
       }
@@ -457,9 +493,8 @@ function checkOutcome(s: BattleState): boolean {
 
     case 'collect': {
       if (s.carried < s.objective.count) break
-      const who = heroOnExit()
-      if (who) {
-        log(s, { k: 'exitReached', unit: who.name })
+      if (partyAtExit()) {
+        log(s, { k: 'exitReached', count: atExitCount() })
         finish(s, 'victory')
         return true
       }
@@ -482,6 +517,22 @@ export function activeUnit(s: BattleState): Unit | undefined {
   if (s.phase !== 'resolution') return undefined
   const id = s.order[s.orderIndex]
   return id ? unitById(s, id) : undefined
+}
+
+/**
+ * How many living heroes are at the extraction point, and how many there are.
+ *
+ * The same rule `checkOutcome` uses — on it or next to it — exported so the
+ * objective read-out can say "1 / 2" instead of leaving the players to guess why
+ * the mission has not ended.
+ */
+export function atExit(s: BattleState): { there: number; total: number } {
+  const living = livingHeroes(s)
+  if (s.exit === null) return { there: 0, total: living.length }
+  return {
+    there: living.filter((h) => distance(h.pos, s.exit!) <= 1).length,
+    total: living.length,
+  }
 }
 
 /** Must this hero rest? (Fewer cards in hand than they have to play.) */
@@ -681,6 +732,25 @@ export function step(previous: BattleState, action: Action): BattleState {
       const turn = s.heroTurn
       if (!turn || turn.active) break
       finishHeroTurn(s)
+      break
+    }
+
+    case 'editTerrain': {
+      const at = fromTileKey(action.tile)
+      if (!onMap(s.map, at)) break
+      // The one thing the tool must not do is create the problem it exists to
+      // solve: burying a unit, a relic or the way out under something solid.
+      const solid = action.kind !== 'floor' && action.kind !== 'ash'
+      if (solid) {
+        if (unitAt(s.units, at)) break
+        if (s.relics.some((r) => sameTile(r, at))) break
+        if (s.exit && sameTile(s.exit, at)) break
+      }
+      if (terrainAt(s.map, at) === action.kind) break
+      setTerrain(s.map, at, action.kind)
+      // A hole is a hole: a tile that becomes one stops being scheduled to.
+      if (action.kind === 'chasm') s.collapsing = s.collapsing.filter((c) => !sameTile(c.pos, at))
+      log(s, { k: 'terrainEdited', kind: action.kind })
       break
     }
 

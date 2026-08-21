@@ -20,7 +20,7 @@ import type {
 // Mastermind with runes. Deducible, quick, and it is the puzzle two people talk
 // through most naturally: one tracks what is ruled out, the other proposes.
 
-export function generateRuneDecode(rng: Rng, difficulty: number): RuneDecodeState {
+export function generateRuneDecode(rng: Rng, difficulty: number, extraTries = 0): RuneDecodeState {
   const length = difficulty >= 3 ? 5 : 4
   const symbols = Math.min(8, 5 + difficulty)
   const secret = Array.from({ length }, () => rng.int(symbols))
@@ -30,7 +30,7 @@ export function generateRuneDecode(rng: Rng, difficulty: number): RuneDecodeStat
     secret,
     draft: Array.from({ length }, () => 0),
     guesses: [],
-    maxAttempts: length + 5,
+    maxAttempts: Math.max(2, length + 5 + extraTries),
   }
 }
 
@@ -85,7 +85,7 @@ export function runeDecodeStatus(s: RuneDecodeState) {
 // have to name the order. Pure comparison logic — no arithmetic needed, which
 // is why it works in any language.
 
-export function generateBalanceScales(rng: Rng, difficulty: number): BalanceScalesState {
+export function generateBalanceScales(rng: Rng, difficulty: number, extraTries = 0): BalanceScalesState {
   const count = difficulty >= 3 ? 6 : difficulty >= 2 ? 5 : 4
   // Distinct weights so the order is unambiguous. The values are never shown.
   const weights = rng.shuffle(Array.from({ length: count }, (_, i) => (i + 1) * 3 + rng.int(2)))
@@ -97,7 +97,7 @@ export function generateBalanceScales(rng: Rng, difficulty: number): BalanceScal
     weighings: [],
     // Enough for a careful sort, not enough to weigh everything against
     // everything: ceil(n log2 n) rounded up a little.
-    maxWeighings: Math.ceil(count * Math.log2(count)) + 1,
+    maxWeighings: Math.max(2, Math.ceil(count * Math.log2(count)) + 1 + extraTries),
     order: [],
     submitted: false,
     correct: false,

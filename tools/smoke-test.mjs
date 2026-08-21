@@ -162,6 +162,8 @@ async function battleStep() {
   }
 
   if (mode === 'rest') {
+    // Losing a card is asked for twice now: pick one, then confirm.
+    if (await tryAction('confirmRest')) return true
     const c = await randomOf(page.locator('.action-bar .card'))
     if (c) {
       await c.click()
@@ -413,16 +415,25 @@ while (steps < 4000) {
       sawEncounter = true
     }
     if (await tryAction('encounterClose')) continue
-    if (await tryAction('encounterConfirm')) continue
+
+    // A choice is picked but not taken: the account is on screen, with a way
+    // back. Pay any card cost, then confirm.
+    if ((await page.locator('.proposal').count()) > 0) {
+      await shotOnce('04b-proposal')
+      if (await tryAction('encounterConfirm')) continue
+      const card = await randomOf(page.locator('.encounter .card'))
+      if (card) {
+        await card.click()
+        continue
+      }
+      // Nothing to pay with: back out and take a different option.
+      if (await tryAction('encounterCancel')) continue
+      throw new Error('Stuck on a proposed choice that can neither be paid nor cancelled.')
+    }
+
     const choice = await randomOf(page.locator('[data-action="encounterChoose"]:not([disabled])'))
     if (choice) {
       await choice.click()
-      continue
-    }
-    // A card payment is waiting.
-    const c = await randomOf(page.locator('.encounter .card'))
-    if (c) {
-      await c.click()
       continue
     }
     throw new Error('Stuck on an encounter with no takeable choice.')
@@ -433,14 +444,18 @@ while (steps < 4000) {
       await shotOnce('08-market')
       sawMarket = true
     }
+    // Buying is two clicks now: pick, then confirm the price.
     if (await tryAction('marketBuy')) continue
+    if (await tryAction('marketPick')) continue
     if (await tryAction('closeMarket')) continue
     throw new Error('Stuck in the market.')
   }
 
   if (current === 'heart') {
     await shotOnce('09-heart')
-    const ending = await randomOf(page.locator('[data-action="chooseEnding"]'))
+    // The last decision of a run is asked for twice as well.
+    if (await tryAction('chooseEnding')) continue
+    const ending = await randomOf(page.locator('[data-action="heartPick"]'))
     if (ending) {
       await ending.click()
       continue

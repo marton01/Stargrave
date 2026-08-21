@@ -51,7 +51,7 @@ function systemName(rng: Rng): string {
   return base
 }
 
-const KIND_TAGS: Record<NodeKind, EncounterTag[]> = {
+export const KIND_TAGS: Record<NodeKind, EncounterTag[]> = {
   empty: ['drift'],
   ruins: ['ruins'],
   station: ['station', 'trade'],

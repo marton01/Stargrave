@@ -6,17 +6,19 @@
 // the power allocation matters.
 
 import { encounter } from '../../content/encounters'
-import type { EncounterChoice, EncounterCost } from '../../content/encounters'
+import type { EncounterChoice, EncounterCost, EncounterEffect } from '../../content/encounters'
 import {
   choiceAffordable,
   choiceAvailable,
   payableCards,
 } from '../../engine/expedition/expedition'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
+import { useState } from 'react'
 import { CardView } from '../CardView'
 import { mapNode } from '../../engine/expedition/starmap'
 import { MODULES, RESOURCES } from '../../content/ship'
 import { SPECIALITY_NAMES } from '../../content/crew'
+import { describeChoice, describeRequirement } from '../../i18n/describeChoice'
 import { useLang } from '../../i18n/LangContext'
 import type { ExpeditionState } from '../../engine/expedition/types'
 
@@ -34,6 +36,57 @@ function CostLabel({ cost }: { cost: EncounterCost }) {
     <span className="cost cost-cards">
       {t.costCards(cost.count)} {cost.symbol === 'force' ? '⚒' : '◈'}
     </span>
+  )
+}
+
+/**
+ * What a decision asks and what it gives, side by side.
+ *
+ * Both halves come from the same data the engine applies, so the account cannot
+ * promise something the resolution will not do.
+ */
+export function Account({
+  costs,
+  effects,
+  compact,
+}: {
+  costs: readonly EncounterCost[]
+  effects: readonly EncounterEffect[]
+  compact?: boolean
+}) {
+  const { t, lang } = useLang()
+  const account = describeChoice(costs, effects, lang)
+  if (account.costs.length === 0 && account.effects.length === 0) {
+    return <p className="account-empty">{t.accountNothing}</p>
+  }
+
+  return (
+    <div className={`account ${compact ? 'account-compact' : ''}`.trim()}>
+      {account.costs.length > 0 && (
+        <div className="account-side">
+          <span className="account-label">{t.accountCosts}</span>
+          <ul>
+            {account.costs.map((line, i) => (
+              <li key={i} className={`tone-${line.tone}`}>
+                {line.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {account.effects.length > 0 && (
+        <div className="account-side">
+          <span className="account-label">{t.accountEffects}</span>
+          <ul>
+            {account.effects.map((line, i) => (
+              <li key={i} className={`tone-${line.tone}`}>
+                {line.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -73,36 +126,54 @@ export function EncounterView({
             </button>
           </div>
         </>
-      ) : cardCost && cardCost.k === 'cards' ? (
-        <>
-          <p className="encounter-prompt">{t.encounterPayCards(cardCost.count)}</p>
-          <p className="panel-meta">
-            {t.encounterPaySelected(pending.payment.length, cardCost.count)}
-          </p>
-          <div className="card-row">
-            {payableCards(state, cardCost.symbol).map(({ heroClass, cardId }) => {
-              const token = `${heroClass}:${cardId}`
-              return (
-                <CardView
-                  key={token}
-                  cardId={cardId}
-                  selected={pending.payment.includes(token)}
-                  onClick={() => dispatch({ k: 'encounterPayCard', heroClass, cardId })}
-                />
-              )
-            })}
-          </div>
+      ) : chosen ? (
+        // The account of a choice that has been picked but not taken. This is the
+        // whole point of the two-step: what it costs and what it does, in words,
+        // while there is still a way back.
+        <div className="proposal">
+          <p className="proposal-choice">{s(chosen.text)}</p>
+          <Account costs={chosen.costs} effects={chosen.effects} />
+
+          {cardCost && cardCost.k === 'cards' && (
+            <>
+              <p className="encounter-prompt">{t.encounterPayCards(cardCost.count)}</p>
+              <p className="panel-meta">
+                {t.encounterPaySelected(pending.payment.length, cardCost.count)}
+              </p>
+              <div className="card-row">
+                {payableCards(state, cardCost.symbol).map(({ heroClass, cardId }) => {
+                  const token = `${heroClass}:${cardId}`
+                  return (
+                    <CardView
+                      key={token}
+                      cardId={cardId}
+                      selected={pending.payment.includes(token)}
+                      onClick={() => dispatch({ k: 'encounterPayCard', heroClass, cardId })}
+                    />
+                  )
+                })}
+              </div>
+            </>
+          )}
+
           <div className="button-row">
             <button
               className="button button-primary"
               data-action="encounterConfirm"
-              disabled={pending.payment.length < cardCost.count}
+              disabled={cardCost && cardCost.k === 'cards' ? pending.payment.length < cardCost.count : false}
               onClick={() => dispatch({ k: 'encounterConfirm' })}
             >
               {t.encounterConfirm}
             </button>
+            <button
+              className="button"
+              data-action="encounterCancel"
+              onClick={() => dispatch({ k: 'encounterCancel' })}
+            >
+              {t.encounterBack}
+            </button>
           </div>
-        </>
+        </div>
       ) : (
         <div className="choice-list">
           {def.choices.map((choice, index) => (
@@ -128,7 +199,7 @@ function ChoiceRow({
   choice: EncounterChoice
   onPick: () => void
 }) {
-  const { t, s } = useLang()
+  const { t, s, lang } = useLang()
   const available = choiceAvailable(state, choice)
   const affordable = choiceAffordable(state, choice)
   const enabled = available && affordable
@@ -146,7 +217,9 @@ function ChoiceRow({
           <CostLabel key={i} cost={cost} />
         ))}
       </span>
-      {!available && <span className="choice-reason">{t.encounterRequirementUnmet}</span>}
+      {!available && choice.requires && (
+        <span className="choice-reason">{describeRequirement(choice.requires, lang)}</span>
+      )}
       {available && !affordable && (
         <span className="choice-reason">{t.encounterUnaffordable}</span>
       )}
@@ -164,6 +237,8 @@ export function MarketView({
   dispatch: (action: ExpeditionAction) => void
 }) {
   const { t, s } = useLang()
+  // Spending is not undoable either, so a purchase is asked for twice.
+  const [confirming, setConfirming] = useState<number | null>(null)
   const node = mapNode(state.map, state.at)
   if (node.event.k !== 'market') return null
   const offers = node.event.offers
@@ -199,14 +274,36 @@ export function MarketView({
                 {detail && <span className="offer-detail">{detail}</span>}
               </div>
               <span className="offer-price">{offer.price} ✧</span>
-              <button
-                className="button"
-                data-action="marketBuy"
-                disabled={offer.bought || tooDear}
-                onClick={() => dispatch({ k: 'marketBuy', index })}
-              >
-                {offer.bought ? t.marketBought : tooDear ? t.marketTooExpensive : t.marketBuy}
-              </button>
+              {confirming === index ? (
+                <span className="offer-confirm">
+                  <button
+                    className="button button-primary button-small"
+                    data-action="marketBuy"
+                    onClick={() => {
+                      dispatch({ k: 'marketBuy', index })
+                      setConfirming(null)
+                    }}
+                  >
+                    {t.marketConfirm(offer.price)}
+                  </button>
+                  <button
+                    className="button button-small"
+                    data-action="marketCancel"
+                    onClick={() => setConfirming(null)}
+                  >
+                    {t.encounterBack}
+                  </button>
+                </span>
+              ) : (
+                <button
+                  className="button"
+                  data-action="marketPick"
+                  disabled={offer.bought || tooDear}
+                  onClick={() => setConfirming(index)}
+                >
+                  {offer.bought ? t.marketBought : tooDear ? t.marketTooExpensive : t.marketBuy}
+                </button>
+              )}
             </div>
           )
         })}

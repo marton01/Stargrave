@@ -61,6 +61,12 @@ export function fullyConnected(map: BattleMap, from: Coord): boolean {
     for (const c of frontier) {
       for (const n of neighbours(map, c)) {
         if (!walkable(map, n)) continue
+        // The same rule movement obeys, and the reason this check exists at all:
+        // a corner that only touches diagonally between two walls looks like a
+        // way through and is not one. Asking a looser question here was how a
+        // sealed-off pocket could pass generation and then be unreachable on the
+        // board — see `diagonalFits` and `reachableTiles`.
+        if (!diagonalFits(map, c, n)) continue
         const key = tileKey(n)
         if (seen.has(key)) continue
         seen.add(key)
@@ -133,7 +139,7 @@ export function hasLineOfSight(map: BattleMap, a: Coord, b: Coord): boolean {
  * You cannot cut diagonally between two blocking tiles.
  * This is the rule that makes diagonal movement feel fair.
  */
-function diagonalFits(map: BattleMap, from: Coord, to: Coord): boolean {
+export function diagonalFits(map: BattleMap, from: Coord, to: Coord): boolean {
   const dx = to.x - from.x
   const dy = to.y - from.y
   if (dx === 0 || dy === 0) return true

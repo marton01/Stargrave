@@ -10,7 +10,16 @@
 // rune pillar a player raises mid-battle.
 
 import { describe, expect, it } from 'vitest'
-import { allTiles, fullyConnected, setTerrain, terrainAt, tileKey, walkable, wouldDisconnect } from './grid'
+import {
+  allTiles,
+  fullyConnected,
+  reachableTiles,
+  setTerrain,
+  terrainAt,
+  tileKey,
+  walkable,
+  wouldDisconnect,
+} from './grid'
 import { generateMap, generateMissionFeatures, MAP_HEIGHT, MAP_WIDTH } from './mapgen'
 import { createRng } from './rng'
 import type { BattleMap, Objective } from './types'
@@ -49,6 +58,51 @@ describe('generated battlefields', () => {
         // And the things the mission is about are still standing on ground.
         for (const relic of relics) expect(walkable(map, relic), `${where}: relic`).toBe(true)
         if (exit) expect(walkable(map, exit), `${where}: exit`).toBe(true)
+      }
+    }
+  })
+})
+
+describe('what a unit can actually walk', () => {
+  // The check above asks whether the tiles are connected. This one asks the
+  // movement code itself, which has one more rule: you cannot cut diagonally
+  // between two blocking tiles. A board where the only link is such a corner
+  // passes a naive connectivity check and is impassable on the screen — an enemy
+  // you can see and never reach. That was a real bug; this is the guard.
+  it('can reach every enemy, by the rules movement uses', () => {
+    const objectives: Objective[] = [{ k: 'eliminate' }, { k: 'collect', count: 3 }, { k: 'reachExit' }]
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      for (const objective of objectives) {
+        const rng = createRng(seed)
+        const { map, heroSpawns, enemySpawns } = generateMap(rng, 4)
+        const { collapsing, relics, exit } = generateMissionFeatures(
+          rng,
+          map,
+          heroSpawns,
+          enemySpawns,
+          objective,
+        )
+        // The worst moment of the mission: every hole open at once.
+        for (const tile of collapsing) setTerrain(map, tile.pos, 'chasm')
+
+        // No units on the board, so the only thing stopping movement is terrain.
+        const reach = reachableTiles(map, [], heroSpawns[0]!, 9999)
+        const where = `seed ${seed}, ${objective.k}`
+
+        for (const spawn of enemySpawns) {
+          expect(reach.has(tileKey(spawn)), `${where}: enemy at ${tileKey(spawn)} unreachable`).toBe(true)
+        }
+        for (const relic of relics) {
+          expect(reach.has(tileKey(relic)), `${where}: relic at ${tileKey(relic)} unreachable`).toBe(true)
+        }
+        if (exit) {
+          expect(reach.has(tileKey(exit)), `${where}: exit at ${tileKey(exit)} unreachable`).toBe(true)
+        }
+        // And nothing at all is walled off, not just the things that matter.
+        const walkableTiles = allTiles(map).filter((c) => walkable(map, c))
+        expect(reach.size, `${where}: ${walkableTiles.length - reach.size} tiles cut off`).toBe(
+          walkableTiles.length,
+        )
       }
     }
   })

@@ -3,8 +3,10 @@
 // Both come back to the ship the same way, through one button, so the expedition
 // layer never has to care which kind it was.
 
+import { useState } from 'react'
 import { ActionBar } from './ActionBar'
-import { activeUnit } from '../engine/battle'
+import { activeUnit, atExit } from '../engine/battle'
+import { predictDamage } from '../engine/combat'
 import { Grid } from './Grid'
 import { PuzzleView } from './puzzles/PuzzleView'
 import { Sidebar } from './Sidebar'
@@ -12,7 +14,8 @@ import { missionSettled } from '../engine/expedition/expedition'
 import type { ExpeditionAction } from '../engine/expedition/expedition'
 import { useLang } from '../i18n/LangContext'
 import type { ExpeditionState } from '../engine/expedition/types'
-import type { BattleState, Objective } from '../engine/types'
+import { TERRAIN_TEXT } from './gridStyle'
+import type { BattleState, Objective, TerrainKind } from '../engine/types'
 
 export function objectiveText(objective: Objective, t: ReturnType<typeof useLang>['t']): string {
   switch (objective.k) {
@@ -30,6 +33,184 @@ export function objectiveText(objective: Objective, t: ReturnType<typeof useLang
 }
 
 /**
+ * The terrain palette: which ground the next click puts down.
+ *
+ * A repair tool, and it says so — it is reached from the "stuck?" panel and it
+ * stays visible with a way out of it, so nobody edits a board by accident. Every
+ * change is an ordinary battle action, so Ctrl+Z takes it back.
+ */
+function TerrainPalette({
+  kind,
+  onPick,
+  onClose,
+}: {
+  kind: TerrainKind
+  onPick: (kind: TerrainKind) => void
+  onClose: () => void
+}) {
+  const { t } = useLang()
+  const kinds: TerrainKind[] = ['floor', 'ash', 'wall', 'chasm', 'pillar']
+
+  return (
+    <div className="palette">
+      <span className="palette-label">{t.paletteLabel}</span>
+      {kinds.map((option) => (
+        <button
+          key={option}
+          className={`button button-small ${option === kind ? 'button-on' : ''}`}
+          data-action="pickTerrain"
+          data-terrain={option}
+          onClick={() => onPick(option)}
+        >
+          {t[TERRAIN_TEXT[option].name] as string}
+        </button>
+      ))}
+      <span className="palette-hint">{t.paletteHint}</span>
+      <button className="button button-small" data-action="closePalette" onClick={onClose}>
+        {t.paletteDone}
+      </button>
+    </div>
+  )
+}
+
+/**
+ * The way out of a landing that cannot be finished.
+ *
+ * Deliberately quiet — a small button in the corner, not an option in the flow —
+ * because it is for a broken board, not for a hard one. Each choice is asked for
+ * twice, and each says what it keeps and what it redeals, so nobody rerolls a
+ * battlefield by accident while reaching for the undo.
+ */
+type RescueKey = 'restart' | 'reroll' | 'withdraw' | 'win' | 'lose' | 'skip'
+
+function Rescue({
+  dispatch,
+  onEdit,
+}: {
+  dispatch: (action: ExpeditionAction) => void
+  onEdit: () => void
+}) {
+  const { t } = useLang()
+  const [open, setOpen] = useState(false)
+  const [confirming, setConfirming] = useState<RescueKey | null>(null)
+
+  const options: { key: RescueKey; label: string; text: string; action: ExpeditionAction }[] = [
+    {
+      key: 'restart',
+      label: t.rescueRestart,
+      text: t.rescueRestartText,
+      action: { k: 'restartBattle' },
+    },
+    {
+      key: 'reroll',
+      label: t.rescueReroll,
+      text: t.rescueRerollText,
+      action: { k: 'rerollBattle' },
+    },
+    {
+      key: 'withdraw',
+      label: t.rescueWithdraw,
+      text: t.rescueWithdrawText,
+      action: { k: 'withdrawBeforeLanding' },
+    },
+    {
+      key: 'win',
+      label: t.rescueWin,
+      text: t.rescueWinText,
+      action: { k: 'settleBattle', as: 'victory' },
+    },
+    {
+      key: 'lose',
+      label: t.rescueLose,
+      text: t.rescueLoseText,
+      action: { k: 'settleBattle', as: 'defeat' },
+    },
+    {
+      key: 'skip',
+      label: t.rescueSkip,
+      text: t.rescueSkipText,
+      action: { k: 'settleBattle', as: 'skip' },
+    },
+  ]
+
+  // A modal rather than a panel in the bar: opening it must not resize the board
+  // underneath, which is the thing you are trying to look at.
+  return (
+    <>
+      <button className="button button-small rescue-open" data-action="openRescue" onClick={() => setOpen(true)}>
+        {t.rescueStuck}
+      </button>
+      {open && <div className="rescue-veil" onClick={() => setOpen(false)}>{panel()}</div>}
+    </>
+  )
+
+  function panel() {
+    return (
+      <div className="rescue" onClick={(event) => event.stopPropagation()}>
+        <p className="rescue-intro">{t.rescueIntro}</p>
+        {/* The fourth way out, and the only one that keeps the battle: change the
+          ground itself. It is not an action to confirm but a tool to pick up, so
+          it sits apart from the three. */}
+      <div className="rescue-option">
+        <div className="rescue-text">
+          <strong>{t.rescueEdit}</strong>
+          <span>{t.rescueEditText}</span>
+        </div>
+        <button
+          className="button button-small"
+          data-action="rescue-edit"
+          onClick={() => {
+            onEdit()
+            setOpen(false)
+          }}
+        >
+          {t.rescueChoose}
+        </button>
+      </div>
+
+      {options.map((option) => (
+        <div key={option.key} className="rescue-option">
+          <div className="rescue-text">
+            <strong>{option.label}</strong>
+            <span>{option.text}</span>
+          </div>
+          {confirming === option.key ? (
+            <span className="rescue-buttons">
+              <button
+                className="button button-small button-primary"
+                data-action={`rescue-${option.key}`}
+                onClick={() => {
+                  dispatch(option.action)
+                  setConfirming(null)
+                  setOpen(false)
+                }}
+              >
+                {t.rescueConfirm}
+              </button>
+              <button className="button button-small" onClick={() => setConfirming(null)}>
+                {t.encounterBack}
+              </button>
+            </span>
+          ) : (
+            <button
+              className="button button-small"
+              data-action={`rescue-pick-${option.key}`}
+              onClick={() => setConfirming(option.key)}
+            >
+              {t.rescueChoose}
+            </button>
+          )}
+        </div>
+        ))}
+        <button className="button button-small rescue-close" data-action="closeRescue" onClick={() => setOpen(false)}>
+          {t.close}
+        </button>
+        </div>
+    )
+  }
+}
+
+/**
  * The objective read-out that sits above the grid — and the undo button.
  *
  * The button lives here rather than in the action bar because the action bar is
@@ -41,16 +222,24 @@ function ObjectiveBar({
   battle,
   canUndo,
   onUndo,
+  rescue,
 }: {
   battle: BattleState
   canUndo: boolean
   onUndo: () => void
+  rescue: React.ReactNode
 }) {
   const { t } = useLang()
   const parts: string[] = [objectiveText(battle.objective, t)]
 
   if (battle.objective.k === 'collect') {
     parts.push(t.relicsCarried(battle.carried, battle.objective.count))
+  }
+  // Who is out and who is not: without this, a mission that will not end because
+  // one hero is three tiles from the exit looks like a bug.
+  if (battle.objective.k === 'reachExit' || battle.objective.k === 'collect') {
+    const { there, total } = atExit(battle)
+    parts.push(t.atExitCount(there, total))
   }
   if (battle.roundLimit !== null) {
     parts.push(t.roundLimitLeft(Math.max(0, battle.roundLimit - battle.round)))
@@ -72,6 +261,7 @@ function ObjectiveBar({
       >
         {t.undo}
       </button>
+      {rescue}
     </div>
   )
 }
@@ -89,6 +279,12 @@ export function MissionView({
 }) {
   const { t, s } = useLang()
   const mission = state.activeMission
+  // The hand can be folded away to give the board the screen. The height is what
+  // limits the board — it scales to fit its box — so this is the one thing that
+  // actually makes the battlefield bigger.
+  const [handOpen, setHandOpen] = useState(true)
+  // Which ground the repair tool is holding, or null when it is put away.
+  const [editKind, setEditKind] = useState<TerrainKind | null>(null)
   if (!mission) return null
   const settled = missionSettled(state)
 
@@ -130,9 +326,45 @@ export function MissionView({
     : undefined
   const previewRadius = activeEffect?.k === 'areaAtPoint' ? activeEffect.radius : null
 
+  // What each offered target would actually lose. Asked of the engine, so the
+  // number on the board is the number that will be taken off.
+  const damagePreview = new Map<string, number>()
+  if (battle.pending?.kind === 'unit' && battle.pending.prompt.k === 'pickAttackTarget' && active) {
+    const { power, range } = battle.pending.prompt
+    for (const id of battle.pending.options) {
+      const target = battle.units.find((u) => u.id === id)
+      if (target) {
+        damagePreview.set(id, predictDamage(battle, active, target, power, { melee: range <= 1 }))
+      }
+    }
+  }
+
   return (
     <div className="mission mission-battle" data-phase={battle.phase}>
-      <ObjectiveBar battle={battle} canUndo={canUndo} onUndo={onUndo} />
+      <ObjectiveBar
+        battle={battle}
+        canUndo={canUndo}
+        onUndo={onUndo}
+        rescue={
+          <>
+            {!settled && (
+              <button
+                className="button button-small hand-toggle"
+                data-action="toggleHand"
+                title={t.handToggleHint}
+                onClick={() => setHandOpen((open) => !open)}
+              >
+                {handOpen ? t.handHide : t.handShow}
+              </button>
+            )}
+            {settled ? null : <Rescue dispatch={dispatch} onEdit={() => setEditKind('floor')} />}
+          </>
+        }
+      />
+
+      {editKind !== null && (
+        <TerrainPalette kind={editKind} onPick={setEditKind} onClose={() => setEditKind(null)} />
+      )}
 
       <div className="mission-body">
         <main className="grid-area">
@@ -142,14 +374,22 @@ export function MissionView({
             selectableUnits={selectableUnits}
             activeId={active?.id}
             previewRadius={previewRadius}
-            onTile={(key) => dispatch({ k: 'battleAction', action: { k: 'choose', value: key } })}
+            damagePreview={damagePreview}
+            editing={editKind !== null}
+            onTile={(key) =>
+              dispatch(
+                editKind !== null
+                  ? { k: 'battleAction', action: { k: 'editTerrain', tile: key, kind: editKind } }
+                  : { k: 'battleAction', action: { k: 'choose', value: key } },
+              )
+            }
             onUnit={(id) => dispatch({ k: 'battleAction', action: { k: 'choose', value: id } })}
           />
         </main>
         <Sidebar state={battle} />
       </div>
 
-      <footer className="action-area">
+      <footer className={`action-area ${handOpen || settled ? '' : 'action-area-folded'}`}>
         {settled ? (
           <div className="action-bar" data-mode="settled">
             <div

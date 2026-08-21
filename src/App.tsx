@@ -12,15 +12,27 @@ import { ArchiveView } from './ui/strategic/ArchiveView'
 import { bankExpedition, newArchive, purchaseUnlock } from './engine/expedition/archive'
 import { canAdvanceWeek, expeditionStep, livingCrew } from './engine/expedition/expedition'
 import type { ExpeditionAction } from './engine/expedition/expedition'
-import { clearSave, loadGame, parseSave, saveFileName, saveGame, serialiseSave } from './engine/expedition/save'
+import {
+  clearSave,
+  loadDialPreset,
+  loadGame,
+  parseSave,
+  saveDialPreset,
+  saveFileName,
+  saveGame,
+  serialiseSave,
+} from './engine/expedition/save'
 import { describeExpeditionEvent } from './i18n/describeExpedition'
 import { EncounterView, MarketView } from './ui/strategic/EncounterView'
 import { HeartView, OverView } from './ui/strategic/EndView'
+import { DifficultyPanel } from './ui/DifficultyPanel'
 import { Help } from './ui/Help'
 import type { HelpTopic } from './ui/Help'
 import { LangProvider, useLang } from './i18n/LangContext'
 import { setSoundEnabled, soundEnabled } from './ui/assets'
 import { MissionView } from './ui/MissionView'
+import { DEFAULT_LEVEL, DIALS } from './content/difficulty'
+import type { DialId } from './content/difficulty'
 import { randomSeed } from './engine/rng'
 import { RESOURCES, RESOURCE_ORDER } from './content/ship'
 import { ResearchView } from './ui/strategic/ResearchView'
@@ -28,7 +40,7 @@ import { ShipView } from './ui/strategic/ShipView'
 import { ChangeSummary, shotOf, summaryMatters } from './ui/strategic/ChangeSummary'
 import type { Shot, Summary, SummaryKind } from './ui/strategic/ChangeSummary'
 import { StarMapView } from './ui/strategic/StarMapView'
-import { startExpedition } from './engine/expedition/expedition'
+import { projectWeek, resourceMax, startExpedition } from './engine/expedition/expedition'
 import type {
   ArchiveUnlockId,
   ExpeditionLength,
@@ -155,6 +167,11 @@ function Game() {
   }, [])
   const [showArchive, setShowArchive] = useState(() => !loadGame()?.expedition)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [wipeOpen, setWipeOpen] = useState(false)
+  const [dialsOpen, setDialsOpen] = useState(false)
+  // Whether there is a preset to offer. Read once and kept, so the button does
+  // not flicker in and out as the panel is used.
+  const [hasPreset, setHasPreset] = useState(() => loadDialPreset() !== null)
   const [sound, setSound] = useState(() => soundEnabled())
   const downloadRef = useRef<HTMLAnchorElement | null>(null)
 
@@ -247,7 +264,14 @@ function Game() {
   const startNew = (length: ExpeditionLength, seed: number | null) => {
     setGame((previous) => ({
       ...previous,
-      expedition: startExpedition(seed ?? randomSeed(), length, previous.archive),
+      // A saved preset is the terms this player likes; a new expedition starts on
+      // them rather than making them dial it in again.
+      expedition: startExpedition(
+        seed ?? randomSeed(),
+        length,
+        previous.archive,
+        loadDialPreset() ?? undefined,
+      ),
     }))
     setShowArchive(false)
   }
@@ -273,6 +297,18 @@ function Game() {
     window.setTimeout(() => URL.revokeObjectURL(url), 4000)
   }
 
+  /**
+   * Wipe everything and start over: the save in the browser, the Archive, the
+   * running expedition. There is no undo for this one, which is why it is asked
+   * for twice and why it is the only red button in the game.
+   */
+  const wipeEverything = useCallback(() => {
+    clearSave()
+    setHasPreset(false)
+    setGame({ archive: newArchive(), expedition: null })
+    setShowArchive(true)
+  }, [setGame])
+
   const importSave = (text: string): boolean => {
     const parsed = parseSave(text)
     if (!parsed) return false
@@ -282,6 +318,10 @@ function Game() {
   }
 
   const expedition = game.expedition
+  // What the week would do, if the allocation and the postings stay as they are.
+  // A whole week is run on a copy for this, so it is memoised on the state.
+  const projection = useMemo(() => (expedition ? projectWeek(expedition) : null), [expedition])
+
   const logLines = useMemo(() => {
     if (!expedition) return []
     return [...expedition.log].reverse().slice(0, 60)
@@ -308,10 +348,7 @@ function Game() {
           }
           onExport={exportSave}
           onImport={importSave}
-          onDeleteSave={() => {
-            clearSave()
-            setGame({ archive: newArchive(), expedition: null })
-          }}
+          onDeleteSave={wipeEverything}
         />
         <a ref={downloadRef} hidden />
         {helpOpen && <Help topic="overview" onClose={() => setHelpOpen(false)} />}
@@ -372,14 +409,39 @@ function Game() {
         </div>
 
         <div className="topbar-middle">
-          {RESOURCE_ORDER.map((id) => (
-            <div key={id} className="meter meter-tight" title={s(RESOURCES[id].name)}>
-              <span className="meter-label">
-                {RESOURCES[id].icon} {s(RESOURCES[id].name)}
-              </span>
-              <span className="meter-value">{expedition.resources[id]}</span>
-            </div>
-          ))}
+          {RESOURCE_ORDER.map((id) => {
+            const delta = projection?.[id]
+            const value = expedition.resources[id]
+            const max = resourceMax(expedition, id)
+            // The cap is always in the tooltip and comes into the open when it is
+            // close enough to matter: a gain the hold cannot take is simply lost,
+            // and that used to happen with nothing on screen to explain it.
+            const nearFull = value >= max * 0.9
+            return (
+              <div
+                key={id}
+                className={`meter meter-tight ${nearFull ? 'meter-full' : ''}`}
+                title={`${s(RESOURCES[id].name)}: ${value} / ${max}`}
+              >
+                <span className="meter-label">
+                  {RESOURCES[id].icon} {s(RESOURCES[id].name)}
+                </span>
+                <span className="meter-value">
+                  {value}
+                  {nearFull && <span className="meter-cap">/{max}</span>}
+                  {delta !== undefined && (
+                    <span
+                      className={`meter-delta ${delta > 0 ? 'gain' : 'loss'}`}
+                      title={t.projectionHint}
+                    >
+                      ({delta > 0 ? '+' : '−'}
+                      {Math.abs(delta)})
+                    </span>
+                  )}
+                </span>
+              </div>
+            )
+          })}
           <div className="meter meter-tight">
             <span className="meter-label">☍ {t.crewHeading}</span>
             <span className="meter-value">{livingCrew(expedition).length}</span>
@@ -437,6 +499,26 @@ function Game() {
             aria-label={t.helpTitle}
           >
             ?
+          </button>
+
+          <button
+            className="button"
+            data-action="openDials"
+            onClick={() => setDialsOpen(true)}
+            title={t.dialsTitle}
+            aria-label={t.dialsTitle}
+          >
+            ⚙
+          </button>
+
+          <button
+            className="button button-danger"
+            data-action="openWipe"
+            onClick={() => setWipeOpen(true)}
+            title={t.wipeTitle}
+            aria-label={t.wipeTitle}
+          >
+            ⟲
           </button>
         </div>
       </header>
@@ -504,6 +586,75 @@ function Game() {
       <a ref={downloadRef} hidden />
       {helpOpen && <Help topic={helpTopicFor(screen)} onClose={() => setHelpOpen(false)} />}
       {session.summary && <ChangeSummary summary={session.summary} onClose={closeSummary} />}
+      {dialsOpen && expedition && (
+        <DifficultyPanel
+          dials={expedition.dials}
+          hasPreset={hasPreset}
+          onSet={(dial, level) => dispatch({ k: 'dialSet', dial, level })}
+          onSavePreset={() => {
+            saveDialPreset(expedition.dials)
+            setHasPreset(true)
+          }}
+          onLoadPreset={() => {
+            const preset = loadDialPreset()
+            if (!preset) return
+            for (const [dial, level] of Object.entries(preset)) {
+              dispatch({ k: 'dialSet', dial: dial as DialId, level })
+            }
+          }}
+          onReset={() => {
+            for (const dial of DIALS) dispatch({ k: 'dialSet', dial: dial.id, level: DEFAULT_LEVEL })
+          }}
+          onClose={() => setDialsOpen(false)}
+        />
+      )}
+      {wipeOpen && (
+        <WipeDialog
+          onCancel={() => setWipeOpen(false)}
+          onConfirm={() => {
+            setWipeOpen(false)
+            wipeEverything()
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * The one dialog that asks whether you really mean it.
+ *
+ * Everything else in the game either has an undo or leaves a trace in the
+ * Archive. This does neither: it takes the Archive too. So it says what it will
+ * destroy, in words, and the destructive button is not the one under the cursor.
+ */
+function WipeDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  const { t } = useLang()
+  return (
+    <div className="wipe-veil" onClick={onCancel}>
+      <div
+        className="wipe"
+        role="dialog"
+        aria-modal
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2>{t.wipeHeading}</h2>
+        <p>{t.wipeText}</p>
+        <ul className="wipe-list">
+          <li>{t.wipeItemExpedition}</li>
+          <li>{t.wipeItemArchive}</li>
+          <li>{t.wipeItemSave}</li>
+        </ul>
+        <p className="wipe-hint">{t.wipeHint}</p>
+        <div className="button-row">
+          <button className="button" data-action="cancelWipe" onClick={onCancel}>
+            {t.cancel}
+          </button>
+          <button className="button button-danger" data-action="confirmWipe" onClick={onConfirm}>
+            {t.wipeConfirm}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

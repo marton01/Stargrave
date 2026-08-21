@@ -40,8 +40,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     branch: 'technology',
     name: { hu: 'Rácsos merevítés', en: 'Hull lattice' },
     description: {
-      hu: 'A hajótest szerkezetének átgondolása. Felső határ +6.',
-      en: 'Rethinking the ship’s frame. Hull capacity +6.',
+      hu: 'A hajótest szerkezetének átgondolása. A hajótest felső határa 20 → 26.',
+      en: 'Rethinking the ship’s frame. Hull capacity 20 → 26.',
     },
     cost: 6,
     weeks: 2,
@@ -66,8 +66,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     branch: 'technology',
     name: { hu: 'Hidropónia', en: 'Hydroponics' },
     description: {
-      hu: 'Élelmet termelni a fedélzeten. Hetente +2, és nagyobb tárolókapacitás.',
-      en: 'Growing food aboard. +2 every week, and more storage.',
+      hu: 'Élelmet termelni a fedélzeten. Hetente +2 élelem, és a felső határ 60 → 70.',
+      en: 'Growing food aboard. +2 food a week, and capacity 60 → 70.',
     },
     cost: 7,
     weeks: 2,
@@ -131,8 +131,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     branch: 'technology',
     name: { hu: 'Visszhang-kamra', en: 'Echo vault' },
     description: {
-      hu: 'Tárolni, amit a Labor megfejtett. Hetente +1 Információ, és nagyobb kapacitás.',
-      en: 'Storing what the Lab has decoded. +1 Information every week, and more capacity.',
+      hu: 'Tárolni, amit a Labor megfejtett. Hetente +1 információ, és a felső határ 60 → 80.',
+      en: 'Storing what the Lab has decoded. +1 information a week, and capacity 60 → 80.',
     },
     cost: 9,
     weeks: 3,

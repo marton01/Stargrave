@@ -5,10 +5,28 @@
 // failed run is not wasted.
 
 import { useRef, useState } from 'react'
-import { ARCHIVE_UNLOCKS, canUnlock } from '../../engine/expedition/archive'
+import {
+  canUnlock,
+  ENDINGS_BEFORE_LAST,
+  ENDING_TITLES,
+  offeredUnlocks,
+} from '../../engine/expedition/archive'
 import { LENGTHS } from '../../engine/expedition/starmap'
 import { useLang } from '../../i18n/LangContext'
 import type { ArchiveState, ArchiveUnlockId, ExpeditionLength } from '../../engine/expedition/types'
+
+/**
+ * Which understanding tier each ending needs. Mirrors `availableEndings`, and is
+ * here rather than in the engine because it exists only to be *shown* — the
+ * engine decides, this explains.
+ */
+const ENDING_TIER: Record<(typeof ENDINGS_BEFORE_LAST)[number], number> = {
+  flee: 0,
+  blindRuin: 0,
+  witness: 1,
+  intervene: 2,
+  communion: 3,
+}
 
 export function ArchiveView({
   archive,
@@ -116,9 +134,45 @@ export function ArchiveView({
         </header>
         <p className="panel-intro">{t.archiveIntro}</p>
 
+        <h3>{t.endingsHeading}</h3>
+        <p className="panel-meta">
+          {archive.completed
+            ? t.endingsDone
+            : t.endingsProgress(
+                ENDINGS_BEFORE_LAST.filter((id) => archive.endingsSeen.includes(id)).length,
+                ENDINGS_BEFORE_LAST.length,
+              )}
+        </p>
+        <ul className="endings">
+          {ENDINGS_BEFORE_LAST.map((id) => {
+            const seen = archive.endingsSeen.includes(id)
+            return (
+              <li key={id} className={`endings-row ${seen ? 'endings-seen' : ''}`} data-ending={id}>
+                <span className="endings-mark">{seen ? '◆' : '◇'}</span>
+                <span className="endings-name">{seen ? s(ENDING_TITLES[id]) : t.endingUnseen}</span>
+                <span className="endings-need">{t.endingNeed(ENDING_TIER[id])}</span>
+              </li>
+            )
+          })}
+          {/* The sixth is not a slot to fill in but the thing the other five are
+              for, so it is only named once it can be aimed at. */}
+          {(archive.unlocked.includes('last-question') || archive.completed) && (
+            <li
+              className={`endings-row endings-final ${archive.completed ? 'endings-seen' : ''}`}
+              data-ending="theAnswer"
+            >
+              <span className="endings-mark">{archive.completed ? '✦' : '◇'}</span>
+              <span className="endings-name">
+                {archive.completed ? s(ENDING_TITLES.theAnswer) : t.endingLastQuestion}
+              </span>
+              <span className="endings-need">{t.endingNeed(3)}</span>
+            </li>
+          )}
+        </ul>
+
         <h3>{t.unlockHeading}</h3>
         <div className="unlock-list">
-          {ARCHIVE_UNLOCKS.map((unlock) => {
+          {offeredUnlocks(archive).map((unlock) => {
             const owned = archive.unlocked.includes(unlock.id)
             const affordable = canUnlock(archive, unlock.id)
             return (

@@ -45,13 +45,23 @@ export * from './types'
 export { edgeAt, poweredTiles, rotateMask, traceBeam, reflect } from './routing'
 export { scoreGuess } from './logic'
 
-export function generatePuzzle(kind: PuzzleKind, seed: number, difficulty: number): Puzzle {
+/**
+ * @param extraTries How many attempts the difficulty dial adds or removes. Only
+ * two puzzle kinds have an attempt limit at all — the rest are settled by
+ * deduction, not by guessing — so this quietly does nothing for the others.
+ */
+export function generatePuzzle(
+  kind: PuzzleKind,
+  seed: number,
+  difficulty: number,
+  extraTries = 0,
+): Puzzle {
   const rng = createRng(seed)
   switch (kind) {
     case 'runeDecode':
-      return { k: kind, s: generateRuneDecode(rng, difficulty) }
+      return { k: kind, s: generateRuneDecode(rng, difficulty, extraTries) }
     case 'balanceScales':
-      return { k: kind, s: generateBalanceScales(rng, difficulty) }
+      return { k: kind, s: generateBalanceScales(rng, difficulty, extraTries) }
     case 'glyphs':
       return { k: kind, s: generateGlyphs(rng, difficulty) }
     case 'safeGround':

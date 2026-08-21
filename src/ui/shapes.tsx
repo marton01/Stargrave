@@ -97,6 +97,66 @@ export function PillarShape() {
   )
 }
 
+// The three mission markers. They used to be drawn inline in the grid, which is
+// why they were missing from the help: there was nothing to put there. Here they
+// are components in the unit square like everything else, so the legend draws the
+// same mark the board does.
+
+/** A relic to be carried out. */
+export function RelicShape() {
+  return (
+    <g>
+      <circle cx="0.5" cy="0.5" r="0.22" fill="none" stroke="var(--rune)" strokeWidth="0.04" />
+      <polygon points="0.5,0.34 0.66,0.5 0.5,0.66 0.34,0.5" fill="var(--rune)" />
+    </g>
+  )
+}
+
+/**
+ * The way out: the tile the party has to be standing on.
+ *
+ * Every length here is in units of the tile, stroke widths included. A shape in
+ * the unit square must not borrow a stroke width from CSS: the group it sits in
+ * is scaled by the tile size, so a `stroke-width: 2` becomes a hundred-pixel
+ * band and a dash pattern becomes a blob.
+ */
+export function ExitShape() {
+  return (
+    <g>
+      <rect
+        x="0.06"
+        y="0.06"
+        width="0.88"
+        height="0.88"
+        rx="0.08"
+        fill="rgba(111, 156, 88, 0.16)"
+        stroke="var(--green)"
+        strokeWidth="0.035"
+        strokeDasharray="0.11 0.07"
+      />
+      <path
+        d="M0.32,0.5 L0.68,0.5 M0.55,0.36 L0.68,0.5 L0.55,0.64"
+        fill="none"
+        stroke="var(--green)"
+        strokeWidth="0.05"
+        strokeLinecap="round"
+      />
+    </g>
+  )
+}
+
+/** Floor that is going to give way. The number of rounds left is a badge. */
+export function CollapsingShape() {
+  return (
+    <path
+      d="M0.15,0.5 L0.35,0.3 L0.5,0.6 L0.7,0.35 L0.88,0.55"
+      fill="none"
+      stroke="rgba(200,86,63,0.75)"
+      strokeWidth="0.04"
+    />
+  )
+}
+
 /** A trap marker. */
 export function TrapShape() {
   return (

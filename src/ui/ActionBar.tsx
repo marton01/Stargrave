@@ -47,8 +47,12 @@ function SelectionBar({
   state: BattleState
   dispatch: (action: Action) => void
 }) {
-  const { t } = useLang()
+  const { t, s } = useLang()
   const [restMode, setRestMode] = useState(false)
+  // Resting loses a card for the rest of the expedition. That used to happen on
+  // one click of one card, which reads as "the cards came back by themselves" —
+  // so it is asked for twice, like every other irreversible thing.
+  const [losing, setLosing] = useState<string | null>(null)
   const hero = livingHeroes(state).find((h) => h.id === state.selectingHero)
 
   if (!hero) return null
@@ -68,19 +72,38 @@ function SelectionBar({
             <Rich text={t.restPickCard} />
           </p>
           {restPossible ? (
-            <div className="card-row">
-              {hero.discard.map((cardId) => (
-                <CardView
-                  key={cardId}
-                  cardId={cardId}
-                  onClick={() => {
-                    dispatch({ k: 'rest', heroId: hero.id, loseCard: cardId })
-                    dispatch({ k: 'confirmSelection', heroId: hero.id })
-                    setRestMode(false)
-                  }}
-                />
-              ))}
-            </div>
+            <>
+              <div className="card-row">
+                {hero.discard.map((cardId) => (
+                  <CardView
+                    key={cardId}
+                    cardId={cardId}
+                    selected={losing === cardId}
+                    onClick={() => setLosing(cardId)}
+                  />
+                ))}
+              </div>
+              {losing !== null && (
+                <div className="button-row">
+                  <span className="rest-warning">{t.restLoseWarning(s(card(losing).name))}</span>
+                  <button
+                    className="button button-primary"
+                    data-action="confirmRest"
+                    onClick={() => {
+                      dispatch({ k: 'rest', heroId: hero.id, loseCard: losing })
+                      dispatch({ k: 'confirmSelection', heroId: hero.id })
+                      setLosing(null)
+                      setRestMode(false)
+                    }}
+                  >
+                    {t.restConfirm}
+                  </button>
+                  <button className="button" data-action="cancelRestCard" onClick={() => setLosing(null)}>
+                    {t.encounterBack}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <p className="instruction warning">{t.nothingToRecover}</p>
           )}

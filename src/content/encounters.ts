@@ -43,6 +43,23 @@ export type EncounterEffect =
   | { k: 'hullRisk'; amount: number }
   | { k: 'startMission'; flavour: 'boarding' | 'ruins' | 'explore' }
   | { k: 'startPuzzle'; kind?: PuzzleKind }
+  /** Remember this for the rest of the expedition. */
+  | { k: 'flag'; id: string }
+  /** Remember this for good: it goes into the Archive and comes back next run. */
+  | { k: 'mark'; id: string }
+  /**
+   * Move the Gate. Negative takes weeks away — the heaviest thing a decision can
+   * do, because the countdown is the whole pressure of the game.
+   */
+  | { k: 'gateWeeks'; amount: number }
+  /** Push the Darkening on or back a level. */
+  | { k: 'darkening'; amount: number }
+  /**
+   * The situation is not over: this encounter follows it, once the result has
+   * been read. A scene, in other words — and because it is an ordinary
+   * encounter, it can have its own costs, requirements and further scenes.
+   */
+  | { k: 'then'; encounterId: string }
 
 export type ChoiceRequirement =
   | { k: 'shieldsAtLeast'; value: number }
@@ -50,6 +67,11 @@ export type ChoiceRequirement =
   | { k: 'understandingAtLeast'; value: number }
   | { k: 'crewWithTrait'; trait: CrewTraitId }
   | { k: 'resourceAtLeast'; id: ResourceId; value: number }
+  /** Something this expedition did. */
+  | { k: 'flag'; id: string }
+  | { k: 'noFlag'; id: string }
+  /** Something an earlier expedition did. */
+  | { k: 'mark'; id: string }
 
 export type EncounterChoice = {
   text: Text
@@ -70,6 +92,16 @@ export type Encounter = {
   once?: boolean
   /** Only appears once the Archive has opened it up. */
   archiveGated?: boolean
+  /**
+   * Never turns up on its own: it is a later scene of another encounter, reached
+   * through a `then` effect. Keeping scenes as ordinary encounters means they
+   * get costs, requirements and further scenes for free.
+   */
+  chained?: boolean
+  /** Only appears if the expedition has this flag. */
+  requiresFlag?: string
+  /** Only appears if an earlier expedition left this mark. */
+  requiresMark?: string
   choices: EncounterChoice[]
 }
 
@@ -688,10 +720,14 @@ export const ENCOUNTERS: Encounter[] = [
         effects: [
           { k: 'resource', id: 'morale', amount: 2 },
           { k: 'understanding', amount: 1 },
+          { k: 'flag', id: 'wraith-freed' },
         ],
         result: {
-          hu: 'Nem támad. Elindul valamerre, és az útvonala nem véletlen.',
-          en: 'It does not attack. It sets off somewhere, and its heading is not random.',
+          hu:
+            'Nem támad. Elindul valamerre, és az útvonala nem véletlen. Amerre megy, arra megyünk mi is.',
+          en:
+            'It does not attack. It sets off somewhere, and its heading is not random. Where it goes is ' +
+            'where we are going too.',
         },
       },
       {
@@ -701,13 +737,189 @@ export const ENCOUNTERS: Encounter[] = [
           { k: 'resource', id: 'information', amount: 6 },
           { k: 'understanding', amount: 2 },
           { k: 'resource', id: 'morale', amount: -2 },
+          { k: 'flag', id: 'wraith-studied' },
         ],
         result: {
-          hu: 'Hat nap alatt megtudtuk, miből áll. A hetediken senki nem akart bemenni hozzá.',
-          en: 'In six days we learned what it is made of. On the seventh nobody wanted to go in.',
+          hu:
+            'Hat nap alatt megtudtuk, miből áll. A hetediken senki nem akart bemenni hozzá. ' +
+            'A kórus, amiből énekelt, azóta egy hanggal kevesebb — és ezt valaki számon tartja.',
+          en:
+            'In six days we learned what it is made of. On the seventh nobody wanted to go in. ' +
+            'The choir it sang in is one voice short now, and somebody is keeping count.',
         },
       },
       walkAway,
+    ],
+  },
+
+  // --------------------------------------------------------- the wraith, later
+  //
+  // Two follow-ups to `wounded-wraith`, one per decision. Neither can turn up on
+  // its own: each needs the flag its decision left behind, and the star map does
+  // not have to have guessed it would be needed — see `encounterAtNode`.
+
+  {
+    id: 'wraith-returns',
+    title: { hu: 'Ugyanaz a hang', en: 'The same voice' },
+    text: {
+      hu:
+        'A fantom, amit kiengedtünk, ott áll az útban. Nem közeledik. Egy irányba fordul, aztán ' +
+        'vissza ránk, és megvárja, hogy értsük.',
+      en:
+        'The wraith we let out is standing in the way. It does not approach. It turns towards one ' +
+        'heading, then back to us, and waits for us to understand.',
+    },
+    tags: ['ruins', 'anomaly', 'drift'],
+    weight: 8,
+    once: true,
+    requiresFlag: 'wraith-freed',
+    choices: [
+      {
+        text: { hu: 'Megyünk utána.', en: 'We follow it.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'understanding', amount: 2 },
+          { k: 'revealMap', columns: 2 },
+          { k: 'then', encounterId: 'wraith-deep' },
+        ],
+        result: {
+          hu:
+            'Egy héten át vezet, és nem néz vissza egyszer sem. Aztán megáll egy hely előtt, ' +
+            'ami nincs a térképeinken.',
+          en:
+            'It leads for a week and never once looks back. Then it stops in front of a place ' +
+            'that is not on our charts.',
+        },
+      },
+      {
+        text: { hu: 'Köszönjük, de dolgunk van.', en: 'Our thanks, but we have work.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'morale', amount: -1 },
+          { k: 'mark', id: 'refused-the-guide' },
+        ],
+        result: {
+          hu:
+            'Elfordul, és nem siet. A legénység egy része sokáig nézi utána, és nem mondja ki, ' +
+            'amit gondol. Ezt valahol feljegyezték — nem mi.',
+          en:
+            'It turns away, unhurried. Part of the crew watches it go for a long time and does not ' +
+            'say what they are thinking. This was written down somewhere. Not by us.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'wraith-deep',
+    title: { hu: 'Amit meg akart mutatni', en: 'What it wanted to show us' },
+    text: {
+      hu:
+        'Nem rom, nem hajó. Egy kapu-forma, félig a kőben, és nem működik. A fantom nem megy be. ' +
+        'Leül elé, ahogy egy kutya ül a csukott ajtó előtt.',
+      en:
+        'Not a ruin and not a ship. A gate-shape, half in the rock, and dead. The wraith does not ' +
+        'go in. It sits down in front of it the way a dog sits at a shut door.',
+    },
+    tags: ['ruins', 'anomaly'],
+    weight: 0,
+    chained: true,
+    choices: [
+      {
+        text: { hu: 'Kinyitjuk neki.', en: 'We open it for it.' },
+        costs: [{ k: 'cards', symbol: 'force', count: 2 }],
+        effects: [
+          { k: 'understanding', amount: 3 },
+          { k: 'gateWeeks', amount: 3 },
+          { k: 'mark', id: 'opened-the-second-gate' },
+        ],
+        result: {
+          hu:
+            'Két rúnát törünk szét hozzá, és a forma felismeri őket. Nem megy át rajta semmi — ' +
+            'de ami a mi Kapunkat tartja, az egy kicsit könnyebben tartja azóta. A fantom nem jön ' +
+            'velünk tovább. Nem is kell.',
+          en:
+            'We break two runes to do it, and the shape recognises them. Nothing crosses — but ' +
+            'whatever holds our own Gate holds it a little more easily from then on. The wraith does ' +
+            'not come any further. It does not need to.',
+        },
+      },
+      {
+        text: { hu: 'Csak felmérjük, és megyünk.', en: 'We survey it and move on.' },
+        costs: [],
+        effects: [
+          { k: 'understanding', amount: 1 },
+          { k: 'resource', id: 'information', amount: 8 },
+        ],
+        result: {
+          hu: 'Minden mérésünk megvan róla. A fantom ott marad ülve, és nem fordul utánunk.',
+          en: 'Every measurement is ours. The wraith stays sitting there and does not turn after us.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'wraith-chorus',
+    title: { hu: 'A kórus számol', en: 'The choir keeps count' },
+    text: {
+      hu:
+        'Három fantom áll a hajó előtt, egy vonalban. Nem támadnak. Ugyanazt a hangot ismétlik, ' +
+        'amit hat napon át hallgattunk a mérőműszereken.',
+      en:
+        'Three wraiths stand in a line in front of the ship. They do not attack. They repeat the ' +
+        'one voice we listened to for six days on the instruments.',
+    },
+    tags: ['ruins', 'anomaly', 'drift'],
+    weight: 8,
+    once: true,
+    requiresFlag: 'wraith-studied',
+    choices: [
+      {
+        text: { hu: 'Visszaadjuk a felvételeket.', en: 'We give the recordings back.' },
+        costs: [{ k: 'resource', id: 'information', amount: 8 }],
+        effects: [
+          { k: 'resource', id: 'morale', amount: 2 },
+          { k: 'mark', id: 'gave-the-voice-back' },
+        ],
+        result: {
+          hu:
+            'Kiírjuk, ami a mérésekből volt, és hagyjuk kint. Amikor visszanézünk, a vonal már ' +
+            'nem áll ott. A hang viszont teljes.',
+          en:
+            'We write out what the instruments held and leave it outside. When we look again the ' +
+            'line is gone. The voice, though, is whole.',
+        },
+      },
+      {
+        text: { hu: 'Nem adjuk. Álljunk készenlétbe.', en: 'We keep it. Stand ready.' },
+        costs: [],
+        effects: [
+          { k: 'darkening', amount: 1 },
+          { k: 'startMission', flavour: 'boarding' },
+        ],
+        result: {
+          hu: 'A vonal nem szakad meg. Egyszerűen közelebb kerül, és már a fedélzeten van.',
+          en: 'The line does not break. It simply gets closer, and then it is aboard.',
+        },
+      },
+      {
+        text: { hu: 'Cserét ajánlunk.', en: 'We offer a trade.' },
+        costs: [{ k: 'cards', symbol: 'insight', count: 1 }],
+        effects: [
+          { k: 'understanding', amount: 2 },
+          { k: 'resource', id: 'morale', amount: -1 },
+        ],
+        requires: { k: 'understandingAtLeast', value: 4 },
+        result: {
+          hu:
+            'Egy rúnát adunk oda helyette — a magunkéból. Elfogadják, és a csere közben egy ' +
+            'pillanatra érteni is engedik, mit vettünk el tőlük.',
+          en:
+            'We give a rune of our own instead. They accept, and for a moment in the exchange they ' +
+            'let us understand what we took.',
+        },
+      },
     ],
   },
 
@@ -1217,15 +1429,218 @@ export function encounter(id: string): Encounter {
   return e
 }
 
+// ------------------------------------------------- what an earlier run left
+//
+// Three encounters that only exist because a previous expedition did something.
+// They are the reason marks exist: a decision that is remembered by the Archive
+// is a decision that can be answered a run later, by a different crew, who only
+// know it from the record.
+//
+// Every mark the content sets has one of these. A hook without a payoff is the
+// thing being fixed here, so adding a mark without adding its answer would be
+// repeating the mistake.
+
+export const CARRIED_ENCOUNTERS: Encounter[] = [
+  {
+    id: 'guide-again',
+    title: { hu: 'A vezető, másodszor', en: 'The guide, a second time' },
+    text: {
+      hu:
+        'Az archívumban egy sor: egy expedíció nem ment el egy fantom után, mert dolga volt. ' +
+        'Most ugyanaz a hang áll a hajó előtt, és nem fordul semerre. Csak áll.',
+      en:
+        'One line in the Archive: an expedition did not follow a wraith, because it had work. ' +
+        'Now the same voice stands in front of the ship, and turns nowhere at all. It just stands.',
+    },
+    tags: ['ruins', 'anomaly', 'drift'],
+    weight: 9,
+    once: true,
+    requiresMark: 'refused-the-guide',
+    choices: [
+      {
+        text: { hu: 'Most megyünk. Ha még akarja.', en: 'We come now. If it still wants us to.' },
+        costs: [{ k: 'weeks', amount: 2 }],
+        effects: [
+          { k: 'understanding', amount: 3 },
+          { k: 'mark', id: 'followed-at-last' },
+        ],
+        result: {
+          hu:
+            'Két hét, és semmi jele, hogy örülne. A végén megáll egy hely előtt, amit már ' +
+            'egyszer megmutatott volna — és ami azóta bezárult. Amit még lehet érteni belőle, ' +
+            'azt megértjük.',
+          en:
+            'Two weeks, and no sign that it is glad. At the end it stops in front of a place it ' +
+            'would have shown us once, and which has closed since. What can still be understood of ' +
+            'it, we understand.',
+        },
+      },
+      {
+        text: { hu: 'Nem másodszor is.', en: 'Not a second time.' },
+        costs: [],
+        effects: [{ k: 'resource', id: 'morale', amount: -2 }],
+        result: {
+          hu:
+            'Elmegyünk mellette. Nem követ. A napló szerint ez a második alkalom, és a legénység ' +
+            'tudja, hogy olvassák majd.',
+          en:
+            'We pass it by. It does not follow. The log will say this was the second time, and the ' +
+            'crew knows the log gets read.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'second-gate-echo',
+    title: { hu: 'A másik kapu', en: 'The other gate' },
+    text: {
+      hu:
+        'Egy korábbi expedíció kinyitott valamit, ami nem a mi Kapunk volt. A műszerek most ' +
+        'ugyanazt a formát mérik ki, csak nyitva — és a mi visszaszámlálónk lassabban fut, ' +
+        'mióta beléptünk ebbe a rendszerbe.',
+      en:
+        'An earlier expedition opened something that was not our Gate. The instruments read the ' +
+        'same shape now, only open — and our own countdown has been running slower since we ' +
+        'entered this system.',
+    },
+    tags: ['anomaly', 'ruins', 'station'],
+    weight: 9,
+    once: true,
+    requiresMark: 'opened-the-second-gate',
+    choices: [
+      {
+        text: { hu: 'Beállunk a hatása alá, amíg lehet.', en: 'We hold inside its reach.' },
+        costs: [{ k: 'resource', id: 'fuel', amount: 6 }],
+        effects: [
+          { k: 'gateWeeks', amount: 4 },
+          { k: 'understanding', amount: 1 },
+        ],
+        result: {
+          hu:
+            'Egy hétig állunk egy helyben, üzemanyagot égetve, és a Kapu ezalatt nem közeledik ' +
+            'a záráshoz. Amit egy másik csapat nyitott, azt most mi használjuk.',
+          en:
+            'We hold station for a week, burning fuel, and the Gate does not come any closer to ' +
+            'closing. What another crew opened, we are the ones using.',
+        },
+      },
+      {
+        text: { hu: 'Megpróbáljuk lezárni.', en: 'We try to close it.' },
+        costs: [{ k: 'cards', symbol: 'insight', count: 1 }],
+        effects: [
+          { k: 'understanding', amount: 3 },
+          { k: 'darkening', amount: -1 },
+          { k: 'mark', id: 'closed-the-second-gate' },
+        ],
+        requires: { k: 'understandingAtLeast', value: 6 },
+        result: {
+          hu:
+            'Nem tudjuk, mit tart nyitva, de azt látjuk, mi tartja. Amikor elzárjuk, a Sötétedés ' +
+            'egy szintet visszalép — és a hajón mindenki érzi, hogy valami abbahagyta a hívást.',
+          en:
+            'We do not know what holds it open, but we can see what holds it. When we shut it, the ' +
+            'Darkening falls back a level — and everybody aboard feels something stop calling.',
+        },
+      },
+      {
+        text: { hu: 'Nem nyúlunk hozzá.', en: 'We leave it alone.' },
+        costs: [],
+        effects: [{ k: 'resource', id: 'information', amount: 4 }],
+        result: {
+          hu: 'Lemérünk mindent, amit lehet, és tovább megyünk. Nyitva marad.',
+          en: 'We measure everything we can and move on. It stays open.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'voice-returned',
+    title: { hu: 'A visszaadott hang', en: 'The voice given back' },
+    text: {
+      hu:
+        'Egy kórus áll a rendszer peremén, és nem közeledik. Egy hang teljes benne, és az a hang ' +
+        'a mi archívumunkból került vissza. Nem támadnak. Várnak, hogy kérjünk valamit.',
+      en:
+        'A choir stands at the edge of the system and does not approach. One voice in it is whole, ' +
+        'and that voice came back out of our own Archive. They do not attack. They wait for us to ' +
+        'ask for something.',
+    },
+    tags: ['anomaly', 'ruins', 'world'],
+    weight: 9,
+    once: true,
+    requiresMark: 'gave-the-voice-back',
+    choices: [
+      {
+        text: { hu: 'Vezessenek a szívhez.', en: 'Let them lead us to the heart.' },
+        costs: [],
+        effects: [
+          { k: 'revealMap', columns: 3 },
+          { k: 'understanding', amount: 2 },
+        ],
+        result: {
+          hu:
+            'Nem beszélnek. Egyszerűen elmennek előttünk, és amerre elmennek, ott a térkép ' +
+            'kinyílik. Három oszlopon nincs többé kérdőjel.',
+          en:
+            'They do not speak. They simply go ahead of us, and where they go the map opens. Three ' +
+            'columns have no question marks left on them.',
+        },
+      },
+      {
+        text: { hu: 'Kérjük, hogy álljanak mellénk egyszer.', en: 'Ask them to stand with us once.' },
+        costs: [],
+        effects: [
+          { k: 'module', id: 'boardingWards' },
+          { k: 'resource', id: 'morale', amount: 2 },
+        ],
+        result: {
+          hu:
+            'Az egyik hang bejön a hajóra, és ott marad a rúnamagban. Nem lehet beszélni vele. ' +
+            'Ami kívülről jön, az most nehezebben talál be.',
+          en:
+            'One of the voices comes aboard and stays in the rune core. There is no talking to it. ' +
+            'What comes from outside has a harder time landing now.',
+        },
+      },
+      {
+        text: { hu: 'Semmit. Csak megköszönjük.', en: 'Nothing. We only thank them.' },
+        costs: [],
+        effects: [
+          { k: 'understanding', amount: 2 },
+          { k: 'mark', id: 'asked-for-nothing' },
+        ],
+        result: {
+          hu:
+            'Nem kérünk. A kórus egy ütemig hallgat, aztán szétnyílik, és utat hagy. Az Archívum ' +
+            'ezt is feljegyzi, és a következő csapat érteni fogja, miért.',
+          en:
+            'We ask for nothing. The choir holds for a beat, then parts and leaves a way through. ' +
+            'The Archive notes this too, and the next crew will understand why.',
+        },
+      },
+    ],
+  },
+]
+
 /** Which encounters can appear at a node with these tags? */
+/** Everything, in one list: the ordinary pool and the carried-over answers. */
+const ALL_ENCOUNTERS: Encounter[] = [...ENCOUNTERS, ...CARRIED_ENCOUNTERS]
+
 export function encountersFor(
   tags: readonly EncounterTag[],
   used: readonly string[],
   archiveOpen: boolean,
+  flags: readonly string[] = [],
+  marks: readonly string[] = [],
 ): Encounter[] {
-  return ENCOUNTERS.filter((e) => {
+  return ALL_ENCOUNTERS.filter((e) => {
+    if (e.chained) return false
     if (e.once && used.includes(e.id)) return false
     if (e.archiveGated && !archiveOpen) return false
+    if (e.requiresFlag && !flags.includes(e.requiresFlag)) return false
+    if (e.requiresMark && !marks.includes(e.requiresMark)) return false
     return e.tags.some((t) => tags.includes(t))
   })
 }

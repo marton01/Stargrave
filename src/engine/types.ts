@@ -210,6 +210,7 @@ export type LogEvent =
   | { k: 'trapTriggered'; unit: Text }
   | { k: 'trapPlaced'; power: number }
   | { k: 'pillarRaised' }
+  | { k: 'terrainEdited'; kind: TerrainKind }
   | { k: 'shieldGained'; unit: Text; amount: number }
   | { k: 'healed'; unit: Text; amount: number }
   | { k: 'statusApplied'; unit: Text; status: StatusKind }
@@ -230,7 +231,7 @@ export type LogEvent =
   | { k: 'exhausted'; unit: Text }
   | { k: 'relicPicked'; unit: Text; remaining: number }
   | { k: 'relicsComplete' }
-  | { k: 'exitReached'; unit: Text }
+  | { k: 'exitReached'; count: number }
   | { k: 'floorGaveWay' }
   | { k: 'floorAboutToGive'; rounds: number }
   | { k: 'reinforcements'; count: number }

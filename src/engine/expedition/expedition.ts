@@ -25,7 +25,9 @@ import {
   lifeSupportNeeded,
 } from '../../content/ship'
 import type { ResourceId, StationId, SystemId } from '../../content/ship'
-import { encounter } from '../../content/encounters'
+import { encounter, encountersFor } from '../../content/encounters'
+import { dialValue, normaliseDials } from '../../content/difficulty'
+import type { DialId } from '../../content/difficulty'
 import type { EncounterChoice, EncounterEffect } from '../../content/encounters'
 import { availableProjects, researchProject, understandingTier } from '../../content/research'
 import { card, cardsOfClass } from '../../content/cards'
@@ -33,7 +35,7 @@ import { generatePuzzle, puzzleStatus, applyPuzzleMove, STARTING_PUZZLE_KINDS } 
 import type { PuzzleKind, PuzzleMove } from '../puzzles/types'
 import { missionResult, startMission, step as battleStep } from '../battle'
 import type { Action as BattleAction, CarriedHero } from '../battle'
-import { LENGTHS, generateStarMap, mapNode, revealAhead } from './starmap'
+import { KIND_TAGS, LENGTHS, generateStarMap, mapNode, revealAhead } from './starmap'
 import type {
   ArchiveState,
   EndingId,
@@ -59,11 +61,28 @@ export type ExpeditionAction =
   | { k: 'engageNode' }
   | { k: 'encounterChoose'; index: number }
   | { k: 'encounterPayCard'; heroClass: HeroClassId; cardId: string }
+  | { k: 'encounterCancel' }
   | { k: 'encounterConfirm' }
   | { k: 'encounterClose' }
   | { k: 'battleAction'; action: BattleAction }
   | { k: 'puzzleMove'; move: PuzzleMove }
   | { k: 'missionFinish' }
+  /** Same battlefield, from the beginning. */
+  | { k: 'restartBattle' }
+  /** A different battlefield, same brief. */
+  | { k: 'rerollBattle' }
+  /** Leave, as if the landing had not happened. */
+  | { k: 'withdrawBeforeLanding' }
+  /**
+   * Decide the landing without playing it.
+   *
+   * Three shapes of the same escape hatch: take the win with everything it pays,
+   * take the loss with everything it costs, or walk away from a landing that is
+   * neither — nothing gained, nothing paid, the node counted as done.
+   */
+  | { k: 'settleBattle'; as: 'victory' | 'defeat' | 'skip' }
+  /** Move one difficulty dial. See content/difficulty.ts. */
+  | { k: 'dialSet'; dial: DialId; level: number }
   | { k: 'marketBuy'; index: number }
   | { k: 'chooseEnding'; endingId: EndingId }
   | { k: 'abandon' }
@@ -102,10 +121,15 @@ export function resourceMax(s: ExpeditionState, id: ResourceId): number {
 function gain(s: ExpeditionState, id: ResourceId, amount: number): void {
   if (amount === 0) return
   const before = s.resources[id]
-  s.resources[id] = Math.max(0, Math.min(resourceMax(s, id), before + amount))
+  const max = resourceMax(s, id)
+  s.resources[id] = Math.max(0, Math.min(max, before + amount))
   const delta = s.resources[id] - before
   if (delta > 0) log(s, { k: 'resourceGain', id, amount: delta })
   else if (delta < 0) log(s, { k: 'resourceLoss', id, amount: -delta })
+  // A gain the hold could not take is the one thing storage capacity is for, and
+  // silently dropping it is why nobody could tell whether capacity mattered.
+  const lost = amount - delta
+  if (amount > 0 && lost > 0) log(s, { k: 'storageFull', id, lost, max })
 }
 
 /** How much reactor output is actually available, after the Darkening bites. */
@@ -138,10 +162,125 @@ function stationStrength(s: ExpeditionState, station: StationId): number {
   }, 0)
 }
 
+/**
+ * What ending the week would do to the resources, if nothing else changes.
+ *
+ * Deliberately not a second copy of the weekly rules: it runs the week on a copy
+ * of the state and looks at the difference. A hand-written projection would be a
+ * second implementation of food, fuel, stations, modules and morale drift — and
+ * the day one of them changed, the header would start lying.
+ *
+ * `expeditionStep` already works on a clone and never touches the state it is
+ * given, so this costs one copy and cannot leak. And because every random draw
+ * comes from the state's own seed and step counter, the copy draws exactly what
+ * the real week will draw: the projection is not an estimate.
+ *
+ * Returns null while the week cannot be ended anyway — mid-battle, mid-encounter.
+ */
+export function projectWeek(s: ExpeditionState): Partial<Record<ResourceId, number>> | null {
+  if (!canAdvanceWeek(s)) return null
+  const after = expeditionStep(s, { k: 'advanceWeek' })
+  const out: Partial<Record<ResourceId, number>> = {}
+  for (const id of RESOURCE_ORDER) {
+    const delta = after.resources[id] - s.resources[id]
+    if (delta !== 0) out[id] = delta
+  }
+  return out
+}
+
+// ------------------------------------------------------- what a point buys
+//
+// Every one of these is the number the weekly turn actually uses, exported so
+// the ship screen can show it. Before this, the formulas lived inside the
+// functions that applied them and the interface showed only how many pips were
+// lit — so "does a fourth point do anything?" was unanswerable without reading
+// the source. Two of them turned out to be: no.
+
+/** Information the Lab produces in a week. Scales with power. */
+export function labOutput(s: ExpeditionState): number {
+  if (!stationActive(s, 'lab')) return 0
+  return 1 + s.power.lab + Math.max(0, traitBonus(crewAt(s, 'lab'), 'research'))
+}
+
+/**
+ * Hull the Forge repairs in a week.
+ *
+ * BALANCE: the power given to the Forge used to do nothing at all beyond
+ * switching it on — the repair came from the crew alone. It counts now, at half
+ * a point of hull per point of power, the same rate the crew is worth.
+ */
+export function forgeOutput(s: ExpeditionState): number {
+  if (!stationActive(s, 'forge')) return 0
+  return 1 + Math.floor((s.power.forge + stationStrength(s, 'forge')) / 2)
+}
+
+/** Columns of star map the Sensors reveal each week. */
+export function sensorOutput(s: ExpeditionState): number {
+  if (!stationActive(s, 'sensors')) return 0
+  return s.power.sensors + moduleTotal(s, 'sensorRange')
+}
+
+/**
+ * Hit points the Medbay gives each hero between landings.
+ *
+ * BALANCE: a flat 2 before, so a second medic was worth nothing. Now the crew
+ * counts, which is what the station is for.
+ */
+export function medbayOutput(s: ExpeditionState): number {
+  if (!stationActive(s, 'medbay')) return 0
+  return 1 + Math.floor(stationStrength(s, 'medbay') / 2)
+}
+
+/**
+ * Weeks of research the Archive skips ahead.
+ *
+ * BALANCE: flat one week before. A second, well-matched scientist now buys a
+ * second week — the one place where doubling up on a station is dramatic.
+ */
+export function archiveOutput(s: ExpeditionState): number {
+  if (!stationActive(s, 'archive')) return 0
+  return stationStrength(s, 'archive') >= 4 ? 2 : 1
+}
+
+/** Fuel the Bridge saves on every week under way. */
+export function bridgeOutput(s: ExpeditionState): number {
+  if (!stationActive(s, 'bridge')) return 0
+  return 1 + Math.floor(stationStrength(s, 'bridge') / 4)
+}
+
+/** Morale the Sanctum holds the ship at, above the baseline. */
+export function sanctumOutput(s: ExpeditionState): number {
+  if (!stationActive(s, 'sanctum')) return 0
+  return 2 + Math.floor(stationStrength(s, 'sanctum') / 3)
+}
+
+/** Flux the Armoury adds to the landing party. */
+export function armouryOutput(s: ExpeditionState): number {
+  if (!stationActive(s, 'armoury') || s.power.runeCore <= 0) return 0
+  return stationStrength(s, 'armoury') >= 4 ? 2 : 1
+}
+
+/** Weeks a journey of `base` weeks takes at the current engine power. */
+export function travelWeeks(s: ExpeditionState, base: number): number {
+  return Math.max(1, base - Math.max(0, s.power.engines - 1))
+}
+
+/** Hull risk the shields and wards absorb from an encounter. */
+export function shieldMitigation(s: ExpeditionState): number {
+  return s.power.shields + moduleTotal(s, 'wards')
+}
+
+/** Life support the crew needs, and what it has. */
+export function lifeSupportStatus(s: ExpeditionState): { has: number; needs: number } {
+  return { has: s.power.lifeSupport, needs: lifeSupportNeeded(livingCrew(s).length) }
+}
+
 /** Flux the rune core will hand the landing party. */
 export function missionFlux(s: ExpeditionState): number {
-  const armoury = stationActive(s, 'armoury') && s.power.runeCore > 0 ? 1 : 0
-  return Math.max(1, s.power.runeCore + armoury + moduleTotal(s, 'flux'))
+  return Math.max(
+    1,
+    s.power.runeCore + armouryOutput(s) + moduleTotal(s, 'flux') + dialValue(s.dials, 'flux'),
+  )
 }
 
 export function understandingTierOf(s: ExpeditionState) {
@@ -178,6 +317,8 @@ export function startExpedition(
   seed: number,
   length: ExpeditionLength,
   archive: ArchiveState,
+  /** The difficulty dials to run under. Defaults to the game as designed. */
+  startDials?: unknown,
 ): ExpeditionState {
   const rng = createRng(seed)
   const puzzleKinds = puzzleKindsFrom(archive)
@@ -217,7 +358,14 @@ export function startExpedition(
     if (member) member.station = station
   }
 
-  const gateWeeks = LENGTHS[length].weeks + (archive.unlocked.includes('longer-gate') ? 4 : 0)
+  const dials = normaliseDials(startDials)
+  const gateWeeks = Math.max(
+    8,
+    Math.round(
+      (LENGTHS[length].weeks + (archive.unlocked.includes('longer-gate') ? 4 : 0)) *
+        dialValue(dials, 'gateTime'),
+    ),
+  )
 
   const heroes: CarriedHero[] = (['runesmith', 'echoreader'] as HeroClassId[]).map((heroClass) => ({
     heroClass,
@@ -233,10 +381,12 @@ export function startExpedition(
     seed,
     rngStep: 0,
     length,
+    dials,
     week: 0,
     gateTotal: gateWeeks,
     gateWeeksLeft: gateWeeks,
     darkening: 0,
+    darkeningShift: 0,
     resources,
     reactorOutput: BASE_REACTOR_OUTPUT,
     power,
@@ -252,6 +402,15 @@ export function startExpedition(
     activeMission: null,
     pendingEncounter: null,
     usedEncounters: [],
+    // The deeper encounters are an Archive unlock; carried as a flag so that
+    // runtime choices can ask about it without reaching for the Archive.
+    flags: [
+      ...(archive.unlocked.includes('encounters-deep') ? ['deeper-layers'] : []),
+      ...(archive.unlocked.includes('last-question') ? ['last-question'] : []),
+    ],
+    // The long memory comes along, so a decision from an earlier run can be
+    // answered in this one.
+    marks: [...archive.marks],
     screen: 'ship',
     log: [],
     outcome: null,
@@ -285,39 +444,43 @@ export function puzzleKindsFrom(archive: ArchiveState): PuzzleKind[] {
 
 function runStations(s: ExpeditionState): void {
   // Lab: Information.
-  if (stationActive(s, 'lab')) {
-    const amount = 1 + s.power.lab + Math.max(0, traitBonus(crewAt(s, 'lab'), 'research'))
-    gain(s, 'information', amount)
+  const information = labOutput(s)
+  if (information > 0) {
+    gain(s, 'information', information)
     log(s, { k: 'stationRan', station: 'lab' })
   }
 
   // Forge: hull repair.
-  if (stationActive(s, 'forge')) {
-    const amount = 1 + Math.floor(stationStrength(s, 'forge') / 2)
-    gain(s, 'hull', amount)
+  const repair = forgeOutput(s)
+  if (repair > 0) {
+    gain(s, 'hull', repair)
     log(s, { k: 'stationRan', station: 'forge' })
   }
 
   // Sensors: reveal the road ahead.
-  if (stationActive(s, 'sensors')) {
-    const columns = s.power.sensors + moduleTotal(s, 'sensorRange')
+  const columns = sensorOutput(s)
+  if (columns > 0) {
     const revealed = revealAhead(s.map, s.at, columns)
     if (revealed > 0) log(s, { k: 'mapRevealed', columns })
   }
 
   // Medbay: patch the heroes up between landings.
-  if (stationActive(s, 'medbay')) {
+  const healing = medbayOutput(s)
+  if (healing > 0) {
     for (const hero of s.heroes) {
       const max = hero.heroClass === 'runesmith' ? 12 : 8
-      hero.hp = Math.min(max, hero.hp + 2)
+      hero.hp = Math.min(max, hero.hp + healing)
     }
     log(s, { k: 'stationRan', station: 'medbay' })
   }
 
-  // Archive: an extra week of research progress.
-  if (stationActive(s, 'archive') && s.research.active) {
-    s.research.active.weeksLeft -= 1
-    log(s, { k: 'stationRan', station: 'archive' })
+  // Archive: weeks of research skipped.
+  if (s.research.active) {
+    const weeks = archiveOutput(s)
+    if (weeks > 0) {
+      s.research.active.weeksLeft -= weeks
+      log(s, { k: 'stationRan', station: 'archive' })
+    }
   }
 }
 
@@ -326,7 +489,7 @@ function weeklyResources(s: ExpeditionState): void {
   const crewCount = livingCrew(s).length
   // BALANCE: this was crew/2, which emptied a full hold in seven weeks and made
   // starvation the default ending rather than a consequence of a bad route.
-  const eaten = Math.max(1, Math.ceil(crewCount / 3))
+  const eaten = Math.max(1, Math.ceil((crewCount / 3) * dialValue(s.dials, 'upkeep')))
   if (s.resources.food < eaten) {
     s.resources.food = 0
     log(s, { k: 'starving' })
@@ -338,8 +501,7 @@ function weeklyResources(s: ExpeditionState): void {
 
   // Fuel: only while under way. The Bridge makes every jump cheaper.
   if (s.travel) {
-    const discount = stationActive(s, 'bridge') ? 1 : 0
-    const burn = Math.max(1, 2 - discount)
+    const burn = Math.max(1, Math.round((2 - bridgeOutput(s)) * dialValue(s.dials, 'upkeep')))
     if (s.resources.fuel < burn) {
       s.resources.fuel = 0
       log(s, { k: 'noFuel' })
@@ -383,7 +545,7 @@ export function moraleTarget(s: ExpeditionState): number {
   const crewCount = livingCrew(s).length
   let target = 7
   target += Math.max(-2, Math.min(2, traitBonus(livingCrew(s), 'morale')))
-  if (stationActive(s, 'sanctum')) target += 2 + Math.floor(stationStrength(s, 'sanctum') / 3)
+  target += sanctumOutput(s)
   if (s.power.lifeSupport < lifeSupportNeeded(crewCount)) target -= 3
   if (s.resources.food <= 0) target -= 3
   target -= s.darkening
@@ -434,10 +596,11 @@ function advanceResearch(s: ExpeditionState): void {
 
 function updateDarkening(s: ExpeditionState): void {
   const spent = 1 - s.gateWeeksLeft / Math.max(1, s.gateTotal)
-  const level = Math.max(0, Math.min(3, Math.floor(spent * 4)))
-  if (level > s.darkening) {
+  const level = Math.max(0, Math.min(3, Math.floor(spent * 4) + s.darkeningShift))
+  if (level !== s.darkening) {
+    const rising = level > s.darkening
     s.darkening = level
-    log(s, { k: 'darkeningRose', level })
+    log(s, rising ? { k: 'darkeningRose', level } : { k: 'darkeningEased', level })
   }
   s.reactorOutput = reactorOutput(s)
   // Trim any allocation that no longer fits the shrunken reactor.
@@ -488,7 +651,7 @@ function arrive(s: ExpeditionState, nodeId: string): void {
   // Narrative beats open by themselves; landings wait, so the players can put
   // power into the rune core first.
   if (node.event.k === 'encounter' && !node.resolved) {
-    openEncounter(s, node.event.encounterId)
+    openEncounter(s, encounterAtNode(s, node, node.event.encounterId))
     return
   }
   if (node.event.k === 'market' && !node.resolved) {
@@ -529,6 +692,29 @@ function advanceWeek(s: ExpeditionState): void {
 
 // ---------------------------------------------------------------- encounters
 
+/**
+ * Which encounter actually happens here.
+ *
+ * The star map is generated once, at launch, so a node's encounter is chosen
+ * before the expedition has done anything worth answering. That is fine for the
+ * ordinary ones — but a *consequence* must not depend on the map having guessed
+ * that it would be needed.
+ *
+ * So at the moment of arrival, a follow-up whose condition the expedition now
+ * meets takes precedence over whatever was rolled. Deterministically, and
+ * first-come: what you set in motion will find you, at the next place it fits.
+ */
+function encounterAtNode(s: ExpeditionState, node: MapNode, rolled: string): string {
+  const followUp = encountersFor(
+    KIND_TAGS[node.kind],
+    s.usedEncounters,
+    s.flags.includes('deeper-layers'),
+    s.flags,
+    s.marks,
+  ).find((e) => (e.requiresFlag !== undefined || e.requiresMark !== undefined))
+  return followUp?.id ?? rolled
+}
+
 function openEncounter(s: ExpeditionState, id: string): void {
   s.pendingEncounter = { id, chosen: null, payment: [], resolvedText: null }
   if (!s.usedEncounters.includes(id)) s.usedEncounters.push(id)
@@ -549,6 +735,12 @@ export function choiceAvailable(s: ExpeditionState, choice: EncounterChoice): bo
       return hasTrait(s, need.trait)
     case 'resourceAtLeast':
       return s.resources[need.id] >= need.value
+    case 'flag':
+      return s.flags.includes(need.id)
+    case 'noFlag':
+      return !s.flags.includes(need.id)
+    case 'mark':
+      return s.marks.includes(need.id)
   }
 }
 
@@ -579,7 +771,8 @@ export function choiceAffordable(s: ExpeditionState, choice: EncounterChoice): b
 }
 
 function applyHullRisk(s: ExpeditionState, amount: number): void {
-  const mitigated = Math.max(0, amount - s.power.shields - moduleTotal(s, 'wards'))
+  const scaled = Math.round(amount * dialValue(s.dials, 'encounterRisk'))
+  const mitigated = Math.max(0, scaled - s.power.shields - moduleTotal(s, 'wards'))
   if (mitigated > 0) gain(s, 'hull', -mitigated)
 }
 
@@ -625,6 +818,36 @@ function applyEncounterEffects(s: ExpeditionState, effects: readonly EncounterEf
           { k: 'resource', id: 'information', amount: 5 },
         ])
         break
+
+      case 'flag':
+        if (!s.flags.includes(effect.id)) s.flags.push(effect.id)
+        break
+
+      case 'mark':
+        if (!s.marks.includes(effect.id)) s.marks.push(effect.id)
+        break
+
+      case 'gateWeeks': {
+        // Weeks given or taken. The counter is the whole pressure of the run, so
+        // this is the heaviest number a decision can move.
+        s.gateWeeksLeft = Math.max(0, s.gateWeeksLeft + effect.amount)
+        s.gateTotal = Math.max(s.gateTotal, s.week + s.gateWeeksLeft)
+        log(s, { k: 'gateShifted', amount: effect.amount, left: s.gateWeeksLeft })
+        updateDarkening(s)
+        break
+      }
+
+      case 'darkening':
+        // Through the shift, so it survives the next recalculation — and through
+        // `updateDarkening`, so the reactor and the power allocation follow.
+        s.darkeningShift += effect.amount
+        updateDarkening(s)
+        break
+
+      case 'then':
+        // Not applied here: the next scene waits until the result of this one has
+        // been read. See `resolveEncounter`.
+        break
     }
   }
 }
@@ -666,6 +889,11 @@ function resolveEncounter(s: ExpeditionState): void {
   node.resolved = true
 
   pending.resolvedText = choice.result
+  // A situation that continues: remembered here, opened when the player closes
+  // this scene, so the words of one are never on screen with the choices of the
+  // next.
+  const next = choice.effects.find((e) => e.k === 'then')
+  pending.then = next && next.k === 'then' ? next.encounterId : null
   // A mission or puzzle started by the encounter takes the screen; otherwise we
   // stay on the encounter so the result can be read.
   if (s.activeMission) {
@@ -723,22 +951,109 @@ function missionFromFlavour(
   }
 }
 
-function launchMission(s: ExpeditionState, spec: MissionSpec): void {
-  const seed = s.seed * 977 + s.week * 31 + s.rngStep
-  s.rngStep += 1
-  const battle = startMission({
+/**
+ * Build the battle for a spec at a given seed.
+ *
+ * Split out from `launchMission` because a landing can be built more than once:
+ * the same seed rebuilds the same battlefield from the start, a fresh one deals a
+ * different battlefield with the same brief. Both are escape hatches for a board
+ * that cannot be finished — see `restartBattle` and `rerollBattle`.
+ *
+ * The heroes come from `s.heroes`, which is the record kept between missions and
+ * is not written to while a battle is running. That is what makes a rebuild
+ * honest: it restores exactly the party that landed, wounds and lost cards
+ * included, not the one halfway through the fight.
+ */
+function buildBattle(s: ExpeditionState, spec: MissionSpec, seed: number) {
+  return startMission({
     seed,
-    difficulty: Math.min(3, spec.difficulty + (s.darkening >= 2 ? 1 : 0)),
+    difficulty: Math.max(
+      1,
+      Math.min(3, spec.difficulty + (s.darkening >= 2 ? 1 : 0) + dialValue(s.dials, 'enemyStrength')),
+    ),
     objective: spec.objective,
     missionKind: spec.kind,
     flux: missionFlux(s),
     roundLimit: spec.roundLimit,
     heroes: s.heroes,
-    enemyScale: spec.enemyScale,
+    enemyScale: (spec.enemyScale ?? 1) * dialValue(s.dials, 'enemyCount'),
   })
-  s.activeMission = { k: 'battle', nodeId: s.at, spec, battle }
+}
+
+function launchMission(s: ExpeditionState, spec: MissionSpec): void {
+  const seed = s.seed * 977 + s.week * 31 + s.rngStep
+  s.rngStep += 1
+  s.activeMission = { k: 'battle', nodeId: s.at, spec, battle: buildBattle(s, spec, seed) }
   s.screen = 'mission'
   log(s, { k: 'missionLaunched', briefing: spec.briefing })
+}
+
+/**
+ * The three ways out of a landing that cannot be finished.
+ *
+ * They exist because the failure they answer is not the player's fault: a
+ * battlefield that generation got wrong, or a state the engine wedged itself
+ * into. Making somebody burn out a party card by card because of that is worse
+ * than any exploit the buttons open — and the exploit is small, because the brief
+ * comes along unchanged: the objective, the difficulty and how many enemies of
+ * what kind. Only the ground is redealt.
+ */
+function rebuildBattle(s: ExpeditionState, fresh: boolean): void {
+  const mission = s.activeMission
+  if (!mission || mission.k !== 'battle') return
+  const seed = fresh ? s.seed * 977 + s.week * 31 + s.rngStep : mission.battle.seed
+  if (fresh) s.rngStep += 1
+  mission.battle = buildBattle(s, mission.spec, seed)
+  s.screen = 'mission'
+  log(s, fresh ? { k: 'missionRerolled' } : { k: 'missionRestarted' })
+}
+
+/**
+ * Settle a landing without playing it out.
+ *
+ * A victory pays what the brief promised — and for a relic run it counts the
+ * relics as carried, because "as if it had gone perfectly" is the whole point.
+ * A defeat costs what a defeat costs: the week, the morale, the crew member.
+ * Skipping does neither: the site is marked done and the party comes home.
+ *
+ * All three go through the ordinary mission finish, so nothing about rewards or
+ * losses is written twice.
+ */
+function settleBattle(s: ExpeditionState, as: 'victory' | 'defeat' | 'skip'): void {
+  const mission = s.activeMission
+  if (!mission || mission.k !== 'battle') return
+
+  if (as === 'skip') {
+    const node = mapNode(s.map, mission.nodeId)
+    node.resolved = true
+    s.activeMission = null
+    s.screen = 'starmap'
+    log(s, { k: 'missionSkipped' })
+    return
+  }
+
+  const battle = mission.battle
+  if (as === 'victory' && battle.objective.k === 'collect') {
+    battle.carried = battle.objective.count
+  }
+  battle.outcome = as
+  battle.phase = 'over'
+  battle.pending = null
+  battle.heroTurn = null
+  log(s, { k: as === 'victory' ? 'missionForcedWin' : 'missionForcedLoss' })
+  finishMission(s)
+}
+
+/** Back out to the star map, with the node left as it was found. */
+function withdrawBeforeLanding(s: ExpeditionState): void {
+  const mission = s.activeMission
+  if (!mission || mission.k !== 'battle') return
+  const node = mapNode(s.map, mission.nodeId)
+  node.resolved = false
+  s.activeMission = null
+  s.pendingEncounter = null
+  s.screen = 'starmap'
+  log(s, { k: 'missionWithdrawn' })
 }
 
 function launchPuzzle(
@@ -760,7 +1075,7 @@ function launchPuzzle(
     kind: chosen,
     difficulty,
     rewards,
-    puzzle: generatePuzzle(chosen, seed, difficulty),
+    puzzle: generatePuzzle(chosen, seed, difficulty, dialValue(s.dials, 'puzzleTries')),
     briefing:
       briefing ?? {
         hu: 'A szerkezet nem támad és nem nyitható erővel. Le kell ülni elé, és megérteni.',
@@ -895,6 +1210,10 @@ export function availableEndings(s: ExpeditionState): EndingId[] {
   if (tier >= 1) out.push('witness')
   if (tier >= 2) out.push('intervene')
   if (tier >= 3) out.push('communion')
+  // The closing one needs both halves: the Archive must have bought the question
+  // (carried in as a flag at launch) and this run must have understood enough to
+  // answer it.
+  if (tier >= 3 && s.flags.includes('last-question')) out.push('theAnswer')
   return out
 }
 
@@ -904,6 +1223,7 @@ const ENDING_ARCHIVE: Record<EndingId, number> = {
   witness: 5,
   intervene: 9,
   communion: 14,
+  theAnswer: 20,
 }
 
 function chooseEnding(s: ExpeditionState, id: EndingId): void {
@@ -992,7 +1312,7 @@ export function expeditionStep(
       if (index < 0) break
       // Speed comes off the engines: more power, fewer weeks.
       const base = here.linkWeeks[index] ?? 2
-      const weeks = Math.max(1, base - Math.max(0, s.power.engines - 1))
+      const weeks = travelWeeks(s, base)
       s.travel = { to: action.nodeId, weeksLeft: weeks }
       log(s, { k: 'courseSet', node: mapNode(s.map, action.nodeId).name, weeks })
       s.screen = 'starmap'
@@ -1020,9 +1340,17 @@ export function expeditionStep(
       const choice = def.choices[action.index]
       if (!choice) break
       if (!choiceAvailable(s, choice) || !choiceAffordable(s, choice)) break
+      // Only proposed. `encounterConfirm` is what takes it — see PendingEncounter.
       pending.chosen = action.index
-      // A card cost needs the players to pick which cards burn.
-      if (!cardCostOf(choice)) resolveEncounter(s)
+      pending.payment = []
+      break
+    }
+
+    case 'encounterCancel': {
+      const pending = s.pendingEncounter
+      if (!pending || pending.resolvedText) break
+      pending.chosen = null
+      pending.payment = []
       break
     }
 
@@ -1058,7 +1386,12 @@ export function expeditionStep(
     case 'encounterClose': {
       const pending = s.pendingEncounter
       if (!pending || !pending.resolvedText) break
+      const next = pending.then
       s.pendingEncounter = null
+      if (next && !s.activeMission) {
+        openEncounter(s, next)
+        break
+      }
       s.screen = s.activeMission ? 'mission' : 'starmap'
       break
     }
@@ -1080,6 +1413,31 @@ export function expeditionStep(
     case 'missionFinish':
       finishMission(s)
       break
+
+    case 'restartBattle':
+      rebuildBattle(s, false)
+      break
+
+    case 'rerollBattle':
+      rebuildBattle(s, true)
+      break
+
+    case 'withdrawBeforeLanding':
+      withdrawBeforeLanding(s)
+      break
+
+    case 'settleBattle':
+      settleBattle(s, action.as)
+      break
+
+    case 'dialSet': {
+      const level = Math.max(1, Math.min(5, Math.round(action.level)))
+      if (s.dials[action.dial] !== level) {
+        s.dials[action.dial] = level
+        log(s, { k: 'dialSet', dial: action.dial, level })
+      }
+      break
+    }
 
     case 'marketBuy':
       marketBuy(s, action.index)

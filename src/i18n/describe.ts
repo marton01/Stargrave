@@ -70,6 +70,11 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
         ? `Csapda felállítva (${event.power} sebzés).`
         : `Trap set (${event.power} damage).`
 
+    case 'terrainEdited':
+      return hu
+        ? 'A terepet kézzel módosítottuk. (Javítás, nem lépés.)'
+        : 'The ground was edited by hand. (A repair, not a move.)'
+
     case 'pillarRaised':
       return hu
         ? 'Rúnaoszlop emelkedett ki a padlóból.'
@@ -171,8 +176,8 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
 
     case 'exitReached':
       return hu
-        ? `${pick(event.unit, lang)} kiért. A csapat elhagyja a helyszínt.`
-        : `${pick(event.unit, lang)} reached the extraction point. The party is out.`
+        ? `Mind a ${event.count} hős a kimenekítési ponton van. A csapat elhagyja a helyszínt.`
+        : `All ${event.count} heroes are at the extraction point. The party is out.`
 
     case 'floorGaveWay':
       return hu
