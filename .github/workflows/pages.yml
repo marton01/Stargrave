@@ -48,19 +48,23 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
-      - name: Work out the base path
+      # The base path is passed to the build rather than written into
+      # vite.config.ts, so that nothing in the checked-in config has to know
+      # about hosting — and so the config stays free of Node globals, which the
+      # project's tsconfig deliberately does not include.
+      - name: Build with the right base path
         run: |
           owner="${GITHUB_REPOSITORY%%/*}"
           repo="${GITHUB_REPOSITORY#*/}"
           # A user or organisation site (<owner>.github.io) is served from the
           # root; everything else is a project site under /<repo>/.
           if [ "$repo" = "$owner.github.io" ]; then
-            echo "VITE_BASE=/" >> "$GITHUB_ENV"
+            base=/
           else
-            echo "VITE_BASE=/$repo/" >> "$GITHUB_ENV"
+            base="/$repo/"
           fi
-
-      - run: npm run build
+          echo "Building with base $base"
+          npm run build -- --base="$base"
 
       - uses: actions/upload-pages-artifact@v3
         with:
