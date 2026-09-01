@@ -7,7 +7,9 @@
 > **IMPORTANT:** the sections of `RULES.hu.md` (Hungarian) must appear in **the same
 > order** as here. The help picks which tab to open by position, because the titles
 > differ per language. The order is: 1. Overview, 2. The weekly turn, 3. Star map,
-> 4. Landings, 5. Puzzles, 6. Research, 7. The Stargrave, 8. The Archive, 9. Tips.
+> 4. Landings, 5. Puzzles, 6. Research, 7. The Stargrave, 8. The Archive,
+> 9. Consoles, 10. Attention and the Herald, 11. Orders from home,
+> 12. When does it end?, 13. Tips.
 >
 > The game pieces (units, terrain, badges) are not described here: the help **draws
 > them live** with the same components the grid uses, so they can never drift from
@@ -57,10 +59,12 @@ game.
 - **Life support** — a mandatory minimum by crew size (one unit per four people). Too
   little and morale decays and people are lost.
 - **Engines** — how many weeks a jump takes and what it burns a week. A trade rather than
-  free speed: **every point above the first cuts a week, and every point above the second
-  adds a unit of fuel** to each week under way. On a three-week road, 2 power is two weeks
-  at 2 fuel (four in total), 3 power is one week at 3 (three in total), and 4 power is that
-  same single week for 4. The Bridge takes one off every week.
+  free speed. **The first point is what lets the ship move at all**: on no power you cannot
+  set a course, and a jump already under way stalls (the week passes anyway, and the crew
+  takes it badly). After that, **every point above the first cuts a week, and every point
+  above the second adds a unit of fuel** to each week under way. On a three-week road, 2
+  power is two weeks at 2 fuel (four in total), 3 power is one week at 3 (three in total),
+  and 4 power is that same single week for 4. The Bridge takes one off every week.
 - **Shields** — protection in encounters: this decides how much the hull pays for a
   risky choice.
 - **Lab** — Information output and research speed.
@@ -73,7 +77,8 @@ game.
 every system, what the current allocation **buys right now**, as a number. There is no
 guessing whether a fourth point earns its keep.
 
-- **Scales linearly**: Engines (every point above the first cuts a week off a journey),
+- **Scales linearly**: Engines (the first point is movement itself, every further one cuts
+  a week off a journey),
   Shields (absorbs that much hull risk), Lab (+1 information a week per point), Sensors
   (reveals that many columns), Rune core (that much Flux for the landing party), Forge
   (power and crew together, half a point each).
@@ -86,15 +91,28 @@ guessing whether a fourth point earns its keep.
 You post crew members to stations. A station only works if it **has power AND has crew
 standing on it** — that double constraint is where the scarcity lives.
 
-Every crew member has a speciality and is considerably more effective on the matching
-station. Traits (brave, sceptical, of alien descent, veteran…) affect morale, research
-or alien technology.
+Every crew member has a speciality and is **considerably more effective on the matching
+station** — anywhere else they only keep the station alive. Their card says which station
+is home for them.
+
+**One rule that makes the whole posting table simple:** the traits that affect station
+strength (veteran, restless, young) **only count on the station of their own speciality**.
+A veteran engineer is not a better scientist in the Lab than a scientist, and a restless
+engineer does not raise the morale target in the Sanctum. The other traits (brave,
+sceptical, devout, of alien descent…) affect morale, research or alien technology wherever
+they stand.
+
+Under every station the interface prints **what its number is made of**: who is on it,
+whether it is their speciality, and what their rank and traits add. You do not have to
+keep a spreadsheet.
 
 **Does the number of people matter?** The first one is what makes a station run at all.
 The second now **adds something everywhere**: the Forge repairs more, the Medbay heals
 more, the Sanctum holds morale higher, the Bridge saves more fuel, the Archive skips two
-weeks of research instead of one, the Armoury gives an extra Flux. Someone whose
-speciality fits counts double — and the station's card shows what it is producing **now**.
+weeks of research instead of one, the Armoury gives an extra Flux, the Sensors reveal one
+column more with a navigator on them. **Every station rewards the speciality it is for** —
+there are no exceptions — and the station's card shows what it is producing **now** and
+what that number is made of.
 
 ### Morale
 
@@ -405,6 +423,32 @@ same location, entirely different endings:
 **In your first runs you will not even understand what you saw** — and that is exactly
 the point.
 
+### Reading the rim
+
+On arrival, **once**, before you decide anything: you can sit down in front of the
+rim. One mechanism at the hardest setting. Solve it and you gain **2 understanding**
+— which can open a different ending right there, in that moment, with the list
+already on the screen. Fail and it costs morale. The last screen of an expedition
+should be able to go wrong too.
+
+### The nine endings
+
+**Five come from understanding** (turning back, blind ruin, the witness, the
+intervention, communion), and **four have to be earned** — those are not opened by
+a number but by what you did:
+
+| Ending | Condition |
+|---|---|
+| **Homecoming** | At any time on the road: turn back for the Gate while there is fuel |
+| **The Herald's silence** | Stop the Herald, and arrive at understanding tier 1 |
+| **Inheritance** | Three relics aboard, at understanding tier 1 |
+| **Taking the watch** | Arrive with five crew alive, morale 8 or more, understanding tier 2 |
+
+The **Archive** lists all nine with their conditions — you see the name and the
+condition in advance, the words only when you are standing in front of it. The
+tenth, **The answer**, follows from the five understanding endings, and is the end
+of the game.
+
 ### When an expedition is lost
 
 Hull at zero takes the ship. Morale at zero takes the crew. Food running out is not an
@@ -441,6 +485,177 @@ it opens a **sixth ending**, answerable only at understanding tier 3, at the Sta
 That sixth one is the end of the game. After it the Archive is **finished** — not lost,
 finished. Until then you can run as many expeditions as you like; after it too, though you
 will not need to.
+
+## Consoles: what is yours
+
+Almost everything on this ship is shared: **one reactor, one hold, one route**.
+That is the point of the game — but if *nothing* belongs to either of you in
+particular, then sooner or later one of you drives and the other watches. Hence
+the **Consoles** tab (in the header, next to Research): two pages, one per person.
+
+**The other one cannot reach in here.** You cannot take your partner's relic, you
+cannot spend their marks, and you cannot take their mentee.
+
+### Marks: two kinds, because it is two kinds of work
+
+Each hero collects their **own** advancement points, and not for the same things:
+
+| | Runesmith — *forge marks* | Echo-reader — *echo marks* |
+|---|---|---|
+| A landing won | +1 | +1 |
+| A boarding action in which **no module** was destroyed | **+2** | — |
+| A mechanism solved (a puzzle) | — | **+2** |
+| An order carried out (on their own console) | +2 | +2 |
+| Two trained mentees, when a landing is won | +1 | +1 |
+| The Herald silenced | +3 | +3 |
+
+The ship's integrity is on his account; understanding is on hers. That is not
+decoration: because the game pays you for different things, you will **push in
+different directions** in the decisions you share.
+
+Marks buy from that console's own list. The two lists are deliberately not mirror
+images: the Runesmith buys toughness, ground and ship structure (Ironback,
+Wardlines, the Rampart card, Relic bearer, The quiet forge); the Echo-reader buys
+sight, memory and understanding (Longsight, Archivist, Remembrance, Tether, The
+Still Note card, Relic reader).
+
+Two of them add a **new card** to your deck for good — and only to yours.
+
+### Relics: only what you wear does anything
+
+A relic is a **named object** with an effect: they come from exploration landings
+(everything you carry out is one), from traders, from mechanisms and from a few
+decisions.
+
+**A relic in the hold does nothing.** Only what one of the heroes is **wearing
+attuned** has any effect — and by default each of you can wear **one**. So the
+real question is not whether you found a relic but **who wears which, this week**.
+
+- More room: the *Relic bearer* / *Relic reader* perk, or the **Relic cradle**
+  module (research), which gives one more to each of you.
+- Some can be worn by **only one of you**: the Anvil fragment, the Silent plate
+  and The first rune are his; the Choir shard and The ledger of names are hers.
+- Some have a **price**: The watcher's eye sees further but gathers +1 attention a
+  week; the Godmachine tap gives Flux but the crew does not like sharing a deck
+  with it. It is always written down.
+- Whatever nobody is wearing can be **sold** at a post. Think first: **three
+  relics** open an ending of their own at the Stargrave.
+
+### Mentees
+
+Either hero may take **up to three** of the crew under their wing. A mentee learns
+**twice as fast** at their post — and once two of them have reached *trained*,
+every landing won pays their mentor a mark.
+
+Only one of you can take a given person: if they are your partner's, they have to
+let them go first.
+
+### The crew grows too
+
+Anybody standing on a **running** station (it has power and they are on it) earns
+one week of work a week — two as a mentee.
+
+- **8 weeks of work → *trained*.** Station strength +2, which is worth as much as
+  being the station's own specialist. That is the human reason not to reshuffle
+  everybody every week.
+- **20 weeks of work → *master*.** They gain a **new trait** (brave, veteran,
+  meticulous, devout or of alien descent). A long posting leaves a mark on the
+  person, not only on a number.
+
+Ranks show up on the Consoles and in the crew list.
+
+### The ship's two halves
+
+The ship's systems and stations are divided: **Engineering** is the Runesmith's
+(Shields, Forge, Rune core; the Forge and Armoury stations), **Research** is the
+Echo-reader's (Lab, Sensors; the Lab, Archive, Sensors and Sanctum stations). What
+is **Shared** — Life support, Engines, Bridge, Medbay — really does have to be
+decided together.
+
+At the top of the Ship screen there is a **filter**: "Whose console". It locks
+nothing, it only narrows the list down to what is yours. The other half stays
+readable — a co-operative game where you cannot see your partner's screen is just
+two solitaires.
+
+## Attention and the Herald
+
+The Gate's clock is the same on every expedition, and once you know it you stop
+feeling it. **Attention** is not like that: this is a number **you write
+yourselves**.
+
+**It rises with:**
+
+- a landing won: +1 (a boarding action: +2)
+- a mechanism **forced**, that is, a puzzle failed: +1
+- +1 a week while travelling with the **engines at 3**
+- some decisions in encounters (always written out)
+
+**It falls with:**
+
+- a week spent **standing still** at a node that is already settled: −1
+- the **Silence shroud** module (research): −2 a week
+- the **Lantern of still air** relic: −2 · the **Hollow bell**: −1 · the *Quiet
+  forge* perk: −1
+
+Attention is in the header from the **first point**, because a threat you cannot
+see coming is not tension but a trap.
+
+### The Herald
+
+At **eight**, something sets out from the deep. The Herald is not a guard and not
+a hunter: it **counts** — for seventy years it counted how much noise arrived in a
+dead galaxy, and every time it set out to look.
+
+- On the star map a **column** is marked: that is where it is. It does not use the
+  roads, it comes up the corridor — always towards you, **one column a week** (two
+  above 12 attention). Running deeper does not help: it comes with you.
+- If it **arrives**, there is a boarding action, the hardest fight in the game —
+  and your modules are standing on that board too.
+- **If you stop it:** it falls silent, and the Stargrave sends no other. Attention
+  drops to nothing, both heroes gain 3 marks, and the ending **The Herald's
+  silence** opens. The Archive remembers it as well: a later expedition can be
+  asked about it.
+- **If you only drive it off:** the hull pays, the Herald falls back three columns
+  — and comes back **stronger**. Deliberately: "let us lose to it on purpose"
+  must not be the way to beat the mechanic.
+- **The Herald** research (understanding branch) makes the fight one level easier:
+  whoever understands what it counts knows when it turns their way.
+
+It can be **switched off entirely** on the difficulty dials (first step: no
+Herald, and no attention either).
+
+## Orders from home
+
+From the far side of the Gate come **dated requests**: two run at once by
+default, one on each console. The dial sets anything from 0 to 4.
+
+An order is always **somebody's** order — that player answers for it, and takes
+the marks if it comes good. One that runs out costs **2 morale**.
+
+What they may ask for: win N landings · solve N mechanisms · have N relics aboard
+· reach N understanding · finish N research projects · be in system column N ·
+have enough morale or food at the deadline.
+
+The target is always measured **from where** the ship stood when the order was
+issued: an order never arrives already carried out. The ones that ask for stores
+or morale are measured **only at the deadline** — until then you have to keep it
+up.
+
+## When does it end?
+
+There are three answers, and that is deliberate:
+
+1. **Reach the Stargrave** and choose there. Nine endings are out there — five
+   opened by your understanding tier, four by what you did (see the Stargrave
+   chapter).
+2. **Turn back for the Gate.** From the star map, at any time, while there is fuel
+   for it: **2 fuel per column**. This is **not a defeat**: everything you gathered
+   goes through the Gate and the Archive gets it — every relic carried home is
+   worth an extra point. At home they will not call it a victory. But whoever
+   comes back can hand something on.
+3. **Run out of time** on the far side. That is a defeat — and now it was a
+   *decision* rather than a rule that ambushed you: the interesting week is the one
+   where you could still turn round, and do not.
 
 ## Tips
 

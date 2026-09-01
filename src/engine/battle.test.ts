@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { activeUnit, canRest, mustRest, startBattle, step, type Action } from './battle'
 import { livingHeroes, SHIELD_MAX } from './state'
 import { resolveEffects } from './effects'
-import { card, cardsOfClass } from '../content/cards'
+import { allCardsOfClass, card, cardsOfClass } from '../content/cards'
 import { createRng, type Rng } from './rng'
 import { distance, tileKey, neighbours, walkable, allTiles } from './grid'
 import { generateMap } from './mapgen'
@@ -193,7 +193,7 @@ describe('battle engine', () => {
   it('a card that is lost on use can never sit in the discard pile', () => {
     // The other half of the same defence: if such a card could reach the
     // discard, Echo would have something recursive to point at again.
-    for (const c of [...cardsOfClass('runesmith'), ...cardsOfClass('echoreader')]) {
+    for (const c of [...allCardsOfClass('runesmith'), ...allCardsOfClass('echoreader')]) {
       if (c.top.effects.some((e) => e.k === 'echo')) {
         expect(c.top.lostOnUse, `${c.id}: an echoing half must be lost on use`).toBe(true)
       }
@@ -201,7 +201,7 @@ describe('battle engine', () => {
   })
 
   it('every card is described in both languages', () => {
-    for (const c of [...cardsOfClass('runesmith'), ...cardsOfClass('echoreader')]) {
+    for (const c of [...allCardsOfClass('runesmith'), ...allCardsOfClass('echoreader')]) {
       for (const text of [c.name, c.top.text, c.bottom.text]) {
         expect(text.hu.length, `${c.id}: missing Hungarian text`).toBeGreaterThan(0)
         expect(text.en.length, `${c.id}: missing English text`).toBeGreaterThan(0)

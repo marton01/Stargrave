@@ -1738,11 +1738,21 @@
 }
 
 .rune-score {
-  margin-left: 8px;
+  margin-left: 12px;
   display: flex;
-  gap: 6px;
-  font-size: 13px;
-  letter-spacing: 0.1em;
+  gap: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* The counts are not positions, and the gap above keeps them from reading as
+ * though they belonged to the runes immediately to their left. */
+.rune-legend {
+  margin: 8px 0 4px;
+  max-width: 46em;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-faint);
 }
 
 .score-exact {
@@ -2024,4 +2034,470 @@
 
 .mission > .action-area {
   grid-area: auto;
+}
+
+/* ------------------------------------------------ the two commands, the consoles
+ *
+ * The colour split is the whole point: the Runesmith's side of the ship is rune
+ * amber, the Echo-reader's is echo blue, and what is shared is neither. Once the
+ * two players have learned which colour is theirs, "that is on your console" is
+ * a thing you can say across a table without pointing.
+ */
+
+.domain-filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.domain-filter-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+.domain-badge {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 1px 5px;
+  border-radius: 2px;
+  border: 1px solid var(--line);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.domain-badge.domain-engineering {
+  color: var(--rune);
+  border-color: var(--rune-dim);
+}
+
+.domain-badge.domain-research {
+  color: var(--echo);
+  border-color: var(--echo-dim);
+}
+
+.trait-rank {
+  color: var(--green);
+  border-color: var(--green);
+  cursor: default;
+}
+
+.trait-rank.rank-1 {
+  color: var(--text-faint);
+  border-color: var(--line);
+}
+
+.trait-mentor {
+  color: var(--rune);
+  border-color: var(--rune-dim);
+  cursor: default;
+}
+
+.consoles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.console-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.console-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-bottom-width: 3px;
+  border-radius: 4px 4px 0 0;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.console-tab-marks {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.console-tab-runesmith.on {
+  border-bottom-color: var(--rune);
+  color: var(--rune);
+  background: var(--bg-4);
+}
+
+.console-tab-echoreader.on {
+  border-bottom-color: var(--echo);
+  color: var(--echo);
+  background: var(--bg-4);
+}
+
+.console {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.console-runesmith .panel {
+  border-left: 2px solid var(--rune-dim);
+}
+
+.console-echoreader .panel {
+  border-left: 2px solid var(--echo-dim);
+}
+
+.console-identity {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.console-identity h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.console-stats {
+  margin: 6px 0 2px;
+  font-size: 12px;
+}
+
+.console-how {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------- perks */
+
+.perk-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 8px;
+}
+
+.perk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.perk-owned {
+  border-color: var(--green);
+}
+
+.perk-locked {
+  opacity: 0.6;
+}
+
+.perk-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.perk-desc {
+  font-size: 11.5px;
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+
+.perk-state {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.perk-state.good {
+  color: var(--green);
+}
+
+/* -------------------------------------------------------------------- relics */
+
+.relic-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+}
+
+.relic {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.relic-worn {
+  border-color: var(--rune);
+}
+
+.relic-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.relic-desc {
+  font-size: 11.5px;
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+
+.relic-effect {
+  font-size: 11.5px;
+  color: var(--green);
+}
+
+.relic-whisper {
+  font-size: 11px;
+  color: var(--danger);
+}
+
+.relic-state,
+.mentee-state {
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------- mentees */
+
+.mentee-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+}
+
+.mentee {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.mentee-mine {
+  border-color: var(--rune);
+}
+
+.mentee-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mentee-detail {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.mentee-rank {
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+/* ---------------------------------------------------------------- directives */
+
+.directive {
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.directive-urgent {
+  border-color: var(--danger);
+}
+
+.directive-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.directive-clock {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.directive-urgent .directive-clock {
+  color: var(--danger);
+}
+
+.directive-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+
+.directive-count {
+  font-size: 11.5px;
+  color: var(--text-soft);
+  min-width: 56px;
+}
+
+.directive-bar {
+  flex: 1;
+  height: 5px;
+  background: var(--bg-4);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.directive-fill {
+  display: block;
+  height: 100%;
+  background: var(--green);
+}
+
+.directive-note,
+.directive-reward {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.directive-reward .choice-line {
+  margin-right: 8px;
+}
+
+.directive-closed {
+  margin: 2px 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.directive-done {
+  color: var(--green);
+}
+
+.directive-failed {
+  color: var(--danger);
+}
+
+/* ------------------------------------------------- the Herald, and going home */
+
+.starmap-warning {
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  background: var(--bg-3);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.starmap-warning strong {
+  color: var(--danger);
+}
+
+.starmap-herald-label {
+  fill: var(--danger);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-anchor: middle;
+  text-transform: uppercase;
+}
+
+.heart-read {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--echo-dim);
+  border-radius: 4px;
+  background: var(--bg-3);
+}
+
+.heart-read p {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.market-relics {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.market-relics h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+
+.station-breakdown {
+  margin: 3px 0 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+
+.crew-home {
+  margin: 2px 0 4px;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  line-height: 1.35;
+}
+
+/* An ending you have seen can be read again. The text spans the whole row, under
+ * the three columns of the header line. */
+.endings-open {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.endings-open:hover {
+  color: var(--echo);
+}
+
+.endings-caret {
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.endings-text {
+  grid-column: 2 / -1;
+  margin: 6px 0 2px;
+  max-width: 60em;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-soft);
 }

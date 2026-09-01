@@ -9,7 +9,13 @@
 
 import { describe, expect, it } from 'vitest'
 import { newArchive } from './archive'
-import { expeditionStep, startExpedition, travelFuel, travelWeeks } from './expedition'
+import {
+  canSetCourse,
+  expeditionStep,
+  startExpedition,
+  travelFuel,
+  travelWeeks,
+} from './expedition'
 import type { ExpeditionState } from './types'
 
 function ship(enginePower: number, bridgeCrew = false): ExpeditionState {
@@ -114,5 +120,36 @@ describe("the week's fuel balance", () => {
     s.resources.food = 10
     const after = expeditionStep(s, { k: 'advanceWeek' })
     expect(after.resources.food).toBeGreaterThan(10 - 3)
+  })
+})
+
+describe('cold engines', () => {
+  // The first point of engine power used to buy nothing at all: the same speed
+  // and the same fuel as no power whatsoever. A tester compared one and two,
+  // found the fuel identical, and went looking for the difference. Now the first
+  // point is the difference between a ship and a wreck with lights on.
+  it('cannot set a course', () => {
+    const s = ship(0)
+    expect(canSetCourse(s)).toBe(false)
+    const after = expeditionStep(s, { k: 'setCourse', nodeId: s.map.nodes[1]!.id })
+    expect(after.travel).toBeNull()
+  })
+
+  it('can set a course on a single point', () => {
+    const s = ship(1)
+    expect(canSetCourse(s)).toBe(true)
+    const after = expeditionStep(s, { k: 'setCourse', nodeId: s.map.nodes[1]!.id })
+    expect(after.travel).not.toBeNull()
+  })
+
+  it('stalls a jump already under way, and the week still passes', () => {
+    const s = ship(1)
+    const under = expeditionStep(s, { k: 'setCourse', nodeId: s.map.nodes[1]!.id })
+    const weeksLeft = under.travel!.weeksLeft
+    const cold = expeditionStep(under, { k: 'setPower', system: 'engines', value: 0 })
+    const after = expeditionStep(cold, { k: 'advanceWeek' })
+    expect(after.travel!.weeksLeft, 'no headway').toBe(weeksLeft)
+    expect(after.week, 'the week goes anyway').toBe(under.week + 1)
+    expect(after.log.some((e) => e.event.k === 'enginesCold')).toBe(true)
   })
 })

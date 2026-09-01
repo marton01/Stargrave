@@ -109,6 +109,16 @@ function RuneDecode({ puzzle, onMove }: PuzzleProps) {
 
       <p className="puzzle-meta">{t.puzzleAttemptsLeft(left)}</p>
 
+      {/*
+        The scores used to be printed as a row of dots — ●● for two in place — sat
+        immediately next to the row of four runes, which reads exactly like "these
+        first two are correct". It never meant that: it is a count of how many are
+        right, not of which. A tester spent a whole puzzle believing the first two
+        slots had been confirmed. Numbers with the words next to them, and a line
+        above the history saying what they do not tell you.
+      */}
+      {s.guesses.length > 0 && <p className="rune-legend">{t.runeScoreHint}</p>}
+
       <div className="rune-history">
         {s.guesses.map((g, i) => (
           <div key={i} className="rune-guess">
@@ -116,11 +126,11 @@ function RuneDecode({ puzzle, onMove }: PuzzleProps) {
               <Rune key={j} index={symbol} size={22} />
             ))}
             <span className="rune-score">
-              <span className="score-exact" title={t.runeExact}>
-                {'●'.repeat(g.exact) || '—'}
+              <span className="score-exact">
+                {g.exact} {t.runeExact}
               </span>
-              <span className="score-partial" title={t.runePartial}>
-                {'○'.repeat(g.partial)}
+              <span className="score-partial">
+                {g.partial} {t.runePartial}
               </span>
             </span>
           </div>

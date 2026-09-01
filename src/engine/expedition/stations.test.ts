@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest'
 import { newArchive } from './archive'
 import {
   archiveOutput,
+  crewStrengthAt,
   armouryOutput,
   bridgeOutput,
   forgeOutput,
@@ -25,7 +26,8 @@ import {
   stationStrength,
 } from './expedition'
 import { STATIONS, STATION_ORDER } from '../../content/ship'
-import type { CrewSpeciality } from '../../content/crew'
+import { CREW_TRAITS } from '../../content/crew'
+import type { CrewSpeciality, CrewTraitId } from '../../content/crew'
 import type { StationId } from '../../content/ship'
 import type { ExpeditionState } from './types'
 
@@ -76,14 +78,10 @@ describe('the right speciality in the right place', () => {
   })
 
   it('produces more than a body from another speciality', () => {
-    const excused: StationId[] = [
-      // The Sensors reveal what the power says and take no skill: one pair of
-      // hands is one pair of hands. Documented rather than pretended otherwise.
-      'sensors',
-    ]
-
+    // No exceptions any more. The Sensors used to be one: the columns came from
+    // the power and the person only switched the instrument on, which made it the
+    // odd column out in the posting table and one more thing to explain.
     for (const station of STATION_ORDER) {
-      if (excused.includes(station)) continue
       const wanted = STATIONS[station].speciality
       const matched = OUTPUT[station](staffed(station, wanted))
       const other = OUTPUT[station](staffed(station, mismatchFor(station)))
@@ -128,5 +126,94 @@ describe('what the numbers actually are', () => {
     expect(sanctumOutput(staffed('sanctum', 'navigator'))).toBe(1)
     // And on the Bridge, nothing at all: only a navigator saves fuel.
     expect(bridgeOutput(staffed('bridge', 'medic'))).toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The tester's spreadsheet.
+//
+// Somebody sat down and filled in a table by hand — five specialities down the
+// side, eight stations across the top — and the table said things like "the
+// engineer gives 2 Information a week in the Lab and the scientist also gives 2",
+// "the engineer raises the morale target by 2 in the Sanctum", and "two
+// navigators on the same station give different numbers". Their note ended:
+// "in short, this is complicated".
+//
+// It was one bug: the station traits were being added on EVERY station rather
+// than on the one the person's speciality is at home on. So a veteran engineer
+// was a better scientist than a scientist, and a *restless* engineer — whose
+// whole thing is that morale suffers for it — was the best possible posting for
+// the Sanctum.
+//
+// These two tests are that table, kept honest from now on.
+
+describe('the whole speciality × station table', () => {
+  const SPECIALITIES: CrewSpeciality[] = ['engineer', 'scientist', 'guard', 'medic', 'navigator']
+
+  /** Every trait combination worth trying: none, each one alone, and a pair. */
+  const TRAIT_SETS: CrewTraitId[][] = [
+    [],
+    ...(Object.keys(CREW_TRAITS) as CrewTraitId[]).map((id) => [id]),
+    ['veteran', 'restless'],
+    ['young', 'sceptical'],
+  ]
+
+  function staffedWith(
+    station: StationId,
+    speciality: CrewSpeciality,
+    traits: CrewTraitId[],
+  ): ExpeditionState {
+    const s = staffed(station, speciality)
+    s.crew[0]!.traits = traits
+    return s
+  }
+
+  it('is always won by the speciality the station is for', () => {
+    for (const station of STATION_ORDER) {
+      const wanted = STATIONS[station].speciality
+      const best = OUTPUT[station](staffedWith(station, wanted, []))
+
+      for (const speciality of SPECIALITIES) {
+        if (speciality === wanted) continue
+        for (const traits of TRAIT_SETS) {
+          const other = OUTPUT[station](staffedWith(station, speciality, traits))
+          expect(
+            other,
+            `${station}: a ${speciality} with [${traits.join(', ')}] produces ${other}, ` +
+              `the ${wanted} it is for produces ${best}`,
+          ).toBeLessThanOrEqual(best)
+        }
+      }
+    }
+  })
+
+  it('never lets a trait help somebody on a station that is not theirs', () => {
+    for (const station of STATION_ORDER) {
+      const wanted = STATIONS[station].speciality
+      for (const speciality of SPECIALITIES) {
+        if (speciality === wanted) continue
+        const plain = crewStrengthAt(staffedWith(station, speciality, []).crew[0]!, station)
+        for (const traits of TRAIT_SETS) {
+          const withTraits = crewStrengthAt(
+            staffedWith(station, speciality, traits).crew[0]!,
+            station,
+          )
+          expect(
+            withTraits,
+            `${station}: [${traits.join(', ')}] changed a ${speciality}'s strength`,
+          ).toBe(plain)
+        }
+      }
+    }
+  })
+
+  it('does let a trait help on the station that is theirs', () => {
+    // The other half of the rule: a veteran on their own station is worth more
+    // than a plain specialist, or the trait says nothing at all.
+    const plain = crewStrengthAt(staffedWith('lab', 'scientist', []).crew[0]!, 'lab')
+    const veteran = crewStrengthAt(staffedWith('lab', 'scientist', ['veteran']).crew[0]!, 'lab')
+    const green = crewStrengthAt(staffedWith('lab', 'scientist', ['young']).crew[0]!, 'lab')
+    expect(veteran).toBeGreaterThan(plain)
+    expect(green).toBeLessThan(plain)
   })
 })

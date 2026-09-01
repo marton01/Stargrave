@@ -10,8 +10,11 @@
 
 import { MODULES, RESOURCES } from '../content/ship'
 import { CREW_TRAITS } from '../content/crew'
+import { HERO_CLASSES } from '../content/heroes'
+import { relic } from '../content/relics'
 import { pick } from './ui'
 import type { EncounterCost, EncounterEffect, ChoiceRequirement } from '../content/encounters'
+import type { Reward } from '../engine/expedition/types'
 import type { Lang, TrialSymbol } from '../engine/types'
 
 /** One line of an account: what it is, and whether it is a gain or a price. */
@@ -150,6 +153,40 @@ export function describeEffect(effect: EncounterEffect, lang: Lang): ChoiceLine 
       // saying "this sets flag x" would turn a story into a checklist. The
       // consequence announces itself when it arrives.
       return { text: '', tone: 'plain' }
+    case 'relic':
+      return {
+        text: effect.id
+          ? hu
+            ? `Ereklye: ${pick(relic(effect.id).name, lang)}`
+            : `Relic: ${pick(relic(effect.id).name, lang)}`
+          : hu
+            ? 'Egy ereklye — nem tudni, melyik'
+            : 'A relic — no telling which',
+        tone: 'gain',
+      }
+    case 'attention':
+      return {
+        text:
+          effect.amount >= 0
+            ? hu
+              ? `Figyelem +${effect.amount} — a Hírnök hamarabb indul`
+              : `Attention +${effect.amount} — the Herald sets out sooner`
+            : hu
+              ? `Figyelem −${Math.abs(effect.amount)} — csendesebbek lesztek`
+              : `Attention −${Math.abs(effect.amount)} — you go quieter`,
+        tone: effect.amount >= 0 ? 'loss' : 'gain',
+      }
+    case 'heroXp':
+      return {
+        text: effect.who
+          ? hu
+            ? `${pick(HERO_CLASSES[effect.who].name, lang)}: +${effect.amount} jegy`
+            : `${pick(HERO_CLASSES[effect.who].name, lang)}: +${effect.amount} marks`
+          : hu
+            ? `Mindkét hősnek +${effect.amount} jegy`
+            : `+${effect.amount} marks for both heroes`,
+        tone: 'gain',
+      }
     case 'then':
       return {
         text: hu ? 'A helyzet folytatódik' : 'The situation continues',
@@ -189,11 +226,42 @@ export function describeRequirement(need: ChoiceRequirement, lang: Lang): string
       return hu
         ? `${pick(RESOURCES[need.id].name, lang)} ${need.value}+`
         : `${pick(RESOURCES[need.id].name, lang)} ${need.value}+`
+    case 'relicsAtLeast':
+      return hu ? `${need.value}+ ereklye a fedélzeten` : `${need.value}+ relics aboard`
+    case 'attentionAtLeast':
+      return hu ? `Figyelem ${need.value}+` : `Attention ${need.value}+`
     case 'flag':
     case 'noFlag':
     case 'mark':
       // These are about what you did, not what you have; there is nothing useful
       // to tell a player who does not meet them, and a lot to spoil.
       return hu ? 'Máskor.' : 'Another time.'
+  }
+}
+
+/**
+ * A reward, in one line. Rewards and encounter effects overlap but are not the
+ * same union — a reward can unlock a puzzle type, an effect can start a mission —
+ * so this maps the ones a reward can be rather than casting between them. A cast
+ * would compile and then hand `describeEffect` a shape it has no case for, which
+ * is a crash rather than a missing line.
+ */
+export function describeReward(reward: Reward, lang: Lang): ChoiceLine {
+  const hu = lang === 'hu'
+  switch (reward.k) {
+    case 'resource':
+    case 'understanding':
+    case 'module':
+    case 'crewJoin':
+    case 'archive':
+    case 'revealMap':
+    case 'relic':
+    case 'heroXp':
+      return describeEffect(reward, lang)
+    case 'unlockPuzzle':
+      return {
+        text: hu ? 'Új feladványtípus' : 'A new kind of mechanism',
+        tone: 'echo',
+      }
   }
 }

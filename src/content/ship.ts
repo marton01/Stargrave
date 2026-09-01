@@ -115,6 +115,17 @@ export type SystemDef = {
   description: Text
   max: number
   icon: string
+  /**
+   * Whose console this system sits on.
+   *
+   * The two players share one reactor, and that is the best argument in the game
+   * — but "shared" meant nobody owned anything, and with nothing owned there was
+   * nothing to argue FROM. Engineering is the Runesmith's side of the ship,
+   * research is the Echo-reader's, and what is marked shared is genuinely a joint
+   * call. The interface can filter by this, so each player has a screen that is
+   * theirs.
+   */
+  domain: 'engineering' | 'research' | 'shared'
 }
 
 /**
@@ -132,6 +143,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     },
     max: 4,
     icon: '❋',
+    domain: 'shared',
   },
   engines: {
     id: 'engines',
@@ -142,6 +154,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     },
     max: 3,
     icon: '➤',
+    domain: 'shared',
   },
   shields: {
     id: 'shields',
@@ -152,6 +165,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     },
     max: 3,
     icon: '◇',
+    domain: 'engineering',
   },
   lab: {
     id: 'lab',
@@ -162,6 +176,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     },
     max: 3,
     icon: '◈',
+    domain: 'research',
   },
   forge: {
     id: 'forge',
@@ -172,6 +187,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     },
     max: 3,
     icon: '⚒',
+    domain: 'engineering',
   },
   sensors: {
     id: 'sensors',
@@ -182,6 +198,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     },
     max: 3,
     icon: '◉',
+    domain: 'research',
   },
   runeCore: {
     id: 'runeCore',
@@ -192,6 +209,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     },
     max: 5,
     icon: '⟐',
+    domain: 'engineering',
   },
 }
 
@@ -287,8 +305,12 @@ export const STATIONS: Record<StationId, StationDef> = {
     id: 'sensors',
     name: { hu: 'Érzékelő', en: 'Sensors' },
     effect: {
-      hu: 'Felfedi, mi van a következő rendszerekben.',
-      en: 'Reveals what lies in the next systems.',
+      hu:
+        'Felfedi, mi van a következő rendszerekben. Navigátorral egy oszloppal többet — ' +
+        'más szakma csak bekapcsolja a műszert.',
+      en:
+        'Reveals what lies in the next systems. With a navigator, one column more — anybody ' +
+        'else merely switches the instrument on.',
     },
     domain: 'research',
     needs: 'sensors',
@@ -367,6 +389,8 @@ export type ModuleId =
   | 'echoVault'
   | 'reactorTap'
   | 'boardingWards'
+  | 'silenceShroud'
+  | 'relicCradle'
 
 export type ModuleDef = {
   id: ModuleId
@@ -384,6 +408,10 @@ export type ModuleDef = {
   sensorRange?: number
   /** Hull damage avoided in encounters. */
   wards?: number
+  /** Attention gained (or, negative, shed) every week. See the Herald. */
+  attention?: number
+  /** Relics each hero may wear attuned, above the first. */
+  attunements?: number
 }
 
 export const MODULES: Record<ModuleId, ModuleDef> = {
@@ -418,8 +446,8 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     id: 'deepSensors',
     name: { hu: 'Mélyérzékelők', en: 'Deep sensors' },
     description: {
-      hu: 'Egy oszloppal többet látsz előre a csillagtérképen.',
-      en: 'You see one more column ahead on the star map.',
+      hu: 'Egy oszloppal többet látsz előre a csillagtérképen — amíg az Érzékelő állomás megy.',
+      en: 'You see one more column ahead on the star map — while the Sensors station is running.',
     },
     sensorRange: 1,
   },
@@ -452,6 +480,27 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     },
     reactor: 2,
   },
+  silenceShroud: {
+    id: 'silenceShroud',
+    name: { hu: 'Csendburok', en: 'Silence shroud' },
+    description: {
+      hu:
+        'A hajó hangja kifelé elhal. Hetente 2 figyelemmel kevesebb — a Hírnök nehezebben talál rá.',
+      en:
+        'The ship’s noise dies on the way out. Two less attention a week — the Herald has more ' +
+        'trouble finding you.',
+    },
+    attention: -2,
+  },
+  relicCradle: {
+    id: 'relicCradle',
+    name: { hu: 'Ereklyeágy', en: 'Relic cradle' },
+    description: {
+      hu: 'Tartó, ami elbírja, amit találtatok. Mindkét hős egy plusz ereklyét hordhat ráhangolva.',
+      en: 'A mount that can hold what you found. Each hero may wear one more relic attuned.',
+    },
+    attunements: 1,
+  },
   boardingWards: {
     id: 'boardingWards',
     name: { hu: 'Átszálló-rúnák', en: 'Boarding wards' },
@@ -472,4 +521,6 @@ export const MODULE_ORDER: ModuleId[] = [
   'echoVault',
   'reactorTap',
   'boardingWards',
+  'silenceShroud',
+  'relicCradle',
 ]

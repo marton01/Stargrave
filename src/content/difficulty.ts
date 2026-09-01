@@ -22,6 +22,8 @@ export type DialId =
   | 'puzzleTries'
   | 'gateTime'
   | 'boardingStakes'
+  | 'attention'
+  | 'directives'
 
 /** When a change starts to matter. Honest, because some cannot apply at once. */
 export type DialScope = 'nextLanding' | 'nextWeek' | 'nextExpedition'
@@ -293,6 +295,110 @@ export const DIALS: DialDef[] = [
         text: {
           hu: 'Négy modul. Egy elrontott hajóra törés hetekre visszavet — a kutatásod egy része a rácson áll.',
           en: 'Four modules. One botched boarding sets you back weeks — part of your research is standing on that board.',
+        },
+      },
+    ],
+  },
+  {
+    id: 'attention',
+    name: { hu: 'A Hírnök', en: 'The Herald' },
+    about: {
+      hu:
+        'Milyen gyorsan gyűlik a figyelem, és ezzel milyen hamar indul el utánatok a Hírnök. ' +
+        'Az első fokozaton egyáltalán nincs Hírnök.',
+      en:
+        'How fast attention builds, and so how soon the Herald sets out after you. On the first ' +
+        'step there is no Herald at all.',
+    },
+    scope: 'nextWeek',
+    levels: [
+      {
+        value: 0,
+        text: {
+          hu: 'Nincs Hírnök. A figyelem sem gyűlik: a Csillagsír nem veszi észre, hogy ott vagytok.',
+          en: 'No Herald. Attention does not build either: the Stargrave never notices you.',
+        },
+      },
+      {
+        value: 0.6,
+        text: {
+          hu: 'Lassan gyűlik. Egy hosszú expedícióban is csak egyszer ébred fel, a vége felé.',
+          en: 'It builds slowly. Even on a long expedition it wakes once, near the end.',
+        },
+      },
+      {
+        value: 1,
+        text: {
+          hu:
+            'Ahogy tervezve van: a harc, az erővel nyitott szerkezetek és a hajtómű zaja gyűjtik. ' +
+            'Nyolcnál felébred, és onnan hetente egy oszlopot közelít.',
+          en:
+            'As designed: fighting, forcing mechanisms and engine noise all build it. At eight it ' +
+            'wakes, and from there it closes a column a week.',
+        },
+      },
+      {
+        value: 1.4,
+        text: {
+          hu: 'Gyorsan gyűlik. Egy zajos expedíció kétszer is összefut vele.',
+          en: 'It builds fast. A loud expedition will meet it twice.',
+        },
+      },
+      {
+        value: 2,
+        text: {
+          hu:
+            'Kétszeres. A csendes játék nem stílus, hanem feltétel: a Csendburok és az ' +
+            'Állócsend-lámpás kutatás nélkül végig menekülni fogtok.',
+          en:
+            'Double. Playing quietly is not a style but a condition: without the shroud and the ' +
+            'lantern you will spend the run running.',
+        },
+      },
+    ],
+  },
+  {
+    id: 'directives',
+    name: { hu: 'Parancsok otthonról', en: 'Orders from home' },
+    about: {
+      hu: 'Hány határidős parancs fut egyszerre. Mindegyik az egyik játékos pultjára kerül.',
+      en: 'How many dated orders run at once. Each one lands on one player’s console.',
+    },
+    scope: 'nextWeek',
+    levels: [
+      {
+        value: 0,
+        text: {
+          hu: 'Nincs parancs. Az expedíció azt csinálja, amit akar — és a hetek szerkezet nélkül telnek.',
+          en: 'No orders. The expedition does as it likes — and the weeks have no shape but yours.',
+        },
+      },
+      {
+        value: 1,
+        text: {
+          hu: 'Egy parancs egyszerre. Kevés nyomás, de mindig van egy irány.',
+          en: 'One order at a time. Little pressure, but always a direction.',
+        },
+      },
+      {
+        value: 2,
+        text: {
+          hu: 'Ahogy tervezve van: kettő fut, egy-egy mindkét pulton.',
+          en: 'As designed: two run, one on each console.',
+        },
+      },
+      {
+        value: 3,
+        text: {
+          hu: 'Három egyszerre. Lesz, amit tudatosan elbuktok — az is döntés.',
+          en: 'Three at once. Some you will fail on purpose — that is a decision too.',
+        },
+      },
+      {
+        value: 4,
+        text: {
+          hu: 'Négy egyszerre. Az útvonalat a határidők írják, nem a kíváncsiság.',
+          en: 'Four at once. The route is written by deadlines, not by curiosity.',
         },
       },
     ],

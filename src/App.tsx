@@ -24,14 +24,15 @@ import {
 } from './engine/expedition/save'
 import { describeExpeditionEvent } from './i18n/describeExpedition'
 import { EncounterView, MarketView } from './ui/strategic/EncounterView'
-import { HeartView, OverView } from './ui/strategic/EndView'
+import { GateView, HeartView, OverView } from './ui/strategic/EndView'
+import { ConsoleView } from './ui/strategic/ConsoleView'
 import { DifficultyPanel } from './ui/DifficultyPanel'
 import { Help } from './ui/Help'
 import type { HelpTopic } from './ui/Help'
 import { LangProvider, useLang } from './i18n/LangContext'
 import { setSoundEnabled, soundEnabled } from './ui/assets'
 import { MissionView } from './ui/MissionView'
-import { DEFAULT_LEVEL, DIALS } from './content/difficulty'
+import { DEFAULT_LEVEL, DIALS, dialValue } from './content/difficulty'
 import type { DialId } from './content/difficulty'
 import { randomSeed } from './engine/rng'
 import { RESOURCES, RESOURCE_ORDER } from './content/ship'
@@ -40,7 +41,13 @@ import { ShipView } from './ui/strategic/ShipView'
 import { ChangeSummary, shotOf, summaryMatters } from './ui/strategic/ChangeSummary'
 import type { Shot, Summary, SummaryKind } from './ui/strategic/ChangeSummary'
 import { StarMapView } from './ui/strategic/StarMapView'
-import { projectWeek, resourceMax, startExpedition } from './engine/expedition/expedition'
+import {
+  HERALD_WAKES_AT,
+  heraldDistance,
+  projectWeek,
+  resourceMax,
+  startExpedition,
+} from './engine/expedition/expedition'
 import type {
   ArchiveUnlockId,
   ExpeditionLength,
@@ -59,10 +66,16 @@ export function App() {
   )
 }
 
-const NAV: { screen: Screen; labelKey: 'shipHeading' | 'starMapHeading' | 'researchHeading' }[] = [
+const NAV: {
+  screen: Screen
+  labelKey: 'shipHeading' | 'starMapHeading' | 'researchHeading' | 'consolesHeading'
+}[] = [
   { screen: 'ship', labelKey: 'shipHeading' },
   { screen: 'starmap', labelKey: 'starMapHeading' },
   { screen: 'research', labelKey: 'researchHeading' },
+  // The two players' own screen. Fourth rather than first: it is where you go
+  // once the week is set up, not where the week starts.
+  { screen: 'consoles', labelKey: 'consolesHeading' },
 ]
 
 /**
@@ -450,6 +463,31 @@ function Game() {
             <span className="meter-label">◈ {t.understanding}</span>
             <span className="meter-value">{expedition.understanding}</span>
           </div>
+          {/*
+            Attention, from the very first point. A meter that only appears once
+            it is dangerous is a trap, and this one is entirely the players' own
+            doing — so they get to watch themselves do it.
+          */}
+          {dialValue(expedition.dials, 'attention') > 0 && (
+            <div
+              className={`meter meter-tight ${
+                expedition.herald ? 'meter-danger' : expedition.attention >= HERALD_WAKES_AT - 3 ? 'meter-full' : ''
+              }`}
+              title={`${t.attentionHint}${expedition.herald ? ` — ${t.heraldHint}` : ''}`}
+            >
+              <span className="meter-label">◎ {t.attention}</span>
+              <span className="meter-value">
+                {expedition.attention}
+                <span className="meter-cap">/{HERALD_WAKES_AT}</span>
+                {expedition.herald && (
+                  <span className="meter-delta loss">
+                    {' · '}
+                    {t.heraldLabel} {t.heraldAway(heraldDistance(expedition) ?? 0)}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
           {expedition.darkening > 0 && (
             <div className="meter meter-tight meter-danger">
               <span className="meter-label">{t.darkening}</span>
@@ -528,6 +566,8 @@ function Game() {
         {screen === 'starmap' && <StarMapView state={expedition} dispatch={dispatch} />}
         {screen === 'research' && <ResearchView state={expedition} dispatch={dispatch} />}
         {screen === 'crew' && <ShipView state={expedition} dispatch={dispatch} />}
+        {screen === 'consoles' && <ConsoleView state={expedition} dispatch={dispatch} />}
+        {screen === 'gate' && <GateView state={expedition} dispatch={dispatch} />}
         {screen === 'market' && <MarketView state={expedition} dispatch={dispatch} />}
         {screen === 'encounter' && <EncounterView state={expedition} dispatch={dispatch} />}
         {screen === 'mission' && (
@@ -667,8 +707,11 @@ function helpTopicFor(screen: Screen): HelpTopic {
     case 'mission':
       return 'mission'
     case 'heart':
+    case 'gate':
     case 'over':
       return 'ending'
+    case 'consoles':
+      return 'consoles'
     default:
       return 'strategic'
   }

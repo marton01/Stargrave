@@ -85,6 +85,19 @@ export type BattleSetup = {
   heroes?: CarriedHero[]
   /** Scale the enemy count — exploration missions field far fewer. */
   enemyScale?: number
+  /**
+   * Maximum hit points per hero, when the expedition has raised them.
+   *
+   * A hero's maximum used to be a constant of their class. Perks and worn relics
+   * can both add to it now, and that has to reach the grid or the strategic
+   * layer is promising something the battle does not honour.
+   */
+  heroMaxHp?: Partial<Record<HeroClassId, number>>
+  /**
+   * How close the two of them have to be for the Bond, in tiles. Two by default;
+   * a perk and a relic can widen it.
+   */
+  bondRange?: number
 }
 
 export type Action =
@@ -174,6 +187,7 @@ export function startMission(setup: BattleSetup): BattleState {
   const heroUnits: Hero[] = slots.map((slot, i) => {
     const cls = HERO_CLASSES[slot.heroClass]
     const carried = setup.heroes?.find((h) => h.heroClass === slot.heroClass)
+    const maxHp = setup.heroMaxHp?.[slot.heroClass] ?? cls.hp
     return {
       id: `hero-${slot.heroClass}`,
       side: 'hero',
@@ -181,8 +195,8 @@ export function startMission(setup: BattleSetup): BattleState {
       heroClass: slot.heroClass,
       playerSlot: slot.playerSlot,
       pos: heroSpawns[i] ?? heroSpawns[0] ?? { x: 0, y: 0 },
-      hp: carried ? Math.max(1, Math.min(cls.hp, carried.hp)) : cls.hp,
-      maxHp: cls.hp,
+      hp: carried ? Math.max(1, Math.min(maxHp, carried.hp)) : maxHp,
+      maxHp,
       statuses: {},
       alive: true,
       hand: carried ? [...carried.hand] : cardsOfClass(slot.heroClass).map((c) => c.id),
@@ -234,6 +248,7 @@ export function startMission(setup: BattleSetup): BattleState {
     carried: 0,
     exit: features.exit,
     collapsing: features.collapsing,
+    bondRange: setup.bondRange ?? 2,
     installations,
     setupInstallations: moduleIds,
     roundLimit: setup.roundLimit ?? null,

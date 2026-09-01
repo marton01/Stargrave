@@ -11,7 +11,7 @@
 //
 // Everything here is data, and everything the player reads is bilingual.
 
-import type { Text, TrialSymbol } from '../engine/types'
+import type { HeroClassId, Text, TrialSymbol } from '../engine/types'
 import type { ModuleId, ResourceId } from './ship'
 import type { CrewTraitId } from './crew'
 import type { PuzzleKind } from '../engine/puzzles/types'
@@ -41,6 +41,16 @@ export type EncounterEffect =
   | { k: 'revealMap'; columns: number }
   /** Hull damage, reduced by shield power and boarding wards. */
   | { k: 'hullRisk'; amount: number }
+  /** A named relic, or one drawn from what the run has not found yet. */
+  | { k: 'relic'; id?: string }
+  /**
+   * Louder, or quieter. Positive is scaled by the difficulty dial (and does
+   * nothing at all when the Herald is switched off); negative always applies —
+   * shedding attention is a favour and favours are not scaled away.
+   */
+  | { k: 'attention'; amount: number }
+  /** Advancement marks. Without a hero, both of them. */
+  | { k: 'heroXp'; amount: number; who?: HeroClassId }
   | { k: 'startMission'; flavour: 'boarding' | 'ruins' | 'explore' }
   | { k: 'startPuzzle'; kind?: PuzzleKind }
   /** Remember this for the rest of the expedition. */
@@ -72,6 +82,10 @@ export type ChoiceRequirement =
   | { k: 'noFlag'; id: string }
   /** Something an earlier expedition did. */
   | { k: 'mark'; id: string }
+  /** At least this many relics aboard. */
+  | { k: 'relicsAtLeast'; value: number }
+  /** This much attention on the ship — the loud options open late. */
+  | { k: 'attentionAtLeast'; value: number }
 
 export type EncounterChoice = {
   text: Text
@@ -1419,15 +1433,295 @@ export const ENCOUNTERS: Encounter[] = [
       walkAway,
     ],
   },
+  // ------------------------------------------- the new systems, as situations
+  //
+  // A mechanic the narrative layer never mentions stays a number on a bar. These
+  // four are the encounters that hand attention, relics and the Herald over to
+  // the players as decisions rather than as readouts.
+
+  {
+    id: 'the-loud-vein',
+    title: { hu: 'A zajos telér', en: 'The loud vein' },
+    text: {
+      hu:
+        'Egy nyitott bányaakna, tele valamivel, ami még mindig ad energiát. Ki lehet szedni — ' +
+        'de vágni kell hozzá, és a vágás hangja itt nem áll meg a szikla szélén. A műszerek ' +
+        'szerint innen kifelé nagyon jól hallható lesz.',
+      en:
+        'An open shaft, full of something that still gives power. It can be cut out — but cutting ' +
+        'it means noise, and noise here does not stop at the edge of the rock. The instruments say ' +
+        'it will be very audible from outside.',
+    },
+    tags: ['ruins', 'world', 'anomaly'],
+    weight: 11,
+    choices: [
+      {
+        text: { hu: 'Vágjuk ki. Megéri.', en: 'Cut it out. It is worth it.' },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'credits', amount: 16 },
+          { k: 'resource', id: 'fuel', amount: 8 },
+          { k: 'attention', amount: 3 },
+        ],
+        result: {
+          hu:
+            'Négy nap vágás, tele tartály és egy raklap eladható anyag. A negyedik nap végén a ' +
+            'műszerek egy visszhangot mérnek a mélyből, ami nem a mienk volt. Valami meghallott ' +
+            'minket, és most már tudja, merre keressen.',
+          en:
+            'Four days of cutting, a full tank and a pallet of sellable material. At the end of the ' +
+            'fourth day the instruments read an echo from the deep that was not ours. Something ' +
+            'heard us, and now knows which way to look.',
+        },
+      },
+      {
+        text: {
+          hu: 'Csak amit kézzel el tudunk vinni.',
+          en: 'Only what we can carry by hand.',
+        },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [{ k: 'resource', id: 'credits', amount: 5 }],
+        result: {
+          hu:
+            'Egy hét kézi munka, egy hetedannyi zsákmány, és teljes csend. A legénység nem érti, ' +
+            'miért így csináltuk. Egyszer majd megértik.',
+          en:
+            'A week of handwork, a seventh of the haul, and complete silence. The crew does not ' +
+            'understand why we did it this way. One day they will.',
+        },
+      },
+      {
+        text: { hu: 'Hagyjuk ott.', en: 'Leave it.' },
+        costs: [],
+        effects: [{ k: 'attention', amount: -1 }],
+        result: {
+          hu:
+            'Lezárjuk az aknát, ahogy találtuk, és a hajó lassan kifordul. Amit nem bántottunk ' +
+            'meg, az nem szól utánunk.',
+          en:
+            'We seal the shaft as we found it and the ship turns slowly out. What we did not ' +
+            'disturb does not call after us.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'the-lantern-keeper',
+    title: { hu: 'A lámpás őrzője', en: 'The lantern-keeper' },
+    text: {
+      hu:
+        'Egy állomás, amit belülről zártak le, és a zsilipnél egy váz, aki nem próbált kijutni. ' +
+        'A kezében egy tárgy, ami elveszi a hangot a környékéről — ezért nem hallotta meg semmi, ' +
+        'ami idekint jár. Hetven éve tartja.',
+      en:
+        'A station sealed from the inside, and at the airlock a body that never tried to get out. ' +
+        'In its hands is an object that takes the sound out of the space around it — which is why ' +
+        'nothing out here ever heard it. It has been holding it for seventy years.',
+    },
+    tags: ['station', 'ruins', 'distress'],
+    weight: 10,
+    once: true,
+    choices: [
+      {
+        text: {
+          hu: 'Kivesszük a kezéből. Nekünk kell.',
+          en: 'We take it out of its hands. We need it.',
+        },
+        costs: [{ k: 'resource', id: 'morale', amount: 1 }],
+        effects: [{ k: 'relic', id: 'lantern-of-still-air' }],
+        result: {
+          hu:
+            'Nehezebb, mint amilyennek látszik, és amíg viszed, nem hallod a saját lépteidet. ' +
+            'A legénység egy része nem nézett oda. A napló azt írja: „átvéve”.',
+          en:
+            'It is heavier than it looks, and while you carry it you cannot hear your own steps. ' +
+            'Some of the crew did not look. The log says: "taken over".',
+        },
+      },
+      {
+        text: {
+          hu: 'Felírjuk, mi volt, és nem visszük el.',
+          en: 'We write down what it was and leave it there.',
+        },
+        costs: [],
+        effects: [
+          { k: 'understanding', amount: 2 },
+          { k: 'resource', id: 'information', amount: 6 },
+        ],
+        result: {
+          hu:
+            'Lemérjük, lerajzoljuk, megértjük, mit csinál — és a helyén hagyjuk, a kezében. ' +
+            'A zsilipet ugyanúgy zárjuk vissza. Valaki hetven éve döntött úgy, hogy ez a tárgy ' +
+            'itt marad; nem a mi dolgunk felülírni.',
+          en:
+            'We measure it, draw it, understand what it does — and leave it where it is, in its ' +
+            'hands. We seal the airlock the same way. Somebody decided seventy years ago that this ' +
+            'object stays here; it is not ours to overrule.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'the-offering-floor',
+    title: { hu: 'A felajánlás padlója', en: 'The offering floor' },
+    text: {
+      hu:
+        'Egy kör alakú terem, a padlóján hetven tárgy, mindegyik pontosan a maga helyén. Van, ' +
+        'ahol üres a hely — valakik vittek, valakik hoztak. A terem közepén egy üres kör, ' +
+        'pontosan olyan méretű, mint amit a raktérben hoztunk.',
+      en:
+        'A circular chamber, seventy objects on the floor, every one exactly in its place. Some ' +
+        'places are empty — some took, some brought. In the middle of the room is an empty circle, ' +
+        'exactly the size of what is sitting in our hold.',
+    },
+    tags: ['ruins', 'anomaly'],
+    weight: 10,
+    once: true,
+    choices: [
+      {
+        text: {
+          hu: 'Hozzáteszünk egyet a mieinkből.',
+          en: 'We add one of ours.',
+        },
+        requires: { k: 'relicsAtLeast', value: 2 },
+        costs: [],
+        effects: [
+          { k: 'understanding', amount: 4 },
+          { k: 'archive', amount: 2 },
+          { k: 'attention', amount: -2 },
+        ],
+        result: {
+          hu:
+            'Leteszünk egyet a körbe, és a terem — nem válaszol, nem világít, nem történik semmi ' +
+            'olyan, amit egy műszer mérni tudna. De attól a pillanattól kezdve minden jel, amit ' +
+            'ebben a rendszerben olvasunk, egy fokkal egyszerűbb. Mintha bemutattak volna.',
+          en:
+            'We set one down in the circle, and the room — does not answer, does not light up, ' +
+            'nothing happens that an instrument could measure. But from that moment every sign we ' +
+            'read in this system is one degree simpler. As though we had been introduced.',
+        },
+      },
+      {
+        text: { hu: 'Elviszünk egyet.', en: 'We take one.' },
+        costs: [],
+        effects: [
+          { k: 'relic' },
+          { k: 'attention', amount: 2 },
+          { k: 'resource', id: 'morale', amount: -1 },
+        ],
+        result: {
+          hu:
+            'Az egyik hely üres marad utánunk. Semmi nem tartott vissza, és pontosan ez a ' +
+            'kellemetlen benne. A legénység egy hétig nem beszélt a teremről.',
+          en:
+            'One place stays empty behind us. Nothing stopped us, and that is exactly what is ' +
+            'unpleasant about it. The crew did not talk about that room for a week.',
+        },
+      },
+      {
+        text: { hu: 'Végigmérjük, és nem nyúlunk semmihez.', en: 'We survey it and touch nothing.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'resource', id: 'information', amount: 10 },
+          { k: 'understanding', amount: 1 },
+        ],
+        result: {
+          hu:
+            'Egy hét mérés: hetven tárgy, hetven felirat, és egy sorrend, ami nem véletlen. ' +
+            'A Labor hónapokra elég munkát kapott.',
+          en:
+            'A week of measurement: seventy objects, seventy inscriptions, and an order that is ' +
+            'not accidental. The Lab has months of work.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'the-counters-wake',
+    title: { hu: 'Amit a számláló hallott', en: 'What the counter heard' },
+    text: {
+      hu:
+        'A műszerek egy hetven éves adást fognak, ami nem üzenet: egy lista. Számok, dátumok, ' +
+        'irányok — és a legutolsó bejegyzés a mi hajónk, a mi hetünk, a mi zajszintünk. ' +
+        'Valami vezeti, mennyi hangot adtunk le, mióta átjöttünk a Kapun.',
+      en:
+        'The instruments pick up a seventy-year-old transmission that is not a message but a ' +
+        'list. Numbers, dates, headings — and the last entry is our ship, our week, our noise ' +
+        'level. Something is keeping a record of how much sound we have made since the Gate.',
+    },
+    tags: ['drift', 'anomaly', 'station'],
+    weight: 12,
+    once: true,
+    choices: [
+      {
+        text: {
+          hu: 'Elhallgatunk. Két hét teljes rádiócsend.',
+          en: 'We go quiet. Two weeks of full silence.',
+        },
+        costs: [{ k: 'weeks', amount: 2 }],
+        effects: [{ k: 'attention', amount: -4 }],
+        result: {
+          hu:
+            'Két hét sodródás, hideg hajtómű, kézi jelzések a fedélzeten. A lista a végén ' +
+            'ugyanazt a bejegyzést ismétli, aztán abbahagyja. Nem tűntünk el belőle — csak már ' +
+            'nem érdekes, amit írhat rólunk.',
+          en:
+            'Two weeks adrift, engines cold, hand signals on deck. At the end the list repeats the ' +
+            'same entry and then stops. We have not disappeared from it — we are simply no longer ' +
+            'worth writing about.',
+        },
+      },
+      {
+        text: {
+          hu: 'Megfejtjük, mit számol.',
+          en: 'We work out what it is counting.',
+        },
+        costs: [{ k: 'resource', id: 'information', amount: 8 }],
+        effects: [
+          { k: 'understanding', amount: 2 },
+          { k: 'heroXp', amount: 2, who: 'echoreader' },
+        ],
+        result: {
+          hu:
+            'Nem fenyegetés és nem őrjárat: könyvelés. Valami hetven éve vezeti, mennyi zaj ' +
+            'érkezik egy halott galaxisba, és minden bejegyzés után elindul megnézni. ' +
+            'Ettől nem lett kevesebb a zajunk — de most már tudjuk, mikor fordul felénk.',
+          en:
+            'Not a threat and not a patrol: bookkeeping. For seventy years something has been ' +
+            'recording how much noise arrives in a dead galaxy, and after every entry it sets out ' +
+            'to look. That has not made us quieter — but now we know when it turns our way.',
+        },
+      },
+      {
+        text: {
+          hu: 'Válaszolunk neki. Hangosan.',
+          en: 'We answer it. Loudly.',
+        },
+        costs: [],
+        effects: [
+          { k: 'attention', amount: 4 },
+          { k: 'understanding', amount: 1 },
+          { k: 'resource', id: 'morale', amount: 1 },
+        ],
+        result: {
+          hu:
+            'Teljes teljesítményen kiadjuk a saját listánkat: kik vagyunk, honnan jöttünk, mit ' +
+            'kerestünk. A legénység a hídon állva hallgatja, és utána valaki megjegyzi, hogy ez ' +
+            'volt az első alkalom, hogy nem bujkáltunk. Az adás egy perc múlva megismétli a ' +
+            'nevünket. Nem tudjuk, mit jelent, hogy megjegyezte.',
+          en:
+            'At full power we broadcast our own list: who we are, where we came from, what we were ' +
+            'looking for. The crew listens standing on the bridge, and afterwards somebody remarks ' +
+            'that this was the first time we were not hiding. A minute later the transmission ' +
+            'repeats our name. We do not know what it means that it took it down.',
+        },
+      },
+    ],
+  },
 ]
-
-const ENCOUNTER_INDEX = new Map(ENCOUNTERS.map((e) => [e.id, e]))
-
-export function encounter(id: string): Encounter {
-  const e = ENCOUNTER_INDEX.get(id)
-  if (!e) throw new Error(`No such encounter: ${id}`)
-  return e
-}
 
 // ------------------------------------------------- what an earlier run left
 //
@@ -1622,11 +1916,157 @@ export const CARRIED_ENCOUNTERS: Encounter[] = [
       },
     ],
   },
+  {
+    id: 'the-silence-after',
+    title: { hu: 'A csend, ami utána lett', en: 'The silence afterwards' },
+    text: {
+      hu:
+        'Az Archívumban egy sor, amit senki nem tudott hova tenni: egy expedíció megállított ' +
+        'valamit, ami hetven éven át számolta a zajt. Azóta ebben a szektorban nem mértek semmit. ' +
+        'Most a hajó egy üres pályaudvarra érkezik: jelzőfények, nyitott zsilipek, és senki. ' +
+        'Nem elhagyatott — kiürült. Ami eddig idehívta őket, azt ti kapcsoltátok ki.',
+      en:
+        'One line in the Archive nobody could place: an expedition stopped something that had spent ' +
+        'seventy years counting noise. Nothing has been measured in this sector since. Now the ship ' +
+        'arrives at an empty terminus: beacons lit, airlocks open, and nobody. Not abandoned — ' +
+        'emptied. Whatever used to call them here, you switched off.',
+    },
+    tags: ['station', 'drift', 'ruins'],
+    weight: 9,
+    once: true,
+    requiresMark: 'silenced-the-herald',
+    choices: [
+      {
+        text: {
+          hu: 'Kifosztjuk. Nekik már nem kell.',
+          en: 'We strip it. They have no use for it.',
+        },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'credits', amount: 22 },
+          { k: 'resource', id: 'food', amount: 12 },
+          { k: 'relic' },
+          { k: 'resource', id: 'morale', amount: -2 },
+        ],
+        result: {
+          hu:
+            'Három nap alatt leszedünk mindent, ami mozdítható. A legénység végig csendben ' +
+            'dolgozik, és a végén valaki azt kérdezi, hogy akkor most mi vagyunk-e azok, akik ' +
+            'miatt ez a hely üres. Nincs rá jó válasz.',
+          en:
+            'In three days we take everything that moves. The crew works in silence, and at the end ' +
+            'somebody asks whether we are the reason this place is empty. There is no good answer.',
+        },
+      },
+      {
+        text: {
+          hu: 'Bekapcsoljuk a jelzőt, és otthagyjuk nyitva.',
+          en: 'We light the beacon and leave it open.',
+        },
+        costs: [{ k: 'resource', id: 'fuel', amount: 6 }],
+        effects: [
+          { k: 'understanding', amount: 3 },
+          { k: 'archive', amount: 3 },
+          { k: 'mark', id: 'left-the-light-on' },
+        ],
+        result: {
+          hu:
+            'Feltöltjük a jelzőt a saját tartalékunkból, kitesszük a hívást minden irányba, és ' +
+            'nyitva hagyjuk a zsilipeket. Ha most nincs, ami számolja a zajt, akkor ez a hely ' +
+            'végre lehet az, aminek szánták: egy pont, ahol valaki megállhat. Nem tudjuk, ' +
+            'jön-e majd bárki. A jelző negyven évig fog égni.',
+          en:
+            'We top the beacon up out of our own reserves, put the call out in every direction and ' +
+            'leave the airlocks open. If there is nothing counting the noise any more, then this ' +
+            'place can finally be what it was meant to be: a point where somebody can stop. We do ' +
+            'not know whether anyone will come. The beacon will burn for forty years.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'the-light-that-burned',
+    title: { hu: 'Ami negyven évig ég', en: 'The light that burns forty years' },
+    text: {
+      hu:
+        'Az Archívum szerint egy korábbi expedíció otthagyott egy égő jelzőt egy kiürült ' +
+        'állomáson. A hajó most ugyanazt a hívást fogja — és nem üresen. Valaki válaszol a ' +
+        'jelzőre: nem a Kapu túloldaláról, nem egy hetven éves adásból. Innen.',
+      en:
+        'The Archive says an earlier expedition left a beacon burning on an emptied station. The ' +
+        'ship is picking up that same call now — and not into emptiness. Somebody is answering the ' +
+        'beacon: not from beyond the Gate, not out of a seventy-year-old transmission. From here.',
+    },
+    tags: ['station', 'distress', 'drift'],
+    weight: 10,
+    once: true,
+    requiresMark: 'left-the-light-on',
+    choices: [
+      {
+        text: { hu: 'Odamegyünk.', en: 'We go to them.' },
+        costs: [{ k: 'weeks', amount: 1 }],
+        effects: [
+          { k: 'crewJoin', count: 2 },
+          { k: 'understanding', amount: 3 },
+          { k: 'resource', id: 'morale', amount: 3 },
+          { k: 'archive', amount: 2 },
+          { k: 'mark', id: 'asked-for-nothing' },
+        ],
+        result: {
+          hu:
+            'Kilencen vannak, három hajóroncsból összehordott levegőn, és nem hősök: ' +
+            'túlélők, akik meghallottak egy jelzőt. Kettő közülük velünk jön. A többi marad, ' +
+            'mert most már van hol maradni. Nem kértek semmit, és mi sem.',
+          en:
+            'There are nine of them, living on air scavenged from three wrecks, and they are not ' +
+            'heroes: survivors who heard a beacon. Two of them come with us. The rest stay, because ' +
+            'now there is somewhere to stay. They asked for nothing, and neither did we.',
+        },
+      },
+      {
+        text: {
+          hu: 'Felírjuk a helyet, és megyünk tovább.',
+          en: 'We log the position and move on.',
+        },
+        costs: [],
+        effects: [
+          { k: 'resource', id: 'information', amount: 6 },
+          { k: 'resource', id: 'morale', amount: -2 },
+        ],
+        result: {
+          hu:
+            'Koordináta, időpont, jelerősség — minden bekerül a naplóba, és a hajó nem fordul ' +
+            'oda. A Kapu nem vár. A legénység érti, és ez a rosszabb.',
+          en:
+            'Coordinates, time, signal strength — all of it goes into the log, and the ship does ' +
+            'not turn. The Gate will not wait. The crew understands, and that is the worse part.',
+        },
+      },
+    ],
+  },
 ]
 
 /** Which encounters can appear at a node with these tags? */
 /** Everything, in one list: the ordinary pool and the carried-over answers. */
 const ALL_ENCOUNTERS: Encounter[] = [...ENCOUNTERS, ...CARRIED_ENCOUNTERS]
+
+/**
+ * Every encounter by id — the carried ones included.
+ *
+ * This index used to be built from `ENCOUNTERS` alone, which meant that the
+ * moment a carried encounter actually came up, resolving it threw "No such
+ * encounter" and took the run with it. `encountersFor` has always offered them,
+ * so the bug was one earned mark away the whole time; it surfaced the first time
+ * a test run happened to give a voice back. See the test that now walks every id.
+ */
+const ENCOUNTER_INDEX = new Map(ALL_ENCOUNTERS.map((e) => [e.id, e]))
+
+export function encounter(id: string): Encounter {
+  const e = ENCOUNTER_INDEX.get(id)
+  if (!e) throw new Error(`No such encounter: ${id}`)
+  return e
+}
 
 export function encountersFor(
   tags: readonly EncounterTag[],

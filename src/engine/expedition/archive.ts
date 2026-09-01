@@ -167,6 +167,46 @@ export const ENDINGS_BEFORE_LAST = [
   'communion',
 ] as const satisfies readonly EndingId[]
 
+/**
+ * The endings that are not read off the understanding number.
+ *
+ * They are listed apart from the five on purpose. The five are a ladder — the
+ * same place, seen with more or less understanding — and the last question is
+ * asked of those five. These four are conditions instead: what the run DID. The
+ * Archive shows them with their conditions written out, because an ending nobody
+ * can see the door to might as well not exist.
+ */
+export const EARNED_ENDINGS: { id: EndingId; condition: Text }[] = [
+  {
+    id: 'homecoming',
+    condition: {
+      hu: 'Bármikor, útközben: megfordulni a Kapu felé, amíg van rá üzemanyag.',
+      en: 'At any time on the road: turn back for the Gate while there is fuel for it.',
+    },
+  },
+  {
+    id: 'silence',
+    condition: {
+      hu: 'Megállítani a Hírnököt, és 1. megértés-szinttel elérni a Csillagsírt.',
+      en: 'Stop the Herald, and reach the Stargrave at understanding tier 1.',
+    },
+  },
+  {
+    id: 'inheritance',
+    condition: {
+      hu: 'Három ereklyével a fedélzeten, 1. megértés-szinttel.',
+      en: 'Three relics aboard, at understanding tier 1.',
+    },
+  },
+  {
+    id: 'custodian',
+    condition: {
+      hu: 'Öt élő legénységgel, 8+ morállal, 2. megértés-szinttel megérkezni.',
+      en: 'Arrive with five crew alive, morale 8 or more, at understanding tier 2.',
+    },
+  },
+]
+
 export function newArchive(): ArchiveState {
   return {
     version: ARCHIVE_VERSION,
@@ -255,9 +295,77 @@ export const ENDING_TITLES: Record<EndingId, Text> = {
   witness: { hu: 'A tanú', en: 'The witness' },
   intervene: { hu: 'A beavatkozás', en: 'The intervention' },
   communion: { hu: 'Együtthangzás', en: 'Communion' },
+  homecoming: { hu: 'Hazatérés', en: 'Homecoming' },
+  custodian: { hu: 'Az őrség átvétele', en: 'Taking the watch' },
+  silence: { hu: 'A Hírnök hallgatása', en: 'The Herald’s silence' },
+  inheritance: { hu: 'Örökség', en: 'Inheritance' },
 }
 
 export const ENDING_TEXTS: Record<EndingId, Text> = {
+  homecoming: {
+    hu:
+      'Nem érte el a Csillagsírt. Ez az a döntés, amit egyetlen expedíciós napló sem szeret ' +
+      'leírni: megfordultatok, mert még volt annyi üzemanyag, hogy meg lehessen fordulni. ' +
+      'A Kapu még ott van, ahol hagytátok, és átmegy rajta minden, amit összeszedtetek — ' +
+      'a mérések, a nevek, a leletek, és hat ember, aki különben ott maradt volna. ' +
+      'Odahaza ezt nem hívják győzelemnek. De a következő expedíció a ti térképeitekkel indul, ' +
+      'és nem üres kézzel: aki visszatér, az tovább tud adni.',
+    en:
+      'You never reached the Stargrave. This is the decision no expedition log likes to record: ' +
+      'you turned round, because there was still enough fuel to turn round with. The Gate is ' +
+      'where you left it, and everything you gathered goes through — the readings, the names, the ' +
+      'finds, and six people who would otherwise have stayed out there. At home they will not ' +
+      'call it a victory. But the next expedition sets out with your charts, and not empty-handed: ' +
+      'whoever comes back can hand something on.',
+  },
+  custodian: {
+    hu:
+      'Ép hajóval, teljes legénységgel, morállal álltok a peremen — és ezért nyílik meg az, ' +
+      'amit senki nem tervezett. Amit odalent tartanak, azt nem egyszer kell megtartani, hanem ' +
+      'folyamatosan; és ehhez nem hős kell, hanem váltás. A hajó lehorgonyzik. A legénység ' +
+      'beosztást ír: kinek mikor. Nem áldozat, mert nem halt meg senki — csak nem mennek haza. ' +
+      'A Kapu bezárul, és a Csillagsír fölött hetven év után újra ég egy lámpa, amit valaki ' +
+      'minden reggel meggyújt.',
+    en:
+      'You stand on the rim with an intact ship, a whole crew and morale to spare — and because of ' +
+      'that, something nobody planned for opens. What is held down there does not need holding ' +
+      'once but continuously; and that does not need a hero, it needs a rota. The ship drops ' +
+      'anchor. The crew writes a watch list: who, and when. Not a sacrifice, because nobody died ' +
+      '— they simply do not go home. The Gate closes, and above the Stargrave a lamp burns again ' +
+      'after seventy years, lit by somebody every morning.',
+  },
+  silence: {
+    hu:
+      'A Hírnök nem őr volt és nem vadász: számláló. Hetven éven át számolta, mennyi zaj érkezik ' +
+      'egy halott galaxisba, és minden alkalommal elindult megnézni. Ti megállítottátok, és ' +
+      'ezért most először nem érkezik jelentés a Csillagsír mélyére. A csend, ami odalent van, ' +
+      'először lesz igazi csend. Nem tudjátok, mit tart nyitva ez az ajtó — csak azt, hogy ' +
+      'kinyílt, és hogy amit hallgattatok, az válaszolt. A hajó a Kapun fordul haza, és a ' +
+      'Hírnök törzse ott van a raktérben, felírva, lemérve, elnevezve.',
+    en:
+      'The Herald was not a guard and not a hunter: it was a counter. For seventy years it counted ' +
+      'how much noise arrived in a dead galaxy, and every time it set out to look. You stopped it, ' +
+      'and so for the first time no report reaches the depths of the Stargrave. The silence down ' +
+      'there will be a real silence at last. You do not know what door this holds open — only that ' +
+      'it opened, and that what you listened to answered. The ship turns for the Gate, and the ' +
+      'Herald’s trunk lies in the hold, logged, measured and named.',
+  },
+  inheritance: {
+    hu:
+      'Három ereklye a kézben, és a felismerés, hogy egyiket sem szabad hazavinni. Ami odalent ' +
+      'van, nem választ akar: folytatást. Szétosztjátok, amit találtatok — a magtárat egy ' +
+      'kihalt világ egyenlítőjére, a nevek jegyzékét a Kapu peremére, a harangot a Csillagsír ' +
+      'fölé, ahol hallani fogja a következő, aki idejön. Nem fejeztetek be semmit. Elkezdtetek ' +
+      'valamit, ami nélkülünk fut tovább, és ez az egyetlen dolog, amit egy hetvenéves ' +
+      'temetőben építeni lehet.',
+    en:
+      'Three relics in your hands, and the recognition that none of them should go home. What is ' +
+      'down there does not want an answer: it wants a continuation. So you distribute what you ' +
+      'found — the seed capsule on the equator of a dead world, the ledger of names on the rim of ' +
+      'the Gate, the bell above the Stargrave where whoever comes next will hear it. You finished ' +
+      'nothing. You started something that runs on without us, and that is the only thing anyone ' +
+      'can build in a seventy-year-old graveyard.',
+  },
   theAnswer: {
     hu:
       'Nem kérdeztek. Álltok a Csillagsír peremén azzal az öt válasszal, amit öt expedíció hozott ' +

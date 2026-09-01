@@ -11,9 +11,10 @@ import type { CrewMember } from '../../content/crew'
 import type { ModuleId, ResourceId, StationId, SystemId } from '../../content/ship'
 import type { EncounterTag } from '../../content/encounters'
 import type { PuzzleKind, Puzzle } from '../puzzles/types'
-import type { BattleState, MissionKind, Objective, Text, TrialSymbol } from '../types'
+import type { BattleState, HeroClassId, MissionKind, Objective, Text, TrialSymbol } from '../types'
 import type { CarriedHero } from '../battle'
 import type { DialId, Dials } from '../../content/difficulty'
+import type { DirectiveKind } from '../../content/directives'
 
 // ---------------------------------------------------------------- rewards
 
@@ -25,6 +26,10 @@ export type Reward =
   | { k: 'revealMap'; columns: number }
   | { k: 'unlockPuzzle'; kind: PuzzleKind }
   | { k: 'crewJoin'; count: number }
+  /** A named relic. Without an id, one is drawn from what this run has not seen. */
+  | { k: 'relic'; id?: string }
+  /** Advancement marks. Without a hero, both of them get it. */
+  | { k: 'heroXp'; amount: number; who?: HeroClassId }
 
 // ---------------------------------------------------------------- missions
 
@@ -45,6 +50,15 @@ export type MissionSpec = {
    * the ship, and the ship shows it.
    */
   aboard?: boolean
+  /**
+   * Is this the Herald?
+   *
+   * It is a boarding action like any other, and everything about how it is built
+   * follows from `aboard`. The flag exists so that finishing it can be told
+   * apart: winning silences the thing for the rest of the run, losing sends it
+   * back down the corridor to try again.
+   */
+  herald?: boolean
   /** Shown before launch, so the players can allocate power first. */
   briefing: Text
 }
@@ -79,6 +93,7 @@ export type MarketOffer = {
     | { k: 'resource'; id: ResourceId; amount: number }
     | { k: 'module'; id: ModuleId }
     | { k: 'crew'; member: CrewMember }
+    | { k: 'relic'; id: string }
   price: number
   bought: boolean
 }
@@ -141,6 +156,8 @@ export type ExpeditionEvent =
   | { k: 'courseSet'; node: string; weeks: number }
   | { k: 'arrived'; node: string }
   | { k: 'noFuel' }
+  /** The engines have no power at all, so the jump is not happening this week. */
+  | { k: 'enginesCold' }
   | { k: 'missionLaunched'; briefing: Text }
   | { k: 'missionWon' }
   | { k: 'missionLost' }
@@ -163,6 +180,31 @@ export type ExpeditionEvent =
   | { k: 'bought'; label: Text; price: number }
   | { k: 'gateClosing'; weeksLeft: number }
   | { k: 'reachedHeart' }
+  // ------------------------------------------------- attention and the Herald
+  | { k: 'attentionRose'; amount: number; total: number }
+  | { k: 'attentionFell'; amount: number; total: number }
+  | { k: 'heraldWoke' }
+  | { k: 'heraldMoved'; columnsAway: number }
+  | { k: 'heraldCaught' }
+  | { k: 'heraldSilenced' }
+  | { k: 'heraldRepelled' }
+  // ---------------------------------------------------------------- relics
+  | { k: 'relicFound'; relic: Text }
+  | { k: 'relicAttuned'; relic: Text; hero: HeroClassId }
+  | { k: 'relicStowed'; relic: Text }
+  | { k: 'relicSold'; relic: Text; price: number }
+  // ------------------------------------------------------------ advancement
+  | { k: 'heroMarks'; hero: HeroClassId; amount: number; reason: Text }
+  | { k: 'perkBought'; hero: HeroClassId; perk: Text }
+  | { k: 'crewPromoted'; name: string; rank: number }
+  | { k: 'crewLearned'; name: string; trait: Text }
+  | { k: 'mentorTaken'; name: string; hero: HeroClassId }
+  // ------------------------------------------------------------- directives
+  | { k: 'directiveIssued'; label: Text; weeks: number }
+  | { k: 'directiveDone'; label: Text }
+  | { k: 'directiveFailed'; label: Text }
+  /** The Heart, read before anything is decided there. */
+  | { k: 'heartRead' }
 
 export type ExpeditionLogEntry = { week: number; event: ExpeditionEvent }
 
@@ -186,6 +228,20 @@ export type EndingId =
    * enough. Five expeditions know five things; this one asks what they add up to.
    */
   | 'theAnswer'
+  /**
+   * The four that are not about understanding at all.
+   *
+   * These are the endings you EARN rather than read your way into, and each one
+   * asks for something the run did: turning for the Gate while you still can,
+   * arriving with the crew whole, having silenced the thing that hunted you,
+   * carrying enough of the dead galaxy home in your hands. They exist because
+   * "how much did you understand" was the only question the endgame asked, and
+   * a game whose ending is one number is a game you play once.
+   */
+  | 'homecoming'
+  | 'custodian'
+  | 'silence'
+  | 'inheritance'
 
 export type LossReason = 'hull' | 'morale' | 'gateClosed' | 'abandoned'
 
@@ -203,7 +259,11 @@ export type Screen =
   | 'market'
   | 'encounter'
   | 'mission'
+  /** The two consoles: one per player. Marks, perks, relics, people, orders. */
+  | 'consoles'
   | 'heart'
+  /** The Gate, from the inside. The one screen where you can choose to go home. */
+  | 'gate'
   | 'over'
 
 /** A choice the players have taken but not yet paid for with cards. */
@@ -228,6 +288,78 @@ export type PendingEncounter = {
 // ---------------------------------------------------------------- state
 
 export type ExpeditionLength = 'short' | 'medium' | 'long'
+
+// ------------------------------------------------------- what belongs to whom
+
+/**
+ * One hero's private record: what they have earned and what they wear.
+ *
+ * Deliberately NOT part of `CarriedHero`, which is the battle engine's idea of a
+ * hero and is rebuilt from the units every time a mission ends. Anything stored
+ * there would be silently dropped by `missionResult`. This lives on the
+ * expedition, and the battle is handed only the numbers it needs.
+ */
+export type HeroRecord = {
+  /** Advancement marks earned and not yet spent. See content/advance.ts. */
+  marks: number
+  /** Marks earned over the whole run, so the console can show a history. */
+  marksEarned: number
+  /** Perk ids bought, in the order they were bought. */
+  perks: string[]
+  /** Relic ids worn attuned. Length is capped by perks — see `attunementSlots`. */
+  attuned: string[]
+}
+
+/**
+ * A dated request from home. See content/directives.ts for the kinds.
+ *
+ * `startedAt` is what progress is measured from: an order to win two landings
+ * means two more, not two counting the one from last month. Without that a new
+ * order could arrive already complete, which reads as a bug even when the maths
+ * is right.
+ */
+export type Directive = {
+  id: string
+  kind: DirectiveKind
+  /** Whose console it sits on. */
+  owner: HeroClassId
+  target: number
+  /** The tally (or level) this order was issued against. */
+  startedAt: number
+  /** Week it must be done by. */
+  due: number
+  reward: Reward[]
+  state: 'open' | 'done' | 'failed'
+}
+
+/**
+ * Running counts the directives measure against.
+ *
+ * Kept as its own little ledger rather than derived from the log, because the
+ * log is trimmed to the last four hundred entries and a long expedition would
+ * quietly lose its early landings.
+ */
+export type Tally = {
+  landingsWon: number
+  puzzlesSolved: number
+  researchDone: number
+  heraldsFaced: number
+  relicsFound: number
+}
+
+/**
+ * The thing that comes looking for you.
+ *
+ * It lives on a column rather than a node: it is not travelling the same roads
+ * the ship is, it is coming up the corridor. `column` is where it is, and it
+ * closes on the ship's column. `hunts` counts how many times it has been driven
+ * off — each time it comes back harder, which is what stops "lose to it on
+ * purpose" from being the cheap answer.
+ */
+export type Herald = {
+  column: number
+  hunts: number
+}
 
 
 
@@ -275,6 +407,32 @@ export type ExpeditionState = {
 
   /** Hero wounds and card losses persist between missions. */
   heroes: CarriedHero[]
+  /** What each of the two players has earned, bought and attuned. */
+  heroRecords: Record<HeroClassId, HeroRecord>
+  /** Relic ids aboard, attuned or not. See content/relics.ts. */
+  relics: string[]
+
+  /**
+   * How loudly this expedition is playing, 0 upwards.
+   *
+   * Fighting, forcing mechanisms and running the engines hot all raise it;
+   * quiet weeks bring it down. Past a threshold the Herald wakes — see `herald`.
+   * This is the one pressure in the game the players create themselves, which is
+   * why it is worth having: the Gate's clock is the same every run, and this is
+   * not.
+   */
+  attention: number
+  /** Absent until the attention wakes it, and gone for good once silenced. */
+  herald: Herald | null
+
+  /** Live and finished orders from home. */
+  directives: Directive[]
+  /** Next directive number, so ids stay unique and readable. */
+  directiveCount: number
+  tally: Tally
+
+  /** Has the Heart already been read? It can only be read once. */
+  heartRead: boolean
 
   map: StarMap
   at: string

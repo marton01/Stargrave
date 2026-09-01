@@ -60,6 +60,10 @@ const HU = {
     `${seen} / ${total} megvan. A cél nem a túlélés, hanem hogy mind az ötöt lássátok — és utána az, ami belőlük következik.`,
   endingsDone: 'Mind megvan, és a válasz is. Ez a játék vége — az Archívum kész.',
   endingUnseen: 'Még nem láttátok',
+  endingsEarnedHeading: 'Kiérdemelt végkifejletek',
+  endingsEarnedIntro:
+    'Ezeket nem a megértés száma nyitja, hanem az, amit az expedíció tett. A nevük és a ' +
+    'feltételük itt látszik — a szövegük csak akkor, ha ott állsz előtte.',
   endingNeed: (tier: number) =>
     tier === 0 ? 'megértés nem kell hozzá' : `${tier}. megértés-szint kell hozzá`,
   endingLastQuestion: 'Az utolsó kérdés — a Csillagsírban tehető fel',
@@ -175,6 +179,7 @@ const HU = {
   crewHeading: 'Legénység',
   crewSpeciality: 'Szakterület',
   crewTraits: 'Jellemvonások',
+  crewHome: (stations: string) => `Otthon: ${stations} — máshol csak életben tartja az állomást`,
   crewUnassigned: 'Nincs beosztva',
   crewWeeks: (n: number) => `${n}. hét a fedélzeten`,
   crewLostLabel: 'Elveszett',
@@ -215,6 +220,8 @@ const HU = {
   starMapHeading: 'Csillagtérkép',
   starMapIntro:
     'Előre vezető utak. Amit választotok, az heteket kér — és a Kapu közben számol.',
+  enginesColdWarning:
+    'A hajtómű energia nélkül áll: így nem lehet útnak indulni. Adj neki legalább egy egységet a Hajó képernyőn.',
   setCourse: 'Irány',
   travellingTo: (node: string, weeks: number) => `Útban: ${node} — ${weeks} hét`,
   currentPosition: 'Itt vagyunk',
@@ -273,6 +280,14 @@ const HU = {
   marketTooExpensive: 'Nincs elég kredit',
   marketEmpty: 'Nincs több ajánlat.',
   marketCrew: 'Legénységtag',
+  marketRelic: 'Ereklye',
+  marketSellHeading: 'Amit el tudsz adni',
+  marketSellHint:
+    'Ráhangolni csak keveset lehet egyszerre, a többi a raktárban áll. Az állomás megveszi — ' +
+    'de gondold meg: három ereklyével a Csillagsírban külön végkifejlet nyílik.',
+  marketSell: 'Eladás',
+  marketSellConfirm: (price: number) => `Eladom — ${price} ✧`,
+  marketSellNone: 'Minden ereklyét hordja valaki. Előbb le kell venni.',
 
   // ---------------------------------------------------------------- mission
   missionHeading: 'Küldetés',
@@ -304,9 +319,11 @@ const HU = {
     'Minden feladvány levezethető logikával. Nem kell tippelni, és nincs benne nyelvi tartalom.',
   runeDecodeName: 'Rúnadekódolás',
   runeDecodeHelp:
-    'Ki kell találni a rúnasorrendet. Kattints egy mezőre a következő rúnáért (jobb klikk: visszafelé), majd Beadás. Utána megmutatja, mennyi volt a helyén (●), és mennyi szerepel benne, de máshol (○).',
-  runeExact: 'helyén',
-  runePartial: 'benne',
+    'Ki kell találni a rúnasorrendet. Kattints egy mezőre a következő rúnáért (jobb klikk: visszafelé), majd Beadás. Utána két számot kapsz: mennyi rúna volt a helyén, és mennyi szerepel a sorozatban, de más helyen. Azt NEM mondja meg, melyik — csak azt, mennyi.',
+  runeExact: 'a helyén',
+  runePartial: 'máshol benne',
+  runeScoreHint:
+    'A két szám darabszám, nem pozíció: azt mondja meg, MENNYI rúna jó, nem azt, melyik. Ami egyáltalán nem szerepel a sorozatban, az egyik számban sem jelenik meg.',
   balanceScalesName: 'Egyensúly-mérleg',
   balanceScalesHelp:
     'Az ereklyék súlya rejtve van. Mérj, amíg tudsz, aztán add meg a sorrendet a legkönnyebbtől a legnehezebbig.',
@@ -496,6 +513,104 @@ const HU = {
   badgeRelic: 'Ereklye és kimenekítési pont',
   badgeRelicText:
     'A begyűjtendő ereklyék és a kijárat. Felderítő küldetéseken ezek a cél, nem az ellenség.',
+
+  // -------------------------------------------------- consoles and marks
+  consolesHeading: 'Pultok',
+  consolesIntro:
+    'Két pult, két ember. Ami itt van, az nem közös: a jegyeket az szerzi, aki megszerezte, ' +
+    'az ereklyét az hordja, aki felvette, és a tanítványokat az képzi, aki elvállalta. ' +
+    'A reaktoron osztozzatok — ezen ne.',
+  consoleTabHint: 'Válaszd ki a saját pultodat. A másikat is látod, de ott ne nyomkodd.',
+  marksHeld: (n: number, name: string) => `${n} ${name}`,
+  marksEarned: (n: number) => `összesen ${n} szerezve`,
+  marksHow: 'Miből lesz jegy',
+  perksHeading: 'Amit megtanulhat',
+  perkBuy: (cost: number) => `Megtanulja — ${cost} jegy`,
+  perkOwned: 'Megvan',
+  perkNeeds: (name: string) => `Előbb: ${name}`,
+  perkTooExpensive: 'Nincs elég jegy',
+  relicsHeading: 'Ereklyék',
+  relicsIntro:
+    'Az ereklye a raktárban nem tesz semmit. Csak az hat, amit valaki hord — és mindenki csak ' +
+    'annyit hordhat, amennyi helye van.',
+  relicSlots: (used: number, total: number) => `Ráhangolva: ${used} / ${total}`,
+  relicAttune: 'Ráhangolódom',
+  relicStow: 'Leveszem',
+  relicWornBy: (name: string) => `${name} hordja`,
+  relicOnlyFor: (name: string) => `Csak ${name} tudja hordani`,
+  relicNoSlot: 'Nincs több hely — előbb le kell venni valamit',
+  relicNone: 'Nincs ereklye a fedélzeten. Feltárásos partraszállásokból, kereskedőktől és néhány döntésből jönnek.',
+  relicWhisper: 'Az ára',
+  menteesHeading: 'Tanítványok',
+  menteesIntro:
+    'Akit elvállalsz, kétszer olyan gyorsan tanul a posztján. Ha kettő is képzett szintre ér, ' +
+    'minden megnyert partraszállás egy jegyet fizet neked a munkájuk után.',
+  menteeCount: (n: number, max: number) => `${n} / ${max} tanítvány`,
+  menteeTake: 'Elvállalom',
+  menteeRelease: 'Elengedem',
+  menteeFull: 'Ennyit tudsz vinni',
+  menteeOther: (name: string) => `${name} tanítványa`,
+  crewRankLine: (rank: string, xp: number) => `${rank} · ${xp} munkahét`,
+  crewNextRank: (n: number) => `${n} hét a következő szintig`,
+  heroHpLine: (hp: number, max: number) => `Életerő ${hp} / ${max}`,
+
+  // ------------------------------------------------------------ directives
+  directivesHeading: 'Parancsok otthonról',
+  directivesIntro:
+    'Határidős kérések a Kapu túloldaláról. Mindegyik az egyik pultra kerül — az a játékos ' +
+    'felel érte, és ő kapja a jegyeket, ha összejön. Ami lejár, az morálba kerül.',
+  directiveDue: (week: number) => `határidő: ${week}. hét`,
+  directiveLeft: (weeks: number) => `${weeks} hét van rá`,
+  directiveOverdue: 'lejárt',
+  directiveProgressLine: (now: number, target: number) => `${now} / ${target}`,
+  directiveAtDeadline: 'Ezt csak a határidőkor mérik.',
+  directiveNone: 'Most nincs parancs. (A nehézségi tárcsán ki is lehet kapcsolni őket.)',
+  directiveStateDone: 'teljesítve',
+  directiveStateFailed: 'elbukva',
+  directiveReward: 'Amit fizet',
+
+  // ------------------------------------------------------- attention, Herald
+  attention: 'Figyelem',
+  attentionHint:
+    'Ennyire hangosan játszotok. A harc, az erővel nyitott szerkezetek és a felpörgetett hajtómű ' +
+    'gyűjtik; a csendes hetek, a Csendburok és néhány ereklye viszik le. Nyolcnál elindul a Hírnök.',
+  heraldLabel: 'Hírnök',
+  heraldAway: (columns: number) =>
+    columns === 0 ? 'itt van' : `${columns} oszlopra`,
+  heraldHint:
+    'Nem az utakon jön, hanem a folyosón: mindig felétek tart. Aki mélyebbre menekül, azzal ' +
+    'együtt megy. Ha beér, hajóra törés lesz — ha megállítjátok, nem küldenek másikat.',
+  heraldSilencedLabel: 'A Hírnök elhallgatott',
+
+  // --------------------------------------------------------------- the Gate
+  gateHeading: 'Vissza a Kapun',
+  gateIntro:
+    'A Kapu még nyitva van, és van annyi üzemanyag, hogy meg lehessen fordulni. Ez nem vereség: ' +
+    'amit eddig összeszedtetek, átmegy, és az Archívum megkapja. Az expedíció itt véget ér.',
+  gateFuelCost: (fuel: number) => `${fuel} üzemanyag a hazaútra`,
+  gateBanks: (points: number) => `Kb. ${points} archívum-pont`,
+  gateGoHome: 'Hazatérés',
+  gateGoHomeShort: 'Hazatérés…',
+  gateConfirm: 'Megfordulunk',
+  gateNoFuel: (fuel: number) => `Ehhez ${fuel} üzemanyag kell. Ennyivel nem lehet visszafordulni.`,
+  gateHintOnMap: 'Innen bármikor haza lehet fordulni, amíg van rá üzemanyag és nyitva a Kapu.',
+
+  // ----------------------------------------------------------- the Heart
+  heartReadButton: 'Elolvassuk a peremet',
+  heartReadHint:
+    'Egyszer, mielőtt bármit eldöntenétek: egy szerkezet a legnehezebb fokozaton. Ha megfejtitek, ' +
+    '+2 megértés — és az itt, ebben a pillanatban új végkifejletet nyithat. Ha nem, morálba kerül.',
+  heartReadDone: 'A peremet elolvastátok. Ez egyszeri volt.',
+
+  // -------------------------------------------------------- the two commands
+  commandFilter: 'Kinek a pultja',
+  commandAll: 'Minden',
+  domainEngineering: 'Gépészet',
+  domainResearch: 'Kutatás',
+  domainShared: 'Közös',
+  domainHint:
+    'A hajó két félre van osztva: a Rúnakovács a gépészetért, a Visszhang-olvasó a kutatásért ' +
+    'felel. Ami közös, arról tényleg együtt kell döntenetek.',
 } as const
 
 /**
@@ -557,6 +672,10 @@ const EN: Catalog = {
     `${seen} of ${total} found. The goal is not to survive but to see all five — and then what follows from them.`,
   endingsDone: 'All of them, and the answer too. This is the end of the game — the Archive is finished.',
   endingUnseen: 'Not seen yet',
+  endingsEarnedHeading: 'Endings you earn',
+  endingsEarnedIntro:
+    'These are not opened by the understanding number but by what the expedition did. Their names ' +
+    'and their conditions are here — their words only when you are standing in front of them.',
   endingNeed: (tier: number) =>
     tier === 0 ? 'needs no understanding' : `needs understanding tier ${tier}`,
   endingLastQuestion: 'The last question — to be asked at the Stargrave',
@@ -671,6 +790,8 @@ const EN: Catalog = {
   crewHeading: 'Crew',
   crewSpeciality: 'Speciality',
   crewTraits: 'Traits',
+  crewHome: (stations: string) =>
+    `At home on: ${stations} — anywhere else they only keep the station alive`,
   crewUnassigned: 'Unposted',
   crewWeeks: (n: number) => `week ${n} aboard`,
   crewLostLabel: 'Lost',
@@ -711,6 +832,8 @@ const EN: Catalog = {
   starMapHeading: 'Star map',
   starMapIntro:
     'Roads leading on. Whichever you pick costs weeks — and the Gate is counting.',
+  enginesColdWarning:
+    'The engines have no power: no course can be set like this. Give them at least one unit on the Ship screen.',
   setCourse: 'Set course',
   travellingTo: (node: string, weeks: number) => `Under way: ${node} — ${weeks} weeks`,
   currentPosition: 'We are here',
@@ -767,6 +890,14 @@ const EN: Catalog = {
   marketTooExpensive: 'Not enough credits',
   marketEmpty: 'No offers left.',
   marketCrew: 'Crew member',
+  marketRelic: 'Relic',
+  marketSellHeading: 'What you can sell',
+  marketSellHint:
+    'Only a few can be attuned at once; the rest sit in the hold. The post will take them — but ' +
+    'think first: three relics open an ending of their own at the Stargrave.',
+  marketSell: 'Sell',
+  marketSellConfirm: (price: number) => `Sell it — ${price} ✧`,
+  marketSellNone: 'Every relic is being worn. They have to come off first.',
 
   // ---------------------------------------------------------------- mission
   missionHeading: 'Mission',
@@ -798,9 +929,11 @@ const EN: Catalog = {
     'Every puzzle is derivable by logic. No guessing is required, and there is no linguistic content in any of them.',
   runeDecodeName: 'Rune decoding',
   runeDecodeHelp:
-    'Work out the rune sequence. Click a slot for the next rune (right-click for the previous one), then Submit. It then shows how many were in the right place (●) and how many appear but elsewhere (○).',
+    'Work out the rune sequence. Click a slot for the next rune (right-click for the previous one), then Submit. You then get two numbers: how many runes were in the right place, and how many appear in the sequence but somewhere else. It does NOT tell you which — only how many.',
   runeExact: 'in place',
-  runePartial: 'present',
+  runePartial: 'elsewhere',
+  runeScoreHint:
+    'The two numbers are counts, not positions: they say HOW MANY runes are right, not which ones. Anything that is not in the sequence at all shows up in neither number.',
   balanceScalesName: 'Balance scales',
   balanceScalesHelp:
     'The relics’ weights are hidden. Weigh while you can, then give the order from lightest to heaviest.',
@@ -994,6 +1127,105 @@ const EN: Catalog = {
   badgeRelic: 'Relic and extraction point',
   badgeRelicText:
     'The relics to collect and the way out. On exploration missions these are the objective, not the enemies.',
+
+  // -------------------------------------------------- consoles and marks
+  consolesHeading: 'Consoles',
+  consolesIntro:
+    'Two consoles, two people. Nothing here is shared: marks belong to whoever earned them, a ' +
+    'relic works for whoever put it on, and mentees are trained by whoever took them on. Share ' +
+    'the reactor — not this.',
+  consoleTabHint: 'Pick your own console. You can see the other one, but do not press things on it.',
+  marksHeld: (n: number, name: string) => `${n} ${name}`,
+  marksEarned: (n: number) => `${n} earned in all`,
+  marksHow: 'How marks are earned',
+  perksHeading: 'What they can learn',
+  perkBuy: (cost: number) => `Learn it — ${cost} marks`,
+  perkOwned: 'Learned',
+  perkNeeds: (name: string) => `First: ${name}`,
+  perkTooExpensive: 'Not enough marks',
+  relicsHeading: 'Relics',
+  relicsIntro:
+    'A relic in the hold does nothing. Only what somebody is wearing works — and each of you can ' +
+    'wear only as much as you have room for.',
+  relicSlots: (used: number, total: number) => `Attuned: ${used} of ${total}`,
+  relicAttune: 'Attune it',
+  relicStow: 'Take it off',
+  relicWornBy: (name: string) => `worn by ${name}`,
+  relicOnlyFor: (name: string) => `Only ${name} can wear this`,
+  relicNoSlot: 'No room left — something has to come off first',
+  relicNone: 'No relics aboard. They come from exploration landings, from traders and from a few decisions.',
+  relicWhisper: 'What it costs',
+  menteesHeading: 'Mentees',
+  menteesIntro:
+    'Whoever you take on learns twice as fast at their post. Once two of them reach trained rank, ' +
+    'every landing won pays you a mark for their work.',
+  menteeCount: (n: number, max: number) => `${n} of ${max} mentees`,
+  menteeTake: 'Take them on',
+  menteeRelease: 'Let them go',
+  menteeFull: 'That is all you can carry',
+  menteeOther: (name: string) => `${name}’s mentee`,
+  crewRankLine: (rank: string, xp: number) => `${rank} · ${xp} weeks of work`,
+  crewNextRank: (n: number) => `${n} weeks to the next rank`,
+  heroHpLine: (hp: number, max: number) => `Hit points ${hp} of ${max}`,
+
+  // ------------------------------------------------------------ directives
+  directivesHeading: 'Orders from home',
+  directivesIntro:
+    'Dated requests from the far side of the Gate. Each one lands on one console — that player is ' +
+    'answerable for it, and takes the marks if it comes good. What runs out costs morale.',
+  directiveDue: (week: number) => `due in week ${week}`,
+  directiveLeft: (weeks: number) => `${weeks} weeks left`,
+  directiveOverdue: 'overdue',
+  directiveProgressLine: (now: number, target: number) => `${now} of ${target}`,
+  directiveAtDeadline: 'This one is only measured at the deadline.',
+  directiveNone: 'No orders right now. (They can be switched off on the difficulty dials.)',
+  directiveStateDone: 'carried out',
+  directiveStateFailed: 'failed',
+  directiveReward: 'What it pays',
+
+  // ------------------------------------------------------- attention, Herald
+  attention: 'Attention',
+  attentionHint:
+    'How loudly you are playing. Fighting, forcing mechanisms and running the engines hot all ' +
+    'build it; quiet weeks, the silence shroud and a few relics bring it down. At eight the ' +
+    'Herald sets out.',
+  heraldLabel: 'Herald',
+  heraldAway: (columns: number) => (columns === 0 ? 'here' : `${columns} columns off`),
+  heraldHint:
+    'It does not use the roads: it comes up the corridor, always towards you. Running deeper takes ' +
+    'it with you. If it arrives there is a boarding action — and if you stop it, no other is sent.',
+  heraldSilencedLabel: 'The Herald has fallen silent',
+
+  // --------------------------------------------------------------- the Gate
+  gateHeading: 'Back through the Gate',
+  gateIntro:
+    'The Gate is still open, and there is enough fuel to turn round with. This is not a defeat: ' +
+    'everything you have gathered goes through, and the Archive gets it. The expedition ends here.',
+  gateFuelCost: (fuel: number) => `${fuel} fuel for the road home`,
+  gateBanks: (points: number) => `About ${points} archive points`,
+  gateGoHome: 'Go home',
+  gateGoHomeShort: 'Turn for home…',
+  gateConfirm: 'We turn round',
+  gateNoFuel: (fuel: number) => `That needs ${fuel} fuel. You cannot turn back on this much.`,
+  gateHintOnMap: 'You can turn for home from here at any time, while there is fuel for it and the Gate is open.',
+
+  // ----------------------------------------------------------- the Heart
+  heartReadButton: 'Read the rim',
+  heartReadHint:
+    'Once, before you decide anything: one mechanism at the hardest setting. Solve it and you gain ' +
+    '2 understanding — which can open a different ending right here, in this moment. Fail and it ' +
+    'costs morale.',
+  heartReadDone: 'You have read the rim. That was the one chance.',
+
+  // -------------------------------------------------------- the two commands
+  commandFilter: 'Whose console',
+  commandAll: 'Everything',
+  domainEngineering: 'Engineering',
+  domainResearch: 'Research',
+  domainShared: 'Shared',
+  domainHint:
+    'The ship is split in two: the Runesmith answers for engineering, the Echo-reader for ' +
+    'research. What is marked shared really does have to be decided together.',
 }
 
 const CATALOGS: Record<Lang, Catalog> = { hu: HU, en: EN }

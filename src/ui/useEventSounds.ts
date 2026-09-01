@@ -52,8 +52,20 @@ function expeditionSound(event: ExpeditionEvent): SfxName | null {
       return 'research'
     case 'puzzleSolved':
       return 'puzzleSolved'
+    case 'relicFound':
+    case 'relicAttuned':
+      return 'relic'
+    case 'perkBought':
+    case 'crewPromoted':
+    case 'directiveDone':
+      return 'research'
     case 'missionWon':
+    case 'heraldSilenced':
       return 'missionWon'
+    case 'heraldWoke':
+    case 'heraldCaught':
+    case 'directiveFailed':
+      return 'missionLost'
     case 'missionLost':
     case 'puzzleFailed':
     case 'crewLost':

@@ -536,6 +536,68 @@ export const CARDS: Card[] = [
       effects: [{ k: 'heal', power: 2, alsoPartner: true }],
     },
   },
+
+  // ==================================================== ADVANCEMENT CARDS
+  //
+  // Not in either starting deck. Each one is bought with the hero's own marks
+  // (content/advance.ts), which makes them the only cards in the game one player
+  // owns and the other does not.
+
+  {
+    id: 'rs-rampart',
+    name: { hu: 'Sáncvonal', en: 'Rampart' },
+    heroClass: 'runesmith',
+    advanced: true,
+    initiative: 35,
+    symbols: ['force'],
+    top: {
+      text: {
+        hu: 'Támadás 3, hatótáv 1, hátralökés 1',
+        en: 'Attack 3, range 1, knockback 1',
+      },
+      effects: [{ k: 'attack', power: 3, range: 1, knockback: 1 }],
+    },
+    bottom: {
+      text: {
+        hu: 'Vért 2 magadra és a párodra, majd emelj rúnaoszlopot egy szomszédos mezőre',
+        en: 'Shield 2 to yourself and your partner, then raise a rune pillar on an adjacent tile',
+      },
+      flux: 1,
+      effects: [{ k: 'shield', power: 2, alsoPartner: true }, { k: 'pillar' }],
+    },
+  },
+
+  {
+    id: 'er-still-note',
+    name: { hu: 'Álló hang', en: 'The Still Note' },
+    heroClass: 'echoreader',
+    advanced: true,
+    initiative: 55,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Területsebzés 2, hatótáv 4, sugár 1. A találtak Rúnajel alá kerülnek.',
+        en: 'Area attack 2, range 4, radius 1. Everything hit is Rune Marked.',
+      },
+      flux: 1,
+      effects: [
+        {
+          k: 'areaAtPoint',
+          power: 2,
+          range: 4,
+          radius: 1,
+          status: { kind: 'runeMark', rounds: 2 },
+        },
+      ],
+    },
+    bottom: {
+      text: {
+        hu: 'Mozgás 3, majd vegyél vissza egy lapot az eldobottak közül',
+        en: 'Move 3, then take a card back from your discard pile',
+      },
+      effects: [{ k: 'move', distance: 3 }, { k: 'recoverCard' }],
+    },
+  },
 ]
 
 const CARD_INDEX = new Map(CARDS.map((c) => [c.id, c]))
@@ -546,6 +608,18 @@ export function card(id: string): Card {
   return c
 }
 
+/**
+ * The starting deck of a class.
+ *
+ * Advancement cards are left out: they only reach a deck through the perk that
+ * grants them (content/advance.ts), and a deck-building call must never hand one
+ * out for free. `allCardsOfClass` is the one that still sees everything, for the
+ * checks that have to cover every card ever written.
+ */
 export function cardsOfClass(heroClass: Card['heroClass']): Card[] {
+  return CARDS.filter((c) => c.heroClass === heroClass && !c.advanced)
+}
+
+export function allCardsOfClass(heroClass: Card['heroClass']): Card[] {
   return CARDS.filter((c) => c.heroClass === heroClass)
 }

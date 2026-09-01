@@ -11,7 +11,7 @@
 // exactly what a test is for.
 
 import { describe, expect, it } from 'vitest'
-import { ENCOUNTERS, CARRIED_ENCOUNTERS, encountersFor } from '../../content/encounters'
+import { ENCOUNTERS, CARRIED_ENCOUNTERS, encounter, encountersFor } from '../../content/encounters'
 import { availableEndings, expeditionStep, startExpedition } from './expedition'
 import {
   bankExpedition,
@@ -51,6 +51,16 @@ function ledger() {
 }
 
 describe('encounter consequences', () => {
+  it('can resolve every encounter it can offer, carried ones included', () => {
+    // The lookup index was built from the ordinary encounters alone, so the first
+    // time a run actually met a carried one it threw "No such encounter" and the
+    // expedition died with it. Every id the content can hand out has to be
+    // resolvable, or a mark is a crash waiting for the right save.
+    for (const e of ALL) {
+      expect(() => encounter(e.id), `${e.id} cannot be looked up`).not.toThrow()
+    }
+  })
+
   it('answers every flag a decision writes', () => {
     const { setFlags, readFlags } = ledger()
     const unanswered = [...setFlags].filter((id) => !readFlags.has(id))

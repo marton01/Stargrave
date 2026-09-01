@@ -7,7 +7,7 @@
 
 import { useState } from 'react'
 import { ENDING_TEXTS, ENDING_TITLES, LOSS_TEXTS } from '../../engine/expedition/archive'
-import { availableEndings } from '../../engine/expedition/expedition'
+import { availableEndings, canGoHome, homewardFuel } from '../../engine/expedition/expedition'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
 import { understandingTier } from '../../content/research'
 import { useLang } from '../../i18n/LangContext'
@@ -15,11 +15,21 @@ import type { EndingId, ExpeditionState } from '../../engine/expedition/types'
 import type { UiKey } from '../../i18n/ui'
 
 const TIER_KEY: UiKey[] = ['tier0', 'tier1', 'tier2', 'tier3']
+
+/**
+ * Everything that can be chosen at the Stargrave, in the order it is offered.
+ *
+ * `homecoming` is not here: turning back is not a decision you take standing on
+ * the rim, it is one you take on the road. See `GateView`.
+ */
 const ALL_ENDINGS: EndingId[] = [
   'flee',
   'blindRuin',
   'witness',
   'intervene',
+  'silence',
+  'inheritance',
+  'custodian',
   'communion',
   'theAnswer',
 ]
@@ -47,6 +57,28 @@ export function HeartView({
         </span>
       </header>
       <p className="heart-intro">{t.heartIntro}</p>
+
+      {/*
+        One reading of the rim, before anything is decided. Two points of
+        understanding can open a different ending while the list is already on
+        screen — which is the whole reason it is offered here and not earlier.
+      */}
+      <div className="heart-read">
+        {state.heartRead ? (
+          <p className="muted">{t.heartReadDone}</p>
+        ) : (
+          <>
+            <button
+              className="button button-primary"
+              data-action="readHeart"
+              onClick={() => dispatch({ k: 'readHeart' })}
+            >
+              {t.heartReadButton}
+            </button>
+            <p className="muted">{t.heartReadHint}</p>
+          </>
+        )}
+      </div>
 
       <div className="ending-list">
         {ALL_ENDINGS.filter((id) => id !== 'theAnswer' || open.includes(id)).map((id) => {
@@ -123,6 +155,93 @@ export function OverView({
           <button className="button button-primary" data-action="returnToArchive" onClick={onReturn}>
             {t.overReturn}
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The Gate, from the inside: the screen that answers "when does this end?".
+ *
+ * Before this the answer was "when you reach the Stargrave, or when the clock
+ * runs out and you lose everything". So a run that had gone badly had nothing to
+ * play for, and a run that had gone well had no reason to stop. Turning back is
+ * an ENDING now — a small one, banked and counted, worth more for every relic in
+ * the hold — and the interesting week of an expedition is the one where you can
+ * still afford it and are deciding not to.
+ */
+export function GateView({
+  state,
+  dispatch,
+}: {
+  state: ExpeditionState
+  dispatch: (action: ExpeditionAction) => void
+}) {
+  const { t, s } = useLang()
+  const [confirming, setConfirming] = useState(false)
+  const fuel = homewardFuel(state)
+  const possible = canGoHome(state)
+  // What the Archive would get: the ending itself, a point for every relic
+  // carried home, and half of everything understood. Stated rather than
+  // discovered, because it is the one number this decision turns on.
+  const banked = 3 + state.relics.length + Math.floor(state.understanding / 2) + state.archiveEarned
+
+  return (
+    <div className="heart gate-view">
+      <header className="panel-head">
+        <h2>{t.gateHeading}</h2>
+        <span className="panel-meta">
+          {t.gateFuelCost(fuel)} · {t.gateBanks(banked)}
+        </span>
+      </header>
+      <p className="heart-intro">{t.gateIntro}</p>
+
+      <div className="ending-list">
+        <div className="ending">
+          <h3>{s(ENDING_TITLES.homecoming)}</h3>
+          <p>{s(ENDING_TEXTS.homecoming)}</p>
+          {!possible ? (
+            <p className="muted">{t.gateNoFuel(fuel)}</p>
+          ) : confirming ? (
+            <>
+              <div className="button-row">
+                <button
+                  className="button button-primary"
+                  data-action="chooseEnding"
+                  data-ending="homecoming"
+                  onClick={() => dispatch({ k: 'chooseEnding', endingId: 'homecoming' })}
+                >
+                  {t.gateConfirm}
+                </button>
+                <button
+                  className="button"
+                  data-action="gateBack"
+                  onClick={() => setConfirming(false)}
+                >
+                  {t.encounterBack}
+                </button>
+              </div>
+              <p className="heart-warning">{t.heartFinal}</p>
+            </>
+          ) : (
+            <div className="button-row">
+              <button
+                className="button button-primary"
+                data-action="gatePick"
+                onClick={() => setConfirming(true)}
+              >
+                {t.gateGoHome}
+              </button>
+              <button
+                className="button"
+                data-action="gateLeave"
+                onClick={() => dispatch({ k: 'openScreen', screen: 'starmap' })}
+              >
+                {t.back}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

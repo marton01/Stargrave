@@ -18,6 +18,14 @@ export type ResearchEffect =
   | { k: 'reactor'; amount: number }
   | { k: 'unlockPuzzle'; kind: PuzzleKind }
   | { k: 'heroCard'; cardId: string }
+  /**
+   * Something the expedition now knows, which other things can ask about.
+   *
+   * Used by the Herald project: knowing what the thing is makes facing it a
+   * different fight. Research that only ever produced modules and understanding
+   * points could not touch the rest of the game at all.
+   */
+  | { k: 'flag'; id: string }
 
 export type ResearchProject = {
   id: string
@@ -134,6 +142,40 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     effects: [{ k: 'module', id: 'boardingWards' }],
   },
   {
+    id: 'tech-silence-shroud',
+    branch: 'technology',
+    name: { hu: 'Csendburok', en: 'Silence shroud' },
+    description: {
+      hu:
+        'A hajó lenyomatát elnyelni, mielőtt kijut. Hetente 2 figyelemmel kevesebb: a Hírnök ' +
+        'később ébred, és lassabban talál rátok.',
+      en:
+        'Swallowing the ship’s signature before it leaves the hull. Two less attention a week: the ' +
+        'Herald wakes later and takes longer to find you.',
+    },
+    cost: 12,
+    weeks: 3,
+    requires: [],
+    effects: [{ k: 'module', id: 'silenceShroud' }],
+  },
+  {
+    id: 'tech-relic-cradle',
+    branch: 'technology',
+    name: { hu: 'Ereklyeágy', en: 'Relic cradle' },
+    description: {
+      hu:
+        'Tartó, ami elbírja azt, amit találtatok. Mindkét hős egy plusz ereklyét hordhat ' +
+        'ráhangolva — vagyis kettő helyett négy szólhat bele a hétbe.',
+      en:
+        'A mount that can hold what you found. Each hero may wear one more relic attuned — four ' +
+        'relics speaking into the week instead of two.',
+    },
+    cost: 15,
+    weeks: 3,
+    requires: ['tech-hull-lattice'],
+    effects: [{ k: 'module', id: 'relicCradle' }],
+  },
+  {
     id: 'tech-echo-vault',
     branch: 'technology',
     name: { hu: 'Visszhang-kamra', en: 'Echo vault' },
@@ -191,6 +233,26 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     effects: [
       { k: 'understanding', amount: 3 },
       { k: 'unlockPuzzle', kind: 'starChart' },
+    ],
+  },
+  {
+    id: 'und-the-herald',
+    branch: 'understanding',
+    name: { hu: 'A Hírnök', en: 'The Herald' },
+    description: {
+      hu:
+        'Nem őr és nem vadász: számol. Megtudni, mit számol — és ettől kezdve tudni, mikor ' +
+        'fordul felénk. Aki érti, annak a Hírnök egy fokkal könnyebb ellenfél.',
+      en:
+        'Not a guard and not a hunter: it counts. Learning what it counts — and from then on ' +
+        'knowing when it turns your way. Understood, the Herald is one level easier to face.',
+    },
+    cost: 12,
+    weeks: 3,
+    requires: ['und-the-silence'],
+    effects: [
+      { k: 'understanding', amount: 2 },
+      { k: 'flag', id: 'knows-herald' },
     ],
   },
   {

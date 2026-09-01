@@ -8,6 +8,7 @@
 import { encounter } from '../../content/encounters'
 import type { EncounterChoice, EncounterCost, EncounterEffect } from '../../content/encounters'
 import {
+  HERO_ORDER,
   choiceAffordable,
   choiceAvailable,
   payableCards,
@@ -18,6 +19,7 @@ import { CardView } from '../CardView'
 import { mapNode } from '../../engine/expedition/starmap'
 import { MODULES, RESOURCES } from '../../content/ship'
 import { SPECIALITY_NAMES } from '../../content/crew'
+import { relic } from '../../content/relics'
 import { describeChoice, describeRequirement } from '../../i18n/describeChoice'
 import { useLang } from '../../i18n/LangContext'
 import type { ExpeditionState } from '../../engine/expedition/types'
@@ -254,18 +256,23 @@ export function MarketView({
 
       <div className="offer-list">
         {offers.map((offer, index) => {
+          const item = offer.item
           const label =
-            offer.item.k === 'resource'
-              ? `${s(RESOURCES[offer.item.id].name)} +${offer.item.amount}`
-              : offer.item.k === 'module'
-                ? s(MODULES[offer.item.id].name)
-                : `${t.marketCrew}: ${offer.item.member.name}`
+            item.k === 'resource'
+              ? `${s(RESOURCES[item.id].name)} +${item.amount}`
+              : item.k === 'module'
+                ? s(MODULES[item.id].name)
+                : item.k === 'relic'
+                  ? `${t.marketRelic}: ${s(relic(item.id).name)}`
+                  : `${t.marketCrew}: ${item.member.name}`
           const detail =
-            offer.item.k === 'module'
-              ? s(MODULES[offer.item.id].description)
-              : offer.item.k === 'crew'
-                ? `${s(SPECIALITY_NAMES[offer.item.member.speciality])}`
-                : ''
+            item.k === 'module'
+              ? s(MODULES[item.id].description)
+              : item.k === 'relic'
+                ? s(relic(item.id).description)
+                : item.k === 'crew'
+                  ? `${s(SPECIALITY_NAMES[item.member.speciality])}`
+                  : ''
           const tooDear = state.resources.credits < offer.price
           return (
             <div key={index} className={`offer ${offer.bought ? 'offer-bought' : ''}`}>
@@ -310,6 +317,8 @@ export function MarketView({
         {offers.every((o) => o.bought) && <p className="muted">{t.marketEmpty}</p>}
       </div>
 
+      <RelicCounter state={state} dispatch={dispatch} />
+
       <div className="button-row">
         <button
           className="button button-primary"
@@ -320,5 +329,78 @@ export function MarketView({
         </button>
       </div>
     </div>
+  )
+}
+
+/**
+ * The other half of a trading post: what you can sell.
+ *
+ * Relics pile up faster than they can be worn — there are only so many
+ * attunement slots — and until now the extra ones were dead weight in the hold.
+ * A post will take them, which turns "we found a fourth relic" from a shrug into
+ * a decision: wear it, keep it for the Inheritance ending, or turn it into the
+ * fuel that gets you home.
+ *
+ * Anything somebody is wearing is not on this list. Selling a relic off your
+ * partner's neck from the other side of the table is not a mechanic.
+ */
+function RelicCounter({
+  state,
+  dispatch,
+}: {
+  state: ExpeditionState
+  dispatch: (action: ExpeditionAction) => void
+}) {
+  const { t, s } = useLang()
+  const [confirming, setConfirming] = useState<string | null>(null)
+  const worn = new Set(HERO_ORDER.flatMap((hero) => state.heroRecords[hero].attuned))
+  const sellable = state.relics.filter((id) => !worn.has(id))
+  if (state.relics.length === 0) return null
+
+  return (
+    <section className="market-relics">
+      <h3>{t.marketSellHeading}</h3>
+      <p className="muted">{t.marketSellHint}</p>
+      <div className="offer-list">
+        {sellable.map((id) => {
+          const def = relic(id)
+          return (
+            <div key={id} className="offer">
+              <div className="offer-text">
+                <strong>{s(def.name)}</strong>
+                <span className="offer-detail">{s(def.description)}</span>
+              </div>
+              <span className="offer-price">{def.value} ✧</span>
+              {confirming === id ? (
+                <span className="offer-confirm">
+                  <button
+                    className="button button-primary button-small"
+                    data-action="sellRelic"
+                    onClick={() => {
+                      dispatch({ k: 'sellRelic', relicId: id })
+                      setConfirming(null)
+                    }}
+                  >
+                    {t.marketSellConfirm(def.value)}
+                  </button>
+                  <button
+                    className="button button-small"
+                    data-action="sellCancel"
+                    onClick={() => setConfirming(null)}
+                  >
+                    {t.encounterBack}
+                  </button>
+                </span>
+              ) : (
+                <button className="button" data-action="sellPick" onClick={() => setConfirming(id)}>
+                  {t.marketSell}
+                </button>
+              )}
+            </div>
+          )
+        })}
+        {sellable.length === 0 && <p className="muted">{t.marketSellNone}</p>}
+      </div>
+    </section>
   )
 }

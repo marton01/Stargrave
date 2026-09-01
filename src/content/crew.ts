@@ -5,7 +5,7 @@
 // player reads *about* a crew member is bilingual.
 
 import type { Rng } from '../engine/rng'
-import type { Text } from '../engine/types'
+import type { HeroClassId, Text } from '../engine/types'
 
 export type CrewSpeciality = 'engineer' | 'scientist' | 'guard' | 'medic' | 'navigator'
 
@@ -33,9 +33,15 @@ export type CrewTrait = {
   description: Text
   /** Weekly morale contribution while this member is aboard. */
   morale?: number
-  /** Extra Information per week while assigned to the Lab or the Archive. */
+  /** Extra Information per week while assigned to the Lab. */
   research?: number
-  /** Extra output on their matching station. */
+  /**
+   * Extra output on the station their speciality is at home on — and only there.
+   *
+   * Only there, because otherwise this is a general competence bonus that makes a
+   * veteran engineer a better scientist than a scientist. Every trait carrying
+   * this field says so in its own description.
+   */
   station?: number
   /** Bonus when the ship works on alien technology. */
   alienTech?: number
@@ -83,8 +89,12 @@ export const CREW_TRAITS: Record<CrewTraitId, CrewTrait> = {
     id: 'young',
     name: { hu: 'fiatal', en: 'young' },
     description: {
-      hu: 'Először látja a csillagokat innen. Lelkes, de még tanul.',
-      en: 'Seeing the stars from here for the first time. Eager, but still learning.',
+      hu:
+        'Először látja a csillagokat innen. Lelkes, de még tanul: a saját szakmája állomásán ' +
+        'egyelőre kevesebbet ér.',
+      en:
+        'Seeing the stars from here for the first time. Eager, but still learning: worth less for ' +
+        'now on the station of their own speciality.',
     },
     morale: 1,
     station: -1,
@@ -103,8 +113,12 @@ export const CREW_TRAITS: Record<CrewTraitId, CrewTrait> = {
     id: 'restless',
     name: { hu: 'nyugtalan', en: 'restless' },
     description: {
-      hu: 'Nem tud egy helyben maradni. Gyorsabb munka, romló morál.',
-      en: 'Cannot sit still. Faster work, worse morale.',
+      hu:
+        'Nem tud egy helyben maradni. A saját szakmája állomásán gyorsabb munka, de a hajó ' +
+        'morálja romlik tőle.',
+      en:
+        'Cannot sit still. Faster work on the station of their own speciality, and worse ship ' +
+        'morale for it.',
     },
     morale: -1,
     station: 1,
@@ -131,7 +145,80 @@ export type CrewMember = {
   alive: boolean
   /** Weeks aboard. Purely for the crew list, but it makes losses land harder. */
   weeksAboard: number
+  /**
+   * Weeks of useful work done, which is what a rank is made of.
+   *
+   * A crew member used to be a fixed card: the same name and the same two traits
+   * in week one and week twenty-eight. So there was no reason to keep anybody
+   * anywhere — a body was a body, and a loss was a number. Work counts now, and
+   * that makes a five-week veteran of the Lab a thing you do not want to move.
+   */
+  xp: number
+  /**
+   * The hero who took them under their wing, if either did.
+   *
+   * Mentoring is the smallest possible co-operative hook and the one that was
+   * most obviously missing: the crew list belonged to nobody. A mentee learns
+   * faster, and once they are any good their mentor earns marks for their work.
+   */
+  mentor: HeroClassId | null
 }
+
+/**
+ * Ranks, from the work they have done. Derived rather than stored, so there is
+ * exactly one definition of what a rank is.
+ *
+ * A station gives one point a week, two if the person is mentored. So trained is
+ * eight weeks of work — or four under somebody's wing — and master is twenty, or
+ * ten. Long enough that leaving somebody in place is a decision; short enough
+ * that it happens inside one expedition.
+ */
+export const RANK_XP = [0, 8, 20] as const
+
+export function crewRank(member: CrewMember): 1 | 2 | 3 {
+  if (member.xp >= RANK_XP[2]) return 3
+  if (member.xp >= RANK_XP[1]) return 2
+  return 1
+}
+
+/** Work still needed for the next rank, or null at the top. */
+export function xpToNextRank(member: CrewMember): number | null {
+  const rank = crewRank(member)
+  if (rank === 3) return null
+  return RANK_XP[rank] - member.xp
+}
+
+export const RANK_NAMES: Record<1 | 2 | 3, Text> = {
+  1: { hu: 'újonc', en: 'recruit' },
+  2: { hu: 'képzett', en: 'trained' },
+  3: { hu: 'mester', en: 'master' },
+}
+
+/**
+ * Extra station strength a rank is worth.
+ *
+ * Two, and only at trained — the same weight as being the right specialist for
+ * the station, so "eight weeks in the Lab" is worth as much as "trained as a
+ * scientist". One point would have been invisible: most stations halve their
+ * strength, so a single point disappears in the rounding, which is exactly how
+ * the crew headcount used to do nothing at five stations.
+ *
+ * The master rank adds nothing here on purpose. Its reward is the trait the
+ * person learns, which is a change to who they are rather than another number —
+ * and some of those traits add station strength themselves.
+ */
+export function rankBonus(member: CrewMember): number {
+  return crewRank(member) >= 2 ? 2 : 0
+}
+
+/** The traits a promotion may hand out: nothing that makes a person worse. */
+export const LEARNABLE_TRAITS: CrewTraitId[] = [
+  'brave',
+  'veteran',
+  'meticulous',
+  'devout',
+  'alienBorn',
+]
 
 // Invented syllables. Combined they give names that belong to no real language,
 // which is exactly what we want for a dead galaxy — and it means the crew list
@@ -160,6 +247,8 @@ export function generateCrewMember(rng: Rng, id: string, speciality?: CrewSpecia
     station: null,
     alive: true,
     weeksAboard: 0,
+    xp: 0,
+    mentor: null,
   }
 }
 

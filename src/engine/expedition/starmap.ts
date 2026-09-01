@@ -12,6 +12,7 @@ import { createRng, type Rng } from '../rng'
 import { encountersFor } from '../../content/encounters'
 import { generateCrewMember } from '../../content/crew'
 import { MODULE_ORDER } from '../../content/ship'
+import { RELICS } from '../../content/relics'
 import { STARTING_PUZZLE_KINDS } from '../puzzles/index'
 import type { EncounterTag } from '../../content/encounters'
 import type { ModuleId, ResourceId } from '../../content/ship'
@@ -147,6 +148,10 @@ function missionFor(rng: Rng, column: number, columns: number, darkeningHint: nu
     rewards.push({ k: 'resource', id: 'information', amount: 2 + objective.count })
   }
   if (rng.next() < 0.3) rewards.push({ k: 'understanding', amount: 1 })
+  // A site worth clearing usually has something in it. Collect objectives get
+  // their relics from what the party actually carried out, so this is for the
+  // fights: the reward for standing your ground somewhere old.
+  if (objective.k !== 'collect' && rng.next() < 0.3) rewards.push({ k: 'relic' })
   if (rng.next() < 0.35) {
     const id: ResourceId = rng.next() < 0.5 ? 'fuel' : 'food'
     rewards.push({ k: 'resource', id, amount: 5 })
@@ -177,6 +182,8 @@ function puzzleEvent(rng: Rng, column: number, columns: number, kinds: readonly 
   else if (roll < 0.6) rewards.push({ k: 'resource', id: 'credits', amount: 8 + difficulty * 3 })
   else if (roll < 0.8) rewards.push({ k: 'understanding', amount: 2 })
   else rewards.push({ k: 'revealMap', columns: 2 })
+  // Deep mechanisms are guarding something.
+  if (difficulty >= 2 && rng.next() < 0.4) rewards.push({ k: 'relic' })
 
   return {
     k: 'puzzle',
@@ -202,9 +209,18 @@ function marketEvent(rng: Rng, column: number, id: string): NodeEvent {
       ]
       const pick = rng.pick(pool)!
       offers.push({ item: { k: 'resource', ...pick }, price: pick.price, bought: false })
-    } else if (roll < 0.75) {
+    } else if (roll < 0.7) {
       const moduleId = rng.pick(MODULE_ORDER) as ModuleId
       offers.push({ item: { k: 'module', id: moduleId }, price: 22 + column * 2, bought: false })
+    } else if (roll < 0.85) {
+      // A post this far out has picked something up too, and it knows what it is
+      // worth: always dearer than what it fetches when you sell it back.
+      const found = rng.pick(RELICS)!
+      offers.push({
+        item: { k: 'relic', id: found.id },
+        price: found.value + 10 + column,
+        bought: false,
+      })
     } else {
       const member = generateCrewMember(rng, `${id}-hire-${i}`)
       offers.push({ item: { k: 'crew', member }, price: 10 + column, bought: false })

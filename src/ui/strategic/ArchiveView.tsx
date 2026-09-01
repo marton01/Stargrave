@@ -7,13 +7,20 @@
 import { useRef, useState } from 'react'
 import {
   canUnlock,
+  EARNED_ENDINGS,
   ENDINGS_BEFORE_LAST,
+  ENDING_TEXTS,
   ENDING_TITLES,
   offeredUnlocks,
 } from '../../engine/expedition/archive'
 import { LENGTHS } from '../../engine/expedition/starmap'
 import { useLang } from '../../i18n/LangContext'
-import type { ArchiveState, ArchiveUnlockId, ExpeditionLength } from '../../engine/expedition/types'
+import type {
+  ArchiveState,
+  ArchiveUnlockId,
+  EndingId,
+  ExpeditionLength,
+} from '../../engine/expedition/types'
 
 /**
  * Which understanding tier each ending needs. Mirrors `availableEndings`, and is
@@ -48,6 +55,8 @@ export function ArchiveView({
   onDeleteSave: () => void
 }) {
   const { t, s } = useLang()
+  // Which ending is open for reading. Only one at a time, so the list stays a list.
+  const [openEnding, setOpenEnding] = useState<EndingId | null>(null)
   const [length, setLength] = useState<ExpeditionLength>('medium')
   const [seedText, setSeedText] = useState('')
   const [importError, setImportError] = useState(false)
@@ -144,30 +153,48 @@ export function ArchiveView({
               )}
         </p>
         <ul className="endings">
-          {ENDINGS_BEFORE_LAST.map((id) => {
-            const seen = archive.endingsSeen.includes(id)
-            return (
-              <li key={id} className={`endings-row ${seen ? 'endings-seen' : ''}`} data-ending={id}>
-                <span className="endings-mark">{seen ? '◆' : '◇'}</span>
-                <span className="endings-name">{seen ? s(ENDING_TITLES[id]) : t.endingUnseen}</span>
-                <span className="endings-need">{t.endingNeed(ENDING_TIER[id])}</span>
-              </li>
-            )
-          })}
+          {ENDINGS_BEFORE_LAST.map((id) => (
+            <EndingRow
+              key={id}
+              id={id}
+              seen={archive.endingsSeen.includes(id)}
+              need={t.endingNeed(ENDING_TIER[id])}
+              open={openEnding === id}
+              onToggle={() => setOpenEnding(openEnding === id ? null : id)}
+            />
+          ))}
           {/* The sixth is not a slot to fill in but the thing the other five are
               for, so it is only named once it can be aimed at. */}
           {(archive.unlocked.includes('last-question') || archive.completed) && (
-            <li
-              className={`endings-row endings-final ${archive.completed ? 'endings-seen' : ''}`}
-              data-ending="theAnswer"
-            >
-              <span className="endings-mark">{archive.completed ? '✦' : '◇'}</span>
-              <span className="endings-name">
-                {archive.completed ? s(ENDING_TITLES.theAnswer) : t.endingLastQuestion}
-              </span>
-              <span className="endings-need">{t.endingNeed(3)}</span>
-            </li>
+            <EndingRow
+              id="theAnswer"
+              seen={archive.completed === true}
+              final
+              unseenName={t.endingLastQuestion}
+              need={t.endingNeed(3)}
+              open={openEnding === 'theAnswer'}
+              onToggle={() => setOpenEnding(openEnding === 'theAnswer' ? null : 'theAnswer')}
+            />
           )}
+        </ul>
+
+        <h3>{t.endingsEarnedHeading}</h3>
+        <p className="panel-meta">{t.endingsEarnedIntro}</p>
+        <ul className="endings">
+          {EARNED_ENDINGS.map(({ id, condition }) => (
+            <EndingRow
+              key={id}
+              id={id}
+              seen={archive.endingsSeen.includes(id)}
+              need={s(condition)}
+              // These are named even before they are reached: the condition is the
+              // point of them, and an ending nobody can see the door to might as
+              // well not exist.
+              nameWhenUnseen
+              open={openEnding === id}
+              onToggle={() => setOpenEnding(openEnding === id ? null : id)}
+            />
+          ))}
         </ul>
 
         <h3>{t.unlockHeading}</h3>
@@ -266,5 +293,63 @@ export function ArchiveView({
         {importError && <p className="warning">{t.importFailed}</p>}
       </section>
     </div>
+  )
+}
+
+/**
+ * One line of the endings list, and the ending itself when it is opened.
+ *
+ * The Archive used to name what you had seen and never show it again — so the
+ * text of an ending existed for exactly one screen, at the end of the expedition
+ * that earned it, and then only in memory. Reading them side by side is most of
+ * what the Archive is for: the last question is literally "what do these five
+ * answers add up to", and you cannot answer that from titles.
+ *
+ * Unseen endings stay closed. The point of them is to be found.
+ */
+function EndingRow({
+  id,
+  seen,
+  need,
+  open,
+  onToggle,
+  final,
+  nameWhenUnseen,
+  unseenName,
+}: {
+  id: EndingId
+  seen: boolean
+  need: string
+  open: boolean
+  onToggle: () => void
+  final?: boolean
+  nameWhenUnseen?: boolean
+  unseenName?: string
+}) {
+  const { t, s } = useLang()
+  const name = seen || nameWhenUnseen ? s(ENDING_TITLES[id]) : (unseenName ?? t.endingUnseen)
+
+  return (
+    <li
+      className={`endings-row ${seen ? 'endings-seen' : ''} ${final ? 'endings-final' : ''}`}
+      data-ending={id}
+    >
+      <span className="endings-mark">{seen ? (final ? '✦' : '◆') : '◇'}</span>
+      {seen ? (
+        <button
+          className="endings-name endings-open"
+          data-action="readEnding"
+          data-ending={id}
+          aria-expanded={open}
+          onClick={onToggle}
+        >
+          {name} <span className="endings-caret">{open ? '▾' : '▸'}</span>
+        </button>
+      ) : (
+        <span className="endings-name">{name}</span>
+      )}
+      <span className="endings-need">{need}</span>
+      {open && seen && <p className="endings-text">{s(ENDING_TEXTS[id])}</p>}
+    </li>
   )
 }

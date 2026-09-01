@@ -6,7 +6,12 @@
 // paying for.
 
 import { mapNode } from '../../engine/expedition/starmap'
-import { nodeEngageable } from '../../engine/expedition/expedition'
+import {
+  canGoHome,
+  canSetCourse,
+  heraldDistance,
+  nodeEngageable,
+} from '../../engine/expedition/expedition'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
 import { useLang } from '../../i18n/LangContext'
 import type { ExpeditionState, MapNode, NodeKind } from '../../engine/expedition/types'
@@ -78,6 +83,9 @@ export function StarMapView({
   const { t } = useLang()
   const map = state.map
   const here = mapNode(map, state.at)
+  // Nothing moves on a cold engine line, so the course options say so rather than
+  // quietly doing nothing when clicked.
+  const cold = !canSetCourse(state)
   const rowsPerColumn = new Map<number, number>()
   for (const node of map.nodes) {
     rowsPerColumn.set(node.column, Math.max(rowsPerColumn.get(node.column) ?? 0, node.row + 1))
@@ -123,8 +131,40 @@ export function StarMapView({
       </header>
       <p className="panel-intro">{t.starMapIntro}</p>
 
+      {state.herald && (
+        <p className="starmap-warning" title={t.heraldHint}>
+          <strong>{t.heraldLabel}</strong> — {t.heraldAway(heraldDistance(state) ?? 0)} ·{' '}
+          {t.heraldHint}
+        </p>
+      )}
+
       <div className="starmap-scroll">
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="starmap-svg">
+          {/*
+            The Herald. It does not sit on a node — it is not using the roads —
+            so it is drawn as the whole column it has reached, closing on the
+            ship. A marker on a node would say something untrue about it.
+          */}
+          {state.herald && (
+            <g className="starmap-herald">
+              <rect
+                x={30 + state.herald.column * COLUMN_WIDTH - COLUMN_WIDTH / 2}
+                y={0}
+                width={COLUMN_WIDTH}
+                height={height}
+                fill="var(--danger)"
+                opacity={0.12}
+              />
+              <text
+                x={30 + state.herald.column * COLUMN_WIDTH}
+                y={16}
+                className="starmap-herald-label"
+              >
+                {t.heraldLabel}
+              </text>
+            </g>
+          )}
+
           {/* links */}
           {map.nodes.flatMap((node) =>
             node.links.map((targetId, i) => {
@@ -163,7 +203,7 @@ export function StarMapView({
           {map.nodes.map((node) => {
             const p = centre(node)
             const isHere = node.id === state.at
-            const reachable = here.links.includes(node.id) && !state.travel
+            const reachable = here.links.includes(node.id) && !state.travel && cold === false
             return (
               <g key={node.id} transform={`translate(${p.x} ${p.y})`}>
                 <circle
@@ -228,6 +268,17 @@ export function StarMapView({
           </button>
         )}
 
+        {canGoHome(state) && (
+          <button
+            className="button"
+            data-action="openGate"
+            title={t.gateHintOnMap}
+            onClick={() => dispatch({ k: 'openScreen', screen: 'gate' })}
+          >
+            {t.gateGoHomeShort}
+          </button>
+        )}
+
         {here.kind === 'heart' && (
           <button
             className="button button-primary"
@@ -237,6 +288,8 @@ export function StarMapView({
             {t.nodeHeart}
           </button>
         )}
+
+        {cold && <p className="starmap-warning">{t.enginesColdWarning}</p>}
 
         {!state.travel && here.links.length > 0 && (
           <div className="course-options">
@@ -248,6 +301,8 @@ export function StarMapView({
                   className="button"
                   data-action="setCourse"
                   data-node={id}
+                  disabled={cold}
+                  title={cold ? t.enginesColdWarning : undefined}
                   onClick={() => dispatch({ k: 'setCourse', nodeId: id })}
                 >
                   {t.setCourse}: {target.known ? target.name : t.unknownSystem} ·{' '}

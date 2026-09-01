@@ -6,8 +6,10 @@
 
 import { dialDef } from '../content/difficulty'
 import { RESOURCES, STATIONS } from '../content/ship'
+import { RANK_NAMES } from '../content/crew'
+import { HERO_CLASSES } from '../content/heroes'
 import { pick } from './ui'
-import type { Lang } from '../engine/types'
+import type { HeroClassId, Lang } from '../engine/types'
 import type { ExpeditionEvent } from '../engine/expedition/types'
 
 export function describeExpeditionEvent(event: ExpeditionEvent, lang: Lang): string {
@@ -201,9 +203,131 @@ export function describeExpeditionEvent(event: ExpeditionEvent, lang: Lang): str
         ? `A Kapu ${event.weeksLeft} hét múlva bezárul.`
         : `The Gate closes in ${event.weeksLeft} weeks.`
 
+    case 'enginesCold':
+      return hu
+        ? 'A hajtómű energia nélkül áll. A hajó nem haladt semmit ezen a héten.'
+        : 'The engines have no power. The ship made no headway at all this week.'
+
     case 'reachedHeart':
       return hu
         ? 'Ott vagyunk. A Csillagsír előttünk van, és nem úgy néz ki, ahogy vártuk.'
         : 'We are here. The Stargrave is in front of us, and it does not look the way we expected.'
+
+    // ---------------------------------------------- attention and the Herald
+
+    case 'attentionRose':
+      return hu
+        ? `Zajt csaptunk: figyelem +${event.amount} (${event.total}).`
+        : `We made noise: attention +${event.amount} (${event.total}).`
+
+    case 'attentionFell':
+      return hu
+        ? `Csendesebb hét: figyelem −${event.amount} (${event.total}).`
+        : `A quieter week: attention −${event.amount} (${event.total}).`
+
+    case 'heraldWoke':
+      return hu
+        ? 'Valami elindult a mélyből. A Hírnök felébredt, és tudja, merre vagyunk.'
+        : 'Something set out from the deep. The Herald is awake, and it knows which way we are.'
+
+    case 'heraldMoved':
+      return event.columnsAway === 0
+        ? hu
+          ? 'A Hírnök beért minket.'
+          : 'The Herald has caught up with us.'
+        : hu
+          ? `A Hírnök ${event.columnsAway} oszlopra van.`
+          : `The Herald is ${event.columnsAway} columns away.`
+
+    case 'heraldCaught':
+      return hu
+        ? 'A zsilipnél van. Nincs hova menni: itt kell megállítani.'
+        : 'It is at the airlock. There is nowhere to go: it has to be stopped here.'
+
+    case 'heraldSilenced':
+      return hu
+        ? 'A Hírnök elhallgatott. A Csillagsír nem küld másikat.'
+        : 'The Herald has fallen silent. The Stargrave sends no other.'
+
+    case 'heraldRepelled':
+      return hu
+        ? 'Kiszorítottuk a hajóból, de nem állítottuk meg. Vissza fog jönni, és erősebb lesz.'
+        : 'We forced it out of the ship without stopping it. It will come back, and stronger.'
+
+    // ---------------------------------------------------------------- relics
+
+    case 'relicFound':
+      return hu
+        ? `Ereklye a fedélzeten: ${pick(event.relic, lang)}.`
+        : `A relic aboard: ${pick(event.relic, lang)}.`
+
+    case 'relicAttuned':
+      return hu
+        ? `${heroName(event.hero, lang)} ráhangolódott: ${pick(event.relic, lang)}.`
+        : `${heroName(event.hero, lang)} attuned: ${pick(event.relic, lang)}.`
+
+    case 'relicStowed':
+      return hu
+        ? `Elraktuk: ${pick(event.relic, lang)}. Innentől nem hat semmire.`
+        : `Stowed: ${pick(event.relic, lang)}. It does nothing from here on.`
+
+    case 'relicSold':
+      return hu
+        ? `Eladva: ${pick(event.relic, lang)} — ${event.price} kredit.`
+        : `Sold: ${pick(event.relic, lang)} — ${event.price} credits.`
+
+    // ----------------------------------------------------------- advancement
+
+    case 'heroMarks':
+      return hu
+        ? `${heroName(event.hero, lang)}: +${event.amount} jegy (${pick(event.reason, lang)}).`
+        : `${heroName(event.hero, lang)}: +${event.amount} marks (${pick(event.reason, lang)}).`
+
+    case 'perkBought':
+      return hu
+        ? `${heroName(event.hero, lang)} megtanulta: ${pick(event.perk, lang)}.`
+        : `${heroName(event.hero, lang)} learned: ${pick(event.perk, lang)}.`
+
+    case 'crewPromoted':
+      return hu
+        ? `${event.name} előrelépett: ${pick(RANK_NAMES[event.rank as 1 | 2 | 3], lang)}.`
+        : `${event.name} has moved up: ${pick(RANK_NAMES[event.rank as 1 | 2 | 3], lang)}.`
+
+    case 'crewLearned':
+      return hu
+        ? `${event.name} új vonása: ${pick(event.trait, lang)}.`
+        : `${event.name} has a new trait: ${pick(event.trait, lang)}.`
+
+    case 'mentorTaken':
+      return hu
+        ? `${event.name} ${heroName(event.hero, lang)} tanítványa lett.`
+        : `${event.name} is now ${heroName(event.hero, lang)}’s mentee.`
+
+    // ------------------------------------------------------------ directives
+
+    case 'directiveIssued':
+      return hu
+        ? `Parancs otthonról: ${pick(event.label, lang)} (${event.weeks} hét).`
+        : `Orders from home: ${pick(event.label, lang)} (${event.weeks} weeks).`
+
+    case 'directiveDone':
+      return hu
+        ? `Parancs teljesítve: ${pick(event.label, lang)}.`
+        : `Order carried out: ${pick(event.label, lang)}.`
+
+    case 'directiveFailed':
+      return hu
+        ? `Parancs elbukva: ${pick(event.label, lang)}. A legénység hallott róla.`
+        : `Order failed: ${pick(event.label, lang)}. The crew has heard about it.`
+
+    case 'heartRead':
+      return hu
+        ? 'Leültünk a Csillagsír pereme elé, hogy elolvassuk, mielőtt bármit döntünk.'
+        : 'We sat down in front of the rim of the Stargrave to read it before deciding anything.'
   }
+}
+
+/** The two of them, by name, because the log talks about them by name. */
+function heroName(hero: HeroClassId, lang: Lang): string {
+  return pick(HERO_CLASSES[hero].name, lang)
 }

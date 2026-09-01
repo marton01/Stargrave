@@ -16,16 +16,22 @@ export type DamageOptions = {
 }
 
 /**
- * Are the two heroes close enough to hit harder? The Bond: 2 tiles or less.
+ * Are the two heroes close enough to hit harder? The Bond: 2 tiles by default.
  *
  * Exported because the interface has to be able to say so. A rule that adds a
  * point of damage and is written down only in the help is a rule players meet as
  * a surprise in the log — which is exactly what happened.
+ *
+ * The range comes off the state, because the expedition can widen it: the
+ * Echo-reader's Tether perk and the Binding cord both mean "we do not have to
+ * see each other any more".
  */
 export function bondActive(s: BattleState, unit: Unit | null): boolean {
   if (!unit || unit.side !== 'hero') return false
   const partner = partnerOf(s, unit.id)
-  return partner !== undefined && partner.alive && distance(unit.pos, partner.pos) <= 2
+  return (
+    partner !== undefined && partner.alive && distance(unit.pos, partner.pos) <= (s.bondRange || 2)
+  )
 }
 
 /**

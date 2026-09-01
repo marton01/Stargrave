@@ -10,6 +10,10 @@
 
 import {
   archiveOutput,
+  canSetCourse,
+  crewAt,
+  crewStrengthAt,
+  stationStrength,
   armouryOutput,
   bridgeOutput,
   forgeOutput,
@@ -24,6 +28,10 @@ import {
   travelWeeks,
   weeklyFromModules,
 } from '../engine/expedition/expedition'
+import { STATIONS, STATION_ORDER } from '../content/ship'
+import { CREW_TRAITS, RANK_NAMES, crewRank } from '../content/crew'
+import { pick } from './ui'
+import type { CrewSpeciality } from '../content/crew'
 import type { ExpeditionState } from '../engine/expedition/types'
 import type { StationId, SystemId } from '../content/ship'
 import type { Lang } from '../engine/types'
@@ -56,6 +64,16 @@ export function describeSystemYield(
     }
 
     case 'engines': {
+      if (!canSetCourse(s)) {
+        return {
+          text: hu
+            ? 'Hideg hajtómű: a hajó nem tud útnak indulni, és egy futó ugrás is megáll. ' +
+              'Az első pont ezt adja.'
+            : 'Cold engines: the ship cannot set a course, and a jump already under way stalls. ' +
+              'That is what the first point buys.',
+          warn: true,
+        }
+      }
       const two = travelWeeks(s, 2)
       const three = travelWeeks(s, 3)
       const burn = travelFuel(s)
@@ -65,12 +83,14 @@ export function describeSystemYield(
         text: hu
           ? `Egy 2 hetes út ${two} hét, egy 3 hetes ${three} hét — és ${burn} üzemanyag megy el ` +
             `hetente útközben${made > 0 ? `, amiből a szintetizáló ${made}-et kiegyenlít: nettó ${net}` : ''}. ` +
-            'Minden pont az első fölött egy hetet vág le, a második fölött viszont egy üzemanyagot ' +
-            'hozzátesz: a lényeg a kettő szorzata.'
+            'Az első pont az, amivel a hajó egyáltalán elindul; minden pont az első fölött egy ' +
+            'hetet vág le, a második fölött viszont egy üzemanyagot hozzátesz. A lényeg a kettő ' +
+            'szorzata: az útra összesen mennyi megy el.'
           : `A two-week road takes ${two}, a three-week road ${three} — and ${burn} fuel goes a week ` +
             `while under way${made > 0 ? `, of which the synthesiser offsets ${made}: ${net} net` : ''}. ` +
-            'Every point above the first cuts a week; every point above the second adds a unit of ' +
-            'fuel. What matters is the two multiplied.',
+            'The first point is what lets the ship move at all; every point above the first cuts a ' +
+            'week, and every point above the second adds a unit of fuel. What matters is the two ' +
+            'multiplied: what the whole journey costs.',
       }
     }
 
@@ -179,4 +199,61 @@ export function describeStationYield(
     }
   }
   return null
+}
+
+/**
+ * Why a station's number is the number it is.
+ *
+ * The interface used to show only the result — "+2 information a week" — and a
+ * tester spent an evening building a spreadsheet to work out where it came from,
+ * then wrote "in short, this is complicated". The arithmetic was not the problem
+ * (well, one bug was: see `crewStrengthAt`); the problem was that a station gave
+ * a number and never said what it was made of. Two navigators on the same station
+ * producing different amounts is a mystery when the traits are invisible.
+ *
+ * So this prints the whole sum, person by person.
+ */
+export function describeStationCrew(
+  s: ExpeditionState,
+  station: StationId,
+  lang: Lang,
+): string | null {
+  const hu = lang === 'hu'
+  const crew = crewAt(s, station)
+  if (crew.length === 0) return null
+  const wanted = STATIONS[station].speciality
+
+  const people = crew.map((member) => {
+    const home = member.speciality === wanted
+    const bits: string[] = [
+      home
+        ? hu
+          ? 'a szakmája'
+          : 'their speciality'
+        : hu
+          ? 'nem a szakmája'
+          : 'not their speciality',
+    ]
+    const rank = crewRank(member)
+    if (rank >= 2) bits.push(pick(RANK_NAMES[rank], lang))
+    // Traits only count where the speciality is at home, so they are only worth
+    // naming there — otherwise the line would explain a bonus nobody is getting.
+    if (home) {
+      for (const trait of member.traits) {
+        const value = CREW_TRAITS[trait].station
+        if (!value) continue
+        bits.push(`${pick(CREW_TRAITS[trait].name, lang)} ${value > 0 ? '+' : '−'}${Math.abs(value)}`)
+      }
+    }
+    return `${member.name} ${crewStrengthAt(member, station)} (${bits.join(', ')})`
+  })
+
+  return `${hu ? 'Erősség' : 'Strength'} ${stationStrength(s, station)} — ${people.join(' · ')}`
+}
+
+/** Which stations this speciality is at home on, for the crew list. */
+export function homeStations(speciality: CrewSpeciality, lang: Lang): string {
+  return STATION_ORDER.filter((id) => STATIONS[id].speciality === speciality)
+    .map((id) => pick(STATIONS[id].name, lang))
+    .join(', ')
 }

@@ -12,8 +12,22 @@
 
 import { clone } from '../state'
 import { createRng } from '../rng'
-import { CREW_TRAITS, generateCrewMember, traitBonus } from '../../content/crew'
+import {
+  CREW_TRAITS,
+  LEARNABLE_TRAITS,
+  crewRank,
+  generateCrewMember,
+  rankBonus,
+  traitBonus,
+} from '../../content/crew'
 import type { CrewMember, CrewTraitId } from '../../content/crew'
+import { BASE_MENTEES, heroPerk, perkAvailable, perksOf } from '../../content/advance'
+import type { PerkEffect } from '../../content/advance'
+import { RELICS, relic, relicFits } from '../../content/relics'
+import type { RelicEffect } from '../../content/relics'
+import { DIRECTIVE_DEFS, directiveDef } from '../../content/directives'
+import type { DirectiveContext, DirectiveKind } from '../../content/directives'
+import { HERO_CLASSES } from '../../content/heroes'
 import {
   BASE_REACTOR_OUTPUT,
   MODULES,
@@ -38,10 +52,12 @@ import type { Action as BattleAction, CarriedHero } from '../battle'
 import { KIND_TAGS, LENGTHS, generateStarMap, mapNode, revealAhead } from './starmap'
 import type {
   ArchiveState,
+  Directive,
   EndingId,
   ExpeditionEvent,
   ExpeditionLength,
   ExpeditionState,
+  HeroRecord,
   MapNode,
   MissionSpec,
   Reward,
@@ -83,6 +99,19 @@ export type ExpeditionAction =
   | { k: 'settleBattle'; as: 'victory' | 'defeat' | 'skip' }
   /** Move one difficulty dial. See content/difficulty.ts. */
   | { k: 'dialSet'; dial: DialId; level: number }
+  /**
+   * One player's own decisions. Each of these belongs to exactly one of the two,
+   * and the other cannot take it: buying a perk with marks the other did not
+   * earn, putting on a relic, taking a crew member under your wing.
+   */
+  | { k: 'buyPerk'; hero: HeroClassId; perkId: string }
+  | { k: 'attuneRelic'; hero: HeroClassId; relicId: string }
+  | { k: 'stowRelic'; hero: HeroClassId; relicId: string }
+  | { k: 'setMentor'; crewId: string; hero: HeroClassId | null }
+  /** Sell a relic at a trading post. */
+  | { k: 'sellRelic'; relicId: string }
+  /** Read the Heart before deciding anything there. Once only. */
+  | { k: 'readHeart' }
   | { k: 'marketBuy'; index: number }
   | { k: 'chooseEnding'; endingId: EndingId }
   | { k: 'abandon' }
@@ -108,6 +137,118 @@ export function moduleTotal(
   field: 'reactor' | 'flux' | 'sensorRange' | 'wards',
 ): number {
   return s.modules.reduce((sum, id) => sum + (MODULES[id][field] ?? 0), 0)
+}
+
+// ------------------------------------------------ modules, relics and perks
+//
+// Three sources of the same kinds of bonus, and they all have to be summed in
+// one place. When modules were the only source, `moduleTotal` was enough; with
+// relics on the heroes and perks under them, three separate additions in three
+// separate functions is exactly how a bonus quietly stops working. Everything
+// that asks "how much flux / how many wards / how far do the sensors see" goes
+// through `shipBonus` now.
+
+/** Fields a module, a relic and a perk can all contribute to. */
+type BonusField =
+  | 'flux'
+  | 'wards'
+  | 'sensorRange'
+  | 'attention'
+  | 'attunements'
+  | 'research'
+  | 'repair'
+  | 'moraleTarget'
+  | 'bondRange'
+
+/** The relics actually being worn — the only ones that do anything. */
+export function attunedRelics(s: ExpeditionState): string[] {
+  return HERO_ORDER.flatMap((hero) => s.heroRecords[hero].attuned)
+}
+
+function relicEffects(s: ExpeditionState): RelicEffect[] {
+  return attunedRelics(s).map((id) => relic(id).effect)
+}
+
+function perkEffects(s: ExpeditionState, hero?: HeroClassId): PerkEffect[] {
+  const heroes = hero ? [hero] : HERO_ORDER
+  return heroes.flatMap((h) => s.heroRecords[h].perks.map((id) => heroPerk(id).effect))
+}
+
+/**
+ * Everything the ship has that adds to `field`: modules, worn relics, and both
+ * heroes' perks.
+ *
+ * `bondRange` is the one exception, because it is a distance rather than a sum —
+ * see `bondRange()`.
+ */
+export function shipBonus(s: ExpeditionState, field: BonusField): number {
+  let total = 0
+  for (const id of s.modules) total += numberField(MODULES[id], field)
+  for (const effect of relicEffects(s)) total += numberField(effect, field)
+  for (const effect of perkEffects(s)) total += numberField(effect, field)
+  return total
+}
+
+/**
+ * One numeric field of a module, relic or perk effect, or zero.
+ *
+ * The three shapes overlap but are not identical — a perk has no `moraleTarget`,
+ * a relic has no `attunements` — and this is what lets one summing function read
+ * all three without either a cast that hides a typo or three near-identical
+ * loops.
+ */
+function numberField(source: object, field: string): number {
+  const value = (source as Record<string, unknown>)[field]
+  return typeof value === 'number' ? value : 0
+}
+
+/** The two, in a fixed order, so nothing depends on object key order. */
+export const HERO_ORDER: HeroClassId[] = ['runesmith', 'echoreader']
+
+/** How many relics this hero may wear at once. */
+export function attunementSlots(s: ExpeditionState, hero: HeroClassId): number {
+  let slots = 1
+  for (const id of s.modules) slots += MODULES[id].attunements ?? 0
+  for (const effect of perkEffects(s, hero)) slots += effect.attunements ?? 0
+  return slots
+}
+
+/**
+ * This hero's maximum hit points.
+ *
+ * The two class values used to be written out as `heroClass === 'runesmith' ? 12
+ * : 8` in three places, which is fine until a perk can change one of them. Now
+ * there is one answer, and the Medbay, the battle and the console all ask it.
+ */
+export function heroMaxHp(s: ExpeditionState, hero: HeroClassId): number {
+  let hp = HERO_CLASSES[hero].hp
+  for (const effect of perkEffects(s, hero)) hp += effect.heroHp ?? 0
+  for (const id of s.heroRecords[hero].attuned) hp += relic(id).effect.heroHp ?? 0
+  return hp
+}
+
+/** Bond range in tiles: the widest thing anybody is wearing or has learned. */
+export function bondRange(s: ExpeditionState): number {
+  let range = 2
+  for (const effect of relicEffects(s)) range = Math.max(range, effect.bondRange ?? 0)
+  for (const effect of perkEffects(s)) range = Math.max(range, effect.bondRange ?? 0)
+  return range
+}
+
+/** Crew this hero may have under their wing. */
+export function mentorLimit(s: ExpeditionState, hero: HeroClassId): number {
+  let limit = BASE_MENTEES
+  for (const effect of perkEffects(s, hero)) limit += effect.mentees ?? 0
+  return limit
+}
+
+export function menteesOf(s: ExpeditionState, hero: HeroClassId): CrewMember[] {
+  return livingCrew(s).filter((c) => c.mentor === hero)
+}
+
+/** A blank private record, for a new expedition or an older save. */
+export function newHeroRecord(): HeroRecord {
+  return { marks: 0, marksEarned: 0, perks: [], attuned: [] }
 }
 
 export function resourceMax(s: ExpeditionState, id: ResourceId): number {
@@ -161,13 +302,31 @@ export function stationActive(s: ExpeditionState, station: StationId): boolean {
  * rules promise.
  */
 export function stationStrength(s: ExpeditionState, station: StationId): number {
-  const def = STATIONS[station]
-  const crew = crewAt(s, station)
-  return crew.reduce((sum, c) => {
-    const match = c.speciality === def.speciality ? 2 : 1
-    const traits = c.traits.reduce((n, t) => n + (CREW_TRAITS[t].station ?? 0), 0)
-    return sum + Math.max(1, match + traits)
-  }, 0)
+  return crewAt(s, station).reduce((sum, c) => sum + crewStrengthAt(c, station), 0)
+}
+
+/**
+ * What one person is worth on one station.
+ *
+ * Two for the right speciality, one for anybody else, plus the rank, plus the
+ * station traits — and the traits ONLY where the speciality is at home.
+ *
+ * That last clause is the whole point of this function existing separately, and
+ * it was the bug a tester found by building a spreadsheet of every speciality on
+ * every station: the traits were being added everywhere, so a veteran engineer
+ * outproduced a scientist in the Lab, a *restless* engineer raised the morale
+ * target in the Sanctum, and two navigators on the same station gave different
+ * numbers for no reason the interface ever showed. Every trait that touches a
+ * station says "on their own station" now, and this is where that is true.
+ */
+export function crewStrengthAt(c: CrewMember, station: StationId): number {
+  const home = c.speciality === STATIONS[station].speciality
+  const traits = home
+    ? c.traits.reduce((n, t) => n + (CREW_TRAITS[t].station ?? 0), 0)
+    : 0
+  // Time served counts anywhere: a rank is the only way a body that is not a
+  // specialist ever becomes good at a station — see content/crew.ts.
+  return Math.max(1, (home ? 2 : 1) + traits + rankBonus(c))
 }
 
 /**
@@ -210,7 +369,8 @@ export function labOutput(s: ExpeditionState): number {
   return (
     s.power.lab +
     Math.floor(stationStrength(s, 'lab') / 2) +
-    Math.max(0, traitBonus(crewAt(s, 'lab'), 'research'))
+    Math.max(0, traitBonus(crewAt(s, 'lab'), 'research')) +
+    shipBonus(s, 'research')
   )
 }
 
@@ -223,13 +383,28 @@ export function labOutput(s: ExpeditionState): number {
  */
 export function forgeOutput(s: ExpeditionState): number {
   if (!stationActive(s, 'forge')) return 0
-  return 1 + Math.floor(s.power.forge / 2) + Math.floor(stationStrength(s, 'forge') / 2)
+  return (
+    1 +
+    Math.floor(s.power.forge / 2) +
+    Math.floor(stationStrength(s, 'forge') / 2) +
+    shipBonus(s, 'repair')
+  )
 }
 
-/** Columns of star map the Sensors reveal each week. */
+/**
+ * Columns of star map the Sensors reveal each week.
+ *
+ * The one station where the speciality used to make no difference at all: the
+ * columns came from the power, and the person only switched it on. It was
+ * documented as an exception, and it was still the odd column out in a table a
+ * tester filled in by hand — every other station rewards the right hands. A
+ * navigator reading the returns gets one column more, on the same one-slot
+ * pattern as the Archive and the Armoury.
+ */
 export function sensorOutput(s: ExpeditionState): number {
   if (!stationActive(s, 'sensors')) return 0
-  return s.power.sensors + moduleTotal(s, 'sensorRange')
+  const navigator = stationStrength(s, 'sensors') >= 2 ? 1 : 0
+  return s.power.sensors + navigator + shipBonus(s, 'sensorRange')
 }
 
 /**
@@ -278,17 +453,46 @@ export function armouryOutput(s: ExpeditionState): number {
   return stationStrength(s, 'armoury') >= 2 ? 2 : 1
 }
 
-/** What the installed modules produce of a resource every week, by themselves. */
+/**
+ * What stands on the ship and simply produces, every week, of one resource.
+ *
+ * Modules and worn relics both, because a relic that grows food is a module made
+ * of stone: the same promise, and it has to be honoured through the same code
+ * path or one of the two will quietly stop paying out.
+ */
 export function weeklyFromModules(s: ExpeditionState, id: ResourceId): number {
-  return s.modules.reduce((sum, m) => {
+  const fromModules = s.modules.reduce((sum, m) => {
     const weekly = MODULES[m].weekly
     return sum + (weekly && weekly.id === id ? weekly.amount : 0)
   }, 0)
+  const fromRelics = attunedRelics(s).reduce((sum, r) => {
+    const weekly = relic(r).effect.weekly
+    return sum + (weekly && weekly.id === id ? weekly.amount : 0)
+  }, 0)
+  return fromModules + fromRelics
 }
 
 /** Weeks a journey of `base` weeks takes at the current engine power. */
 export function travelWeeks(s: ExpeditionState, base: number): number {
   return Math.max(1, base - Math.max(0, s.power.engines - 1))
+}
+
+/**
+ * Can the ship set a course at all?
+ *
+ * The first point of engine power buys exactly this, and it had to buy
+ * something: the second point is the first one that cuts a week and the third is
+ * the first one that costs fuel, so a single point used to do nothing whatsoever
+ * — the ship travelled at the same speed for the same fuel with the engines
+ * completely unpowered. A tester noticed the fuel figure was identical at one and
+ * at two and went looking for the difference; there wasn't one.
+ *
+ * Now nothing moves on a cold reactor line. Which also means the Darkening can
+ * take the ship's legs away by shrinking the reactor, and that is a consequence
+ * worth having rather than a rule to hide.
+ */
+export function canSetCourse(s: ExpeditionState): boolean {
+  return s.power.engines > 0
 }
 
 /**
@@ -334,7 +538,7 @@ export function weeklyFuel(s: ExpeditionState): number {
 
 /** Hull risk the shields and wards absorb from an encounter. */
 export function shieldMitigation(s: ExpeditionState): number {
-  return s.power.shields + moduleTotal(s, 'wards')
+  return s.power.shields + shipBonus(s, 'wards')
 }
 
 /** Life support the crew needs, and what it has. */
@@ -346,7 +550,7 @@ export function lifeSupportStatus(s: ExpeditionState): { has: number; needs: num
 export function missionFlux(s: ExpeditionState): number {
   return Math.max(
     1,
-    s.power.runeCore + armouryOutput(s) + moduleTotal(s, 'flux') + dialValue(s.dials, 'flux'),
+    s.power.runeCore + armouryOutput(s) + shipBonus(s, 'flux') + dialValue(s.dials, 'flux'),
   )
 }
 
@@ -376,6 +580,456 @@ function joinCrew(s: ExpeditionState, count = 1): void {
 
 function hasTrait(s: ExpeditionState, trait: CrewTraitId): boolean {
   return livingCrew(s).some((c) => c.traits.includes(trait))
+}
+
+// ---------------------------------------------------- marks and advancement
+
+/**
+ * Give one of the two players advancement marks, with the reason attached.
+ *
+ * The reason is not decoration. Two currencies earned in the same way are one
+ * currency with two names, so the log has to say what each side was paid for —
+ * it is how the players learn that he is paid for the ship coming home whole and
+ * she is paid for working things out.
+ */
+function grantMarks(s: ExpeditionState, hero: HeroClassId, amount: number, reason: Text): void {
+  if (amount <= 0) return
+  const record = s.heroRecords[hero]
+  record.marks += amount
+  record.marksEarned += amount
+  log(s, { k: 'heroMarks', hero, amount, reason })
+}
+
+const MARK_REASONS = {
+  landing: { hu: 'megnyert partraszállás', en: 'a landing won' },
+  intact: { hu: 'egyetlen modul sem pusztult el', en: 'not one module lost' },
+  mechanism: { hu: 'megfejtett szerkezet', en: 'a mechanism solved' },
+  herald: { hu: 'a Hírnök elhallgatott', en: 'the Herald silenced' },
+  directive: { hu: 'teljesített parancs', en: 'an order carried out' },
+  mentees: { hu: 'a tanítványok munkája', en: 'the work of your mentees' },
+} satisfies Record<string, Text>
+
+function buyPerk(s: ExpeditionState, hero: HeroClassId, perkId: string): void {
+  const record = s.heroRecords[hero]
+  const perk = perksOf(hero).find((p) => p.id === perkId)
+  if (!perk || !perkAvailable(perk, record.perks)) return
+  if (record.marks < perk.cost) return
+  record.marks -= perk.cost
+  record.perks.push(perk.id)
+  log(s, { k: 'perkBought', hero, perk: perk.name })
+  // A perk that hands over a card puts it into that hero's deck at once, the
+  // same way a research project does.
+  if (perk.effect.card) {
+    const carried = s.heroes.find((h) => h.heroClass === hero)
+    if (carried && !carried.hand.includes(perk.effect.card)) carried.hand.push(perk.effect.card)
+  }
+}
+
+// ---------------------------------------------------------------- relics
+
+/** Draw a relic this run has not seen yet. Deterministic, like everything else. */
+function drawRelic(s: ExpeditionState): string | null {
+  const held = new Set(s.relics)
+  const pool = RELICS.filter((r) => !held.has(r.id)).map((r) => r.id)
+  if (pool.length === 0) return null
+  return rngFor(s).pick(pool) ?? null
+}
+
+function findRelic(s: ExpeditionState, id?: string): void {
+  const chosen = id && !s.relics.includes(id) ? id : drawRelic(s)
+  if (!chosen) {
+    // Everything is already aboard. Pay for the find rather than drop it.
+    gain(s, 'credits', 8)
+    return
+  }
+  s.relics.push(chosen)
+  s.tally.relicsFound += 1
+  log(s, { k: 'relicFound', relic: relic(chosen).name })
+}
+
+function attuneRelic(s: ExpeditionState, hero: HeroClassId, relicId: string): void {
+  if (!s.relics.includes(relicId)) return
+  if (!relicFits(relicId, hero)) return
+  const record = s.heroRecords[hero]
+  if (record.attuned.includes(relicId)) return
+  // Worn by the other one? Then it is not free to take: they have to put it down
+  // first. Two consoles must never be able to take things off each other.
+  for (const other of HERO_ORDER) {
+    if (s.heroRecords[other].attuned.includes(relicId)) return
+  }
+  if (record.attuned.length >= attunementSlots(s, hero)) return
+  record.attuned.push(relicId)
+  log(s, { k: 'relicAttuned', relic: relic(relicId).name, hero })
+}
+
+function stowRelic(s: ExpeditionState, hero: HeroClassId, relicId: string): void {
+  const record = s.heroRecords[hero]
+  if (!record.attuned.includes(relicId)) return
+  record.attuned = record.attuned.filter((id) => id !== relicId)
+  log(s, { k: 'relicStowed', relic: relic(relicId).name })
+}
+
+function sellRelic(s: ExpeditionState, relicId: string): void {
+  if (s.screen !== 'market') return
+  if (!s.relics.includes(relicId)) return
+  // Only what nobody is wearing.
+  for (const hero of HERO_ORDER) {
+    if (s.heroRecords[hero].attuned.includes(relicId)) return
+  }
+  const def = relic(relicId)
+  s.relics = s.relics.filter((id) => id !== relicId)
+  gain(s, 'credits', def.value)
+  log(s, { k: 'relicSold', relic: def.name, price: def.value })
+}
+
+// -------------------------------------------------------- attention, Herald
+//
+// The one pressure in this game the players make themselves.
+//
+// The Gate's countdown is the same every run, and once you know it you stop
+// feeling it. Attention is not: it is a number the expedition writes with its
+// own hands. Fight, force mechanisms, run the engines hot, and something starts
+// walking up the corridor towards you. Go quietly and it never wakes.
+//
+// It is deliberately not a hidden meter. It is on the top bar from the first
+// point, because a threat you cannot see coming is not tension but a trap.
+
+/** Attention at which the Herald sets out. */
+export const HERALD_WAKES_AT = 8
+
+/** What a week does to the attention, before anything the ship goes and does. */
+export function weeklyAttention(s: ExpeditionState): number {
+  const scale = dialValue(s.dials, 'attention')
+  if (scale <= 0) return 0
+  let loud = 0
+  // Engines above cruise are the loudest thing the ship does by itself.
+  if (s.travel && s.power.engines >= 3) loud += 1
+  const quiet = shipBonus(s, 'attention')
+  // A week spent sitting still at a settled node is how you cool off.
+  const resting = !s.travel && mapNode(s.map, s.at).resolved ? -1 : 0
+  return Math.round(loud * scale) + quiet + resting
+}
+
+function changeAttention(s: ExpeditionState, amount: number): void {
+  if (amount === 0) return
+  const before = s.attention
+  s.attention = Math.max(0, Math.min(20, before + amount))
+  const delta = s.attention - before
+  if (delta > 0) log(s, { k: 'attentionRose', amount: delta, total: s.attention })
+  else if (delta < 0) log(s, { k: 'attentionFell', amount: -delta, total: s.attention })
+}
+
+/** Something loud just happened. Scaled by the dial, and off at level one. */
+function raiseAttention(s: ExpeditionState, amount: number): void {
+  const scale = dialValue(s.dials, 'attention')
+  if (scale <= 0) return
+  changeAttention(s, Math.max(1, Math.round(amount * scale)))
+}
+
+/** Where the ship is, in columns from the Gate. Under way, where it is heading. */
+export function shipColumn(s: ExpeditionState): number {
+  return mapNode(s.map, s.travel ? s.travel.to : s.at).column
+}
+
+/** Columns between the Herald and the ship, or null while it sleeps. */
+export function heraldDistance(s: ExpeditionState): number | null {
+  if (!s.herald) return null
+  return Math.abs(s.herald.column - shipColumn(s))
+}
+
+/**
+ * Wake it, move it, and let it catch the ship if it can.
+ *
+ * It moves along columns rather than along the roads, because it is not using
+ * the roads: it comes up the corridor. That also makes it readable — "two
+ * columns away" is something a player can act on — and it means running deeper
+ * does not shake it off, which is the point of the whole thing.
+ */
+function runHerald(s: ExpeditionState): void {
+  if (dialValue(s.dials, 'attention') <= 0) return
+  if (s.flags.includes('herald-silenced')) return
+
+  if (!s.herald) {
+    if (s.attention < HERALD_WAKES_AT) return
+    // It sets out from ahead, deeper in, three columns off — far enough that the
+    // first sighting is a warning rather than an ambush.
+    s.herald = { column: Math.min(s.map.columns - 1, shipColumn(s) + 3), hunts: 0 }
+    log(s, { k: 'heraldWoke' })
+    return
+  }
+
+  const target = shipColumn(s)
+  const steps = s.attention >= HERALD_WAKES_AT + 4 ? 2 : 1
+  for (let i = 0; i < steps && s.herald.column !== target; i++) {
+    s.herald.column += Math.sign(target - s.herald.column)
+  }
+  const away = Math.abs(s.herald.column - target)
+  log(s, { k: 'heraldMoved', columnsAway: away })
+  if (away === 0) heraldCatches(s)
+}
+
+/** The fight it came for. A boarding action, and the hardest one in the game. */
+function heraldCatches(s: ExpeditionState): void {
+  if (s.activeMission) return
+  const hunts = s.herald?.hunts ?? 0
+  s.tally.heraldsFaced += 1
+  log(s, { k: 'heraldCaught' })
+  launchMission(s, {
+    kind: 'combat',
+    objective: { k: 'eliminate' },
+    // Knowing what it is takes a level off. That is what the research buys.
+    difficulty: Math.max(1, Math.min(3, 3 + hunts - (s.flags.includes('knows-herald') ? 1 : 0))),
+    enemyScale: 1.2 + hunts * 0.2,
+    roundLimit: null,
+    aboard: true,
+    herald: true,
+    rewards: [
+      { k: 'understanding', amount: 3 },
+      { k: 'archive', amount: 4 },
+      { k: 'resource', id: 'credits', amount: 20 },
+      { k: 'relic' },
+    ],
+    briefing: {
+      hu:
+        'A Hírnök a zsilipnél van. Nem tárgyal és nem kerülhető ki: azért jött, mert hallotta, ' +
+        'hogy itt vagytok. Ha megállítjátok, elhallgat — és a Csillagsír nem küld másikat.',
+      en:
+        'The Herald is at the airlock. It does not negotiate and cannot be avoided: it came ' +
+        'because it heard you. Stop it and it falls silent — and the Stargrave sends no other.',
+    },
+  })
+}
+
+// ---------------------------------------------------------------- directives
+
+export function directiveLabel(d: Directive): Text {
+  const def = directiveDef(d.kind)
+  const ask = def.ask(d.target)
+  return { hu: `${def.name.hu}: ${ask.hu}`, en: `${def.name.en}: ${ask.en}` }
+}
+
+/** Which kinds are judged only when the deadline arrives, not before. */
+const AT_DEADLINE: DirectiveKind[] = ['morale', 'stock']
+
+export function directiveAtDeadline(kind: DirectiveKind): boolean {
+  return AT_DEADLINE.includes(kind)
+}
+
+/** How far along an order is, in the units it asks for. */
+export function directiveProgress(s: ExpeditionState, d: Directive): number {
+  switch (d.kind) {
+    case 'clearSites':
+      return s.tally.landingsWon - d.startedAt
+    case 'solve':
+      return s.tally.puzzlesSolved - d.startedAt
+    case 'research':
+      return s.tally.researchDone - d.startedAt
+    case 'relics':
+      return s.relics.length
+    case 'understand':
+      return s.understanding
+    case 'depth':
+      return shipColumn(s)
+    case 'morale':
+      return s.resources.morale
+    case 'stock':
+      return s.resources.food
+  }
+}
+
+/** What the running count stood at when the order was issued. */
+function directiveStart(s: ExpeditionState, kind: DirectiveKind): number {
+  switch (kind) {
+    case 'clearSites':
+      return s.tally.landingsWon
+    case 'solve':
+      return s.tally.puzzlesSolved
+    case 'research':
+      return s.tally.researchDone
+    default:
+      return 0
+  }
+}
+
+function directiveContext(s: ExpeditionState): DirectiveContext {
+  const column = shipColumn(s)
+  return {
+    week: s.week,
+    depth: column / Math.max(1, s.map.columns - 1),
+    columns: s.map.columns,
+    column,
+    relics: s.relics.length,
+    understanding: s.understanding,
+    puzzleKinds: s.puzzleKinds.length,
+  }
+}
+
+function directiveReward(kind: DirectiveKind, target: number): Reward[] {
+  const base: Reward[] = [
+    { k: 'archive', amount: 2 },
+    { k: 'heroXp', amount: 2 },
+  ]
+  switch (kind) {
+    case 'understand':
+      return [...base, { k: 'resource', id: 'information', amount: 8 }]
+    case 'relics':
+      return [...base, { k: 'resource', id: 'credits', amount: 8 + target * 4 }]
+    case 'depth':
+      return [...base, { k: 'resource', id: 'fuel', amount: 8 }]
+    case 'morale':
+      return [...base, { k: 'resource', id: 'credits', amount: 12 }]
+    case 'stock':
+      return [...base, { k: 'resource', id: 'food', amount: 10 }]
+    case 'solve':
+      return [
+        ...base,
+        { k: 'understanding', amount: 1 },
+        { k: 'resource', id: 'information', amount: 6 },
+      ]
+    case 'research':
+      return [...base, { k: 'resource', id: 'information', amount: 10 }]
+    case 'clearSites':
+      return [...base, { k: 'resource', id: 'credits', amount: 14 }]
+  }
+}
+
+/**
+ * Top the live orders up to what the dial asks for.
+ *
+ * Targets are always measured from where the run stands, so an order can never
+ * arrive already satisfied — which reads as a bug even when the arithmetic is
+ * right — and never asks for something out of reach in the weeks it allows.
+ */
+function issueDirectives(s: ExpeditionState): void {
+  const wanted = Math.round(dialValue(s.dials, 'directives'))
+  if (s.gateWeeksLeft <= 3) return
+
+  const context = directiveContext(s)
+  while (s.directives.filter((d) => d.state === 'open').length < wanted) {
+    const live = s.directives.filter((d) => d.state === 'open').map((d) => d.kind)
+    const pool = DIRECTIVE_DEFS.filter((def) => !live.includes(def.kind))
+    const def = rngFor(s).pick(pool)
+    if (!def) return
+
+    // Every target is measured from where the run stands. An order that arrives
+    // already satisfied reads as a bug even when the arithmetic is defensible,
+    // and it pays out for nothing — including the "have this much at the
+    // deadline" kinds, which have to ask for a little more than the ship has
+    // rather than for what it is already sitting on.
+    let target = def.target(context.depth)
+    if (def.kind === 'relics') target = context.relics + target
+    if (def.kind === 'understand') target = Math.max(target, context.understanding + 3)
+    if (def.kind === 'depth') target = Math.min(s.map.columns - 1, context.column + 2)
+    if (def.kind === 'morale') {
+      target = Math.min(resourceMax(s, 'morale'), Math.max(target, s.resources.morale + 1))
+    }
+    if (def.kind === 'stock') {
+      target = Math.min(resourceMax(s, 'food'), Math.max(target, s.resources.food + 6))
+    }
+
+    const owner: HeroClassId =
+      def.owner === 'either' ? HERO_ORDER[s.directiveCount % HERO_ORDER.length]! : def.owner
+    const directive: Directive = {
+      id: `d${s.directiveCount}`,
+      kind: def.kind,
+      owner,
+      target,
+      startedAt: directiveStart(s, def.kind),
+      due: s.week + Math.min(def.weeks(context.depth), Math.max(2, s.gateWeeksLeft - 1)),
+      reward: directiveReward(def.kind, target),
+      state: 'open',
+    }
+    s.directiveCount += 1
+    s.directives.push(directive)
+    log(s, {
+      k: 'directiveIssued',
+      label: directiveLabel(directive),
+      weeks: directive.due - s.week,
+    })
+  }
+}
+
+/** Settle every order that has come good or come due. */
+function checkDirectives(s: ExpeditionState): void {
+  for (const d of s.directives) {
+    if (d.state !== 'open') continue
+    const met = directiveProgress(s, d) >= d.target
+    const atDeadline = directiveAtDeadline(d.kind)
+
+    if (met && !atDeadline) {
+      d.state = 'done'
+      log(s, { k: 'directiveDone', label: directiveLabel(d) })
+      applyRewards(s, d.reward, d.owner)
+      continue
+    }
+    if (s.week < d.due) continue
+    if (met) {
+      d.state = 'done'
+      log(s, { k: 'directiveDone', label: directiveLabel(d) })
+      applyRewards(s, d.reward, d.owner)
+    } else {
+      d.state = 'failed'
+      log(s, { k: 'directiveFailed', label: directiveLabel(d) })
+      // Home is disappointed, and the crew hears about it.
+      gain(s, 'morale', -2)
+    }
+  }
+}
+
+// ------------------------------------------------------------- crew growth
+
+/**
+ * A week of work, for everybody who did any.
+ *
+ * Only crew on a station that actually ran: standing on an unpowered station is
+ * not experience. Mentored crew learn twice as fast, which is the whole of what
+ * mentoring buys them — the mentor is paid separately, out of what they do once
+ * they are any good.
+ */
+function crewWorkWeek(s: ExpeditionState): void {
+  for (const member of livingCrew(s)) {
+    const station = member.station
+    if (!station || !stationActive(s, station as StationId)) continue
+    const before = crewRank(member)
+    member.xp += member.mentor ? 2 : 1
+    const after = crewRank(member)
+    if (after === before) continue
+    log(s, { k: 'crewPromoted', name: member.name, rank: after })
+    // The master rank comes with something learned, so a long posting leaves a
+    // mark on the person rather than only on a number.
+    if (after === 3) {
+      const options = LEARNABLE_TRAITS.filter((id) => !member.traits.includes(id))
+      const learned = rngFor(s).pick(options)
+      if (learned) {
+        member.traits.push(learned)
+        log(s, { k: 'crewLearned', name: member.name, trait: CREW_TRAITS[learned].name })
+      }
+    }
+  }
+}
+
+function setMentor(s: ExpeditionState, crewId: string, hero: HeroClassId | null): void {
+  const member = s.crew.find((c) => c.id === crewId)
+  if (!member || !member.alive) return
+  if (hero === null) {
+    member.mentor = null
+    return
+  }
+  if (member.mentor === hero) return
+  // Already somebody's. The other console has to let them go first — one player
+  // must never be able to take something off the other one's screen.
+  if (member.mentor !== null) return
+  if (menteesOf(s, hero).length >= mentorLimit(s, hero)) return
+  member.mentor = hero
+  log(s, { k: 'mentorTaken', name: member.name, hero })
+}
+
+/** Marks a mentor earns from the people they trained, when a landing is won. */
+function menteeMarks(s: ExpeditionState): void {
+  for (const hero of HERO_ORDER) {
+    const trained = menteesOf(s, hero).filter((c) => crewRank(c) >= 2).length
+    if (trained >= 2) grantMarks(s, hero, 1, MARK_REASONS.mentees)
+  }
 }
 
 // ---------------------------------------------------------------- start
@@ -434,9 +1088,9 @@ export function startExpedition(
     ),
   )
 
-  const heroes: CarriedHero[] = (['runesmith', 'echoreader'] as HeroClassId[]).map((heroClass) => ({
+  const heroes: CarriedHero[] = HERO_ORDER.map((heroClass) => ({
     heroClass,
-    hp: heroClass === 'runesmith' ? 12 : 8,
+    hp: HERO_CLASSES[heroClass].hp,
     hand: cardsOfClass(heroClass).map((c) => c.id),
     discard: [],
     lost: [],
@@ -463,6 +1117,20 @@ export function startExpedition(
     understanding: 0,
     puzzleKinds,
     heroes,
+    heroRecords: { runesmith: newHeroRecord(), echoreader: newHeroRecord() },
+    relics: [],
+    attention: 0,
+    herald: null,
+    directives: [],
+    directiveCount: 0,
+    tally: {
+      landingsWon: 0,
+      puzzlesSolved: 0,
+      researchDone: 0,
+      heraldsFaced: 0,
+      relicsFound: 0,
+    },
+    heartRead: false,
     map,
     at: map.entryId,
     travel: null,
@@ -487,6 +1155,9 @@ export function startExpedition(
   s.reactorOutput = reactorOutput(s)
   log(s, { k: 'expeditionStart', weeks: gateWeeks })
   revealAhead(s.map, s.at, 1)
+  // The first orders are waiting when the ship comes through the Gate: week one
+  // should already have a direction in it.
+  issueDirectives(s)
   return s
 }
 
@@ -535,8 +1206,7 @@ function runStations(s: ExpeditionState): void {
   const healing = medbayOutput(s)
   if (healing > 0) {
     for (const hero of s.heroes) {
-      const max = hero.heroClass === 'runesmith' ? 12 : 8
-      hero.hp = Math.min(max, hero.hp + healing)
+      hero.hp = Math.min(heroMaxHp(s, hero.heroClass), hero.hp + healing)
     }
     log(s, { k: 'stationRan', station: 'medbay' })
   }
@@ -615,6 +1285,7 @@ export function moraleTarget(s: ExpeditionState): number {
   let target = 7
   target += Math.max(-2, Math.min(2, traitBonus(livingCrew(s), 'morale')))
   target += sanctumOutput(s)
+  target += shipBonus(s, 'moraleTarget')
   if (s.power.lifeSupport < lifeSupportNeeded(crewCount)) target -= 3
   if (s.resources.food <= 0) target -= 3
   target -= s.darkening
@@ -630,6 +1301,7 @@ function advanceResearch(s: ExpeditionState): void {
   const project = researchProject(active.id)
   s.research.completed.push(project.id)
   s.research.active = null
+  s.tally.researchDone += 1
   log(s, { k: 'researchDone', project: project.name })
 
   for (const effect of project.effects) {
@@ -658,6 +1330,9 @@ function advanceResearch(s: ExpeditionState): void {
         for (const hero of s.heroes) {
           if (card(effect.cardId).heroClass === hero.heroClass) hero.hand.push(effect.cardId)
         }
+        break
+      case 'flag':
+        if (!s.flags.includes(effect.id)) s.flags.push(effect.id)
         break
     }
   }
@@ -747,14 +1422,31 @@ function advanceWeek(s: ExpeditionState): void {
 
   weeklyResources(s)
   runStations(s)
+  crewWorkWeek(s)
   advanceResearch(s)
 
+  // What the week did to how loud the expedition is, and what that woke.
+  changeAttention(s, weeklyAttention(s))
+  runHerald(s)
+
   if (s.travel) {
-    s.travel.weeksLeft -= 1
-    if (s.travel.weeksLeft <= 0) {
-      arrive(s, s.travel.to)
+    // No power on the engines, no progress. The week still passes, which is what
+    // makes leaving them cold expensive rather than free.
+    if (!canSetCourse(s)) {
+      log(s, { k: 'enginesCold' })
+      gain(s, 'morale', -1)
+    } else {
+      s.travel.weeksLeft -= 1
+      if (s.travel.weeksLeft <= 0) {
+        arrive(s, s.travel.to)
+      }
     }
   }
+
+  // Orders are settled after the travel, so an order to be somewhere by a week
+  // is judged on where the ship ended the week rather than where it started.
+  checkDirectives(s)
+  issueDirectives(s)
 
   checkLoss(s)
 }
@@ -810,6 +1502,10 @@ export function choiceAvailable(s: ExpeditionState, choice: EncounterChoice): bo
       return !s.flags.includes(need.id)
     case 'mark':
       return s.marks.includes(need.id)
+    case 'relicsAtLeast':
+      return s.relics.length >= need.value
+    case 'attentionAtLeast':
+      return s.attention >= need.value
   }
 }
 
@@ -841,7 +1537,7 @@ export function choiceAffordable(s: ExpeditionState, choice: EncounterChoice): b
 
 function applyHullRisk(s: ExpeditionState, amount: number): void {
   const scaled = Math.round(amount * dialValue(s.dials, 'encounterRisk'))
-  const mitigated = Math.max(0, scaled - s.power.shields - moduleTotal(s, 'wards'))
+  const mitigated = Math.max(0, scaled - s.power.shields - shipBonus(s, 'wards'))
   if (mitigated > 0) gain(s, 'hull', -mitigated)
 }
 
@@ -877,6 +1573,20 @@ function applyEncounterEffects(s: ExpeditionState, effects: readonly EncounterEf
       }
       case 'hullRisk':
         applyHullRisk(s, effect.amount)
+        break
+
+      case 'relic':
+        findRelic(s, effect.id)
+        break
+
+      case 'attention':
+        if (effect.amount >= 0) raiseAttention(s, effect.amount)
+        else changeAttention(s, effect.amount)
+        break
+
+      case 'heroXp':
+        if (effect.who) grantMarks(s, effect.who, effect.amount, MARK_REASONS.landing)
+        else for (const hero of HERO_ORDER) grantMarks(s, hero, effect.amount, MARK_REASONS.landing)
         break
       case 'startMission':
         launchMission(s, missionFromFlavour(s, effect.flavour))
@@ -1040,6 +1750,10 @@ function buildBattle(s: ExpeditionState, spec: MissionSpec, seed: number) {
   const atStake = spec.aboard ? Math.max(0, Math.round(dialValue(s.dials, 'boardingStakes'))) : 0
   return startMission({
     installations: s.modules.slice(0, atStake),
+    // What the two of them have earned and are wearing reaches the grid here:
+    // maximum hit points and the Bond's range are both theirs, not the class's.
+    heroMaxHp: { runesmith: heroMaxHp(s, 'runesmith'), echoreader: heroMaxHp(s, 'echoreader') },
+    bondRange: bondRange(s),
     seed,
     difficulty: Math.max(
       1,
@@ -1173,7 +1887,18 @@ function launchPuzzle(
   log(s, { k: 'missionLaunched', briefing: s.activeMission.briefing })
 }
 
-function applyRewards(s: ExpeditionState, rewards: readonly Reward[]): void {
+/**
+ * Pay out a list of rewards.
+ *
+ * `owner` is who gets the advancement marks when a reward does not name a hero —
+ * an order carried out pays the console it sat on. Without an owner, marks go to
+ * both, which is what a landing does.
+ */
+function applyRewards(
+  s: ExpeditionState,
+  rewards: readonly Reward[],
+  owner?: HeroClassId,
+): void {
   for (const reward of rewards) {
     switch (reward.k) {
       case 'resource':
@@ -1203,6 +1928,16 @@ function applyRewards(s: ExpeditionState, rewards: readonly Reward[]): void {
       case 'crewJoin':
         joinCrew(s, reward.count)
         break
+      case 'relic':
+        findRelic(s, reward.id)
+        break
+      case 'heroXp': {
+        const who = reward.who ?? owner
+        const reason = owner ? MARK_REASONS.directive : MARK_REASONS.landing
+        if (who) grantMarks(s, who, reward.amount, reason)
+        else for (const hero of HERO_ORDER) grantMarks(s, hero, reward.amount, reason)
+        break
+      }
     }
   }
 }
@@ -1217,6 +1952,52 @@ function recoverDecks(s: ExpeditionState): void {
     hero.hand = [...hero.hand, ...hero.discard]
     hero.discard = []
   }
+}
+
+/**
+ * The Echo-reader's Remembrance perk, honoured between landings.
+ *
+ * Lost cards are the attrition the whole game is built on, so this is the only
+ * thing in the game that undoes them — one at a time, and only for her.
+ */
+function recoverLostCards(s: ExpeditionState): void {
+  for (const hero of s.heroes) {
+    let slots = 0
+    for (const id of s.heroRecords[hero.heroClass].perks) slots += heroPerk(id).effect.recoverLost ?? 0
+    for (let i = 0; i < slots; i++) {
+      const back = hero.lost.shift()
+      if (!back) break
+      hero.hand.push(back)
+    }
+  }
+}
+
+/** It came, and it did not leave. Nothing sends another. */
+function heraldSilenced(s: ExpeditionState): void {
+  s.herald = null
+  if (!s.flags.includes('herald-silenced')) s.flags.push('herald-silenced')
+  // The mark outlives the expedition: a later run can be asked about this.
+  if (!s.marks.includes('silenced-the-herald')) s.marks.push('silenced-the-herald')
+  changeAttention(s, -s.attention)
+  for (const hero of HERO_ORDER) grantMarks(s, hero, 3, MARK_REASONS.herald)
+  log(s, { k: 'heraldSilenced' })
+}
+
+/**
+ * It was driven off, not stopped.
+ *
+ * It falls back down the corridor and comes again — harder, because `hunts` goes
+ * up. That is what stops losing to it on purpose from being the cheap way out of
+ * the mechanic.
+ */
+function heraldRepelled(s: ExpeditionState): void {
+  if (!s.herald) return
+  s.herald = {
+    column: Math.min(s.map.columns - 1, shipColumn(s) + 3),
+    hunts: s.herald.hunts + 1,
+  }
+  changeAttention(s, -4)
+  log(s, { k: 'heraldRepelled' })
 }
 
 function finishMission(s: ExpeditionState): void {
@@ -1236,7 +2017,22 @@ function finishMission(s: ExpeditionState): void {
     }
     if (result.outcome === 'victory') {
       log(s, { k: 'missionWon' })
+      s.tally.landingsWon += 1
       applyRewards(s, mission.spec.rewards)
+      // What they carried out of an exploration site is not a number any more:
+      // every relic brought home is a named thing with an effect. See relics.ts.
+      for (let i = 0; i < result.relicsCollected; i++) findRelic(s)
+      // Marks. Both of them for the landing; and the Runesmith again if the ship
+      // came out of a boarding action with everything still standing, which is
+      // the thing he is actually being paid for.
+      for (const hero of HERO_ORDER) grantMarks(s, hero, 1, MARK_REASONS.landing)
+      if (mission.spec.aboard && result.modulesLost.length === 0) {
+        grantMarks(s, 'runesmith', 2, MARK_REASONS.intact)
+      }
+      menteeMarks(s)
+      // A fight is loud. A fight aboard the ship is louder.
+      raiseAttention(s, mission.spec.aboard ? 2 : 1)
+      if (mission.spec.herald) heraldSilenced(s)
       node.resolved = true
     } else {
       log(s, { k: 'missionLost' })
@@ -1254,24 +2050,39 @@ function finishMission(s: ExpeditionState): void {
         applyHullRisk(s, damage)
         log(s, { k: 'boardingDamage' })
       }
+      if (mission.spec.herald) heraldRepelled(s)
       node.resolved = true
     }
   } else {
     const status = puzzleStatus(mission.puzzle)
     if (status === 'solved') {
       log(s, { k: 'puzzleSolved' })
+      s.tally.puzzlesSolved += 1
       applyRewards(s, mission.rewards)
+      // Reading a mechanism is her craft, and this is where she is paid for it.
+      grantMarks(s, 'echoreader', 2, MARK_REASONS.mechanism)
     } else {
       log(s, { k: 'puzzleFailed' })
       gain(s, 'morale', -1)
+      // Forcing something that would not open is exactly the kind of noise the
+      // Stargrave notices.
+      raiseAttention(s, 1)
     }
     node.resolved = true
   }
 
   recoverDecks(s)
+  recoverLostCards(s)
+  checkDirectives(s)
   s.activeMission = null
   updateDarkening(s)
-  s.screen = s.pendingEncounter ? 'encounter' : 'starmap'
+  // Back where the mission was launched from. The Heart is its own screen, and a
+  // mechanism read there must not drop the players onto the star map.
+  s.screen = s.pendingEncounter
+    ? 'encounter'
+    : s.at === s.map.heartId
+      ? 'heart'
+      : 'starmap'
   checkLoss(s)
 }
 
@@ -1307,17 +2118,69 @@ function engageNode(s: ExpeditionState): void {
 
 // ---------------------------------------------------------------- endings
 
+/**
+ * What can be chosen at the Stargrave, given this run.
+ *
+ * Five of these are read off one number, and that was the whole endgame: how
+ * much did you understand. It made every run's last five minutes the same
+ * conversation. The four that follow are earned instead — by arriving with the
+ * crew whole, by having silenced the thing that hunted you, by carrying enough
+ * of the dead galaxy home in your hands. A run can now reach the Heart with a
+ * choice nobody expected, which is the only thing that makes the ending worth
+ * arriving at twice.
+ *
+ * Turning back for the Gate is not here: that is not something you choose at the
+ * Stargrave. See `canGoHome`.
+ */
 export function availableEndings(s: ExpeditionState): EndingId[] {
   const tier = understandingTier(s.understanding)
   const out: EndingId[] = ['flee', 'blindRuin']
   if (tier >= 1) out.push('witness')
   if (tier >= 2) out.push('intervene')
   if (tier >= 3) out.push('communion')
+
+  // Arrived with the ship still a ship: five people alive and a crew that will
+  // still take an order. Understanding alone never asked for that.
+  if (tier >= 2 && livingCrew(s).length >= 5 && s.resources.morale >= 8) out.push('custodian')
+  // You met what the Stargrave sent, and it did not go home either.
+  if (tier >= 1 && s.flags.includes('herald-silenced')) out.push('silence')
+  // Three relics in the hold: enough to leave something behind rather than
+  // carry it all away.
+  if (tier >= 1 && s.relics.length >= 3) out.push('inheritance')
+
   // The closing one needs both halves: the Archive must have bought the question
   // (carried in as a flag at launch) and this run must have understood enough to
   // answer it.
   if (tier >= 3 && s.flags.includes('last-question')) out.push('theAnswer')
   return out
+}
+
+/**
+ * Fuel to turn the ship round and burn for the Gate from where it stands.
+ *
+ * Two units a column, because the road home is the road you came by. It is
+ * deliberately affordable early and expensive deep in: the decision this exists
+ * for is "we are four columns in with eleven weeks left — do we still get to
+ * choose?", and the answer has to be able to be no.
+ */
+export function homewardFuel(s: ExpeditionState): number {
+  return Math.max(2, shipColumn(s) * 2)
+}
+
+/**
+ * May the expedition go home right now?
+ *
+ * This is the answer to the question the game could not answer before: when does
+ * it end? It ends when you say so. Turning back is an ENDING and not a loss —
+ * you keep what you learned, you bank it, and the Archive counts the run. A ship
+ * that instead runs the clock to zero on the far side of the map loses
+ * everything the hard way, and now that is a choice somebody made rather than a
+ * rule that ambushed them.
+ */
+export function canGoHome(s: ExpeditionState): boolean {
+  if (s.outcome || s.activeMission || s.pendingEncounter || s.travel) return false
+  if (s.at === s.map.heartId) return false
+  return s.resources.fuel >= homewardFuel(s)
 }
 
 const ENDING_ARCHIVE: Record<EndingId, number> = {
@@ -1327,13 +2190,55 @@ const ENDING_ARCHIVE: Record<EndingId, number> = {
   intervene: 9,
   communion: 14,
   theAnswer: 20,
+  // Going home early banks less than standing at the Heart — but it banks, and
+  // that is the point: it is never the wrong move, only the smaller one.
+  homecoming: 3,
+  silence: 8,
+  inheritance: 10,
+  custodian: 11,
 }
 
 function chooseEnding(s: ExpeditionState, id: EndingId): void {
+  // Turning back is judged where the ship is, not at the Stargrave.
+  if (id === 'homecoming') {
+    if (!canGoHome(s)) return
+    gain(s, 'fuel', -homewardFuel(s))
+    // A relic carried home is worth something to the Archive even when nothing
+    // else was understood: it is the one ending that pays for what you hold.
+    s.archiveEarned += ENDING_ARCHIVE.homecoming + s.relics.length
+    s.outcome = { k: 'ending', id, understanding: s.understanding }
+    s.screen = 'over'
+    return
+  }
   if (!availableEndings(s).includes(id)) return
   s.archiveEarned += ENDING_ARCHIVE[id]
   s.outcome = { k: 'ending', id, understanding: s.understanding }
   s.screen = 'over'
+}
+
+/**
+ * The Heart, read before anything is decided there.
+ *
+ * One mechanism, at the hardest setting, and the reward is two points of
+ * understanding — which can be the two points that open a different ending while
+ * the players are already standing in front of the list. Once only, and failing
+ * it costs morale: the last screen of an expedition should be able to go wrong.
+ */
+function readHeart(s: ExpeditionState): void {
+  if (s.heartRead || s.activeMission || s.at !== s.map.heartId) return
+  s.heartRead = true
+  log(s, { k: 'heartRead' })
+  launchPuzzle(s, null, 3, [
+    { k: 'understanding', amount: 2 },
+    { k: 'archive', amount: 2 },
+  ], {
+    hu:
+      'A Csillagsír pereme. Nem támad, nem szól, és nem zárva van — csak írva. Le lehet ülni ' +
+      'elé, egyszer, mielőtt bármit eldöntetek.',
+    en:
+      'The rim of the Stargrave. It does not attack, it does not speak, and it is not locked — ' +
+      'only written. You can sit down in front of it, once, before you decide anything.',
+  })
 }
 
 // ---------------------------------------------------------------- market
@@ -1356,6 +2261,9 @@ function marketBuy(s: ExpeditionState, index: number): void {
     if (!s.modules.includes(item.id)) s.modules.push(item.id)
     log(s, { k: 'bought', label: MODULES[item.id].name, price: offer.price })
     log(s, { k: 'moduleInstalled', module: MODULES[item.id].name })
+  } else if (item.k === 'relic') {
+    log(s, { k: 'bought', label: relic(item.id).name, price: offer.price })
+    findRelic(s, item.id)
   } else {
     s.crew.push({ ...item.member, station: null, alive: true, weeksAboard: 0 })
     log(s, { k: 'crewJoined', name: item.member.name })
@@ -1410,6 +2318,7 @@ export function expeditionStep(
 
     case 'setCourse': {
       if (s.travel || s.activeMission || s.pendingEncounter) break
+      if (!canSetCourse(s)) break
       const here = mapNode(s.map, s.at)
       const index = here.links.indexOf(action.nodeId)
       if (index < 0) break
@@ -1429,6 +2338,9 @@ export function expeditionStep(
     case 'openScreen':
       if (s.activeMission && action.screen !== 'mission') break
       if (s.pendingEncounter && action.screen !== 'encounter') break
+      // The Gate screen is the one that offers to end the run, so it is only
+      // reachable when turning back is actually possible.
+      if (action.screen === 'gate' && !canGoHome(s)) break
       s.screen = action.screen
       break
 
@@ -1544,6 +2456,31 @@ export function expeditionStep(
 
     case 'marketBuy':
       marketBuy(s, action.index)
+      break
+
+    // ------------------------------------------------- one player's own moves
+    case 'buyPerk':
+      buyPerk(s, action.hero, action.perkId)
+      break
+
+    case 'attuneRelic':
+      attuneRelic(s, action.hero, action.relicId)
+      break
+
+    case 'stowRelic':
+      stowRelic(s, action.hero, action.relicId)
+      break
+
+    case 'setMentor':
+      setMentor(s, action.crewId, action.hero)
+      break
+
+    case 'sellRelic':
+      sellRelic(s, action.relicId)
+      break
+
+    case 'readHeart':
+      readHeart(s)
       break
 
     case 'chooseEnding':

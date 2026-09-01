@@ -93,9 +93,18 @@ const SECTION_FOR_TOPIC: Record<HelpTopic, number> = {
   mission: 3,
   puzzle: 4,
   ending: 6,
+  // The two consoles and the Herald are the last two chapters before the tips.
+  consoles: 8,
 }
 
-export type HelpTopic = 'overview' | 'strategic' | 'starmap' | 'mission' | 'puzzle' | 'ending'
+export type HelpTopic =
+  | 'overview'
+  | 'strategic'
+  | 'starmap'
+  | 'mission'
+  | 'puzzle'
+  | 'ending'
+  | 'consoles'
 
 function preferredTab(topic: HelpTopic, titles: string[]): string | undefined {
   return titles[SECTION_FOR_TOPIC[topic]] ?? titles[0]

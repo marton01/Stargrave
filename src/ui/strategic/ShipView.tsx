@@ -20,17 +20,48 @@ import {
   SYSTEM_ORDER,
   lifeSupportNeeded,
 } from '../../content/ship'
-import { CREW_TRAITS, SPECIALITY_NAMES } from '../../content/crew'
+import { CREW_TRAITS, RANK_NAMES, SPECIALITY_NAMES, crewRank } from '../../content/crew'
+import { HERO_CLASSES } from '../../content/heroes'
 import { portrait } from '../assets'
 import { Portrait } from '../Portrait'
 import { understandingTier } from '../../content/research'
-import { describeStationYield, describeSystemYield } from '../../i18n/describePower'
+import {
+  describeStationCrew,
+  describeStationYield,
+  describeSystemYield,
+  homeStations,
+} from '../../i18n/describePower'
 import { useLang } from '../../i18n/LangContext'
+import { useState } from 'react'
 import type { ExpeditionState } from '../../engine/expedition/types'
 import type { StationId, SystemId } from '../../content/ship'
 import type { UiKey } from '../../i18n/ui'
 
 const TIER_KEY: UiKey[] = ['tier0', 'tier1', 'tier2', 'tier3']
+
+/**
+ * Whose console a row belongs to.
+ *
+ * The domains were in the data from the beginning and nothing ever showed them,
+ * so the ship screen was one long list two people scrolled past together. With a
+ * filter it becomes two screens that happen to share a reactor: each player can
+ * look at their own half, and what is marked shared is visibly the thing they
+ * have to settle between them.
+ */
+type Domain = 'engineering' | 'research' | 'shared'
+
+const DOMAIN_KEY: Record<Domain, UiKey> = {
+  engineering: 'domainEngineering',
+  research: 'domainResearch',
+  shared: 'domainShared',
+}
+
+/** Which hero holds a domain, for the filter's labels. */
+const DOMAIN_HERO: Record<Domain, 'runesmith' | 'echoreader' | null> = {
+  engineering: 'runesmith',
+  research: 'echoreader',
+  shared: null,
+}
 
 export function ShipView({
   state,
@@ -40,6 +71,11 @@ export function ShipView({
   dispatch: (action: ExpeditionAction) => void
 }) {
   const { t, s, lang } = useLang()
+  // null is "everything". A filter, not a lock: the other half stays readable,
+  // because a co-operative game where you cannot see your partner's screen is
+  // just two solitaires.
+  const [only, setOnly] = useState<Domain | null>(null)
+  const shown = (domain: Domain) => only === null || domain === only || domain === 'shared'
   const used = powerUsed(state)
   const free = state.reactorOutput - used
   const crew = livingCrew(state)
@@ -56,10 +92,33 @@ export function ShipView({
         </header>
         <p className="panel-intro">{t.powerIntro(state.reactorOutput, free)}</p>
 
+        <div className="domain-filter" title={t.domainHint}>
+          <span className="domain-filter-label">{t.commandFilter}:</span>
+          <button
+            className={`button button-small ${only === null ? 'button-primary' : ''}`}
+            data-action="domainFilter"
+            data-domain="all"
+            onClick={() => setOnly(null)}
+          >
+            {t.commandAll}
+          </button>
+          {(['engineering', 'research'] as Domain[]).map((domain) => (
+            <button
+              key={domain}
+              className={`button button-small ${only === domain ? 'button-primary' : ''}`}
+              data-action="domainFilter"
+              data-domain={domain}
+              onClick={() => setOnly(domain)}
+            >
+              {s(HERO_CLASSES[DOMAIN_HERO[domain]!].name)} · {t[DOMAIN_KEY[domain]] as string}
+            </button>
+          ))}
+        </div>
+
 
 
         <div className="power-rows">
-          {SYSTEM_ORDER.map((id) => (
+          {SYSTEM_ORDER.filter((id) => shown(SYSTEMS[id].domain)).map((id) => (
             <PowerRow
               key={id}
               state={state}
@@ -88,7 +147,7 @@ export function ShipView({
         <p className="panel-intro">{t.stationsIntro}</p>
 
         <div className="station-grid">
-          {STATION_ORDER.map((id) => {
+          {STATION_ORDER.filter((id) => shown(STATIONS[id].domain)).map((id) => {
             const def = STATIONS[id]
             const here = crewAt(state, id)
             const running = stationActive(state, id)
@@ -97,6 +156,9 @@ export function ShipView({
               <div key={id} className={`station ${running ? 'station-on' : ''}`}>
                 <div className="station-head">
                   <span className="station-name">{s(def.name)}</span>
+                  <span className={`domain-badge domain-${def.domain}`}>
+                    {t[DOMAIN_KEY[def.domain]] as string}
+                  </span>
                   <span className={`station-state ${running ? 'good' : powered ? '' : 'bad'}`}>
                     {running ? t.stationRunning : powered ? t.stationEmpty : t.stationNoPower}
                   </span>
@@ -105,6 +167,13 @@ export function ShipView({
                 {(() => {
                   const output = describeStationYield(state, id, lang)
                   return output ? <p className="station-yield">{output}</p> : null
+                })()}
+                {(() => {
+                  // Where the number came from. Without this the station gives a
+                  // figure and never says why, which is how two navigators on one
+                  // station producing different amounts became a mystery.
+                  const breakdown = describeStationCrew(state, id, lang)
+                  return breakdown ? <p className="station-breakdown">{breakdown}</p> : null
                 })()}
                 <p className="station-needs">
                   {s(SYSTEMS[def.needs].name)} · {s(SPECIALITY_NAMES[def.speciality])} ·{' '}
@@ -143,7 +212,18 @@ export function ShipView({
                 <span className="crew-name">{member.name}</span>
                 <span className="crew-speciality">{s(SPECIALITY_NAMES[member.speciality])}</span>
               </div>
+              <p className="crew-home">
+                {t.crewHome(homeStations(member.speciality, lang))}
+              </p>
               <div className="crew-traits">
+                <span className={`trait trait-rank rank-${crewRank(member)}`}>
+                  {s(RANK_NAMES[crewRank(member)])}
+                </span>
+                {member.mentor && (
+                  <span className="trait trait-mentor">
+                    {t.menteeOther(s(HERO_CLASSES[member.mentor].name))}
+                  </span>
+                )}
                 {member.traits.map((trait) => (
                   <span key={trait} className="trait" title={s(CREW_TRAITS[trait].description)}>
                     {s(CREW_TRAITS[trait].name)}

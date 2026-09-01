@@ -9,6 +9,7 @@
 // in the whole game that could not be forgiven.
 
 import { newArchive, ARCHIVE_VERSION } from './archive'
+import { newHeroRecord } from './expedition'
 import { normaliseDials } from '../../content/difficulty'
 import type { Dials } from '../../content/difficulty'
 import type { ArchiveState, ExpeditionState, GameState } from './types'
@@ -70,16 +71,61 @@ export function parseSave(raw: string): GameState | null {
   // a missing empty list.
   return {
     archive: { ...newArchive(), ...archive },
-    expedition: expedition
-      ? {
-          ...expedition,
-          flags: expedition.flags ?? [],
-          marks: expedition.marks ?? [],
-          // Without a number here the level becomes NaN on the first week.
-          darkeningShift: expedition.darkeningShift ?? 0,
-          dials: normaliseDials(expedition.dials),
-        }
-      : null,
+    expedition: expedition ? migrate(expedition) : null,
+  }
+}
+
+/**
+ * Fill in whatever a save written before a field existed is missing.
+ *
+ * An older save is not a broken save. Filling the gaps in beats dropping a
+ * twenty-eight week expedition over a missing empty list — and every one of
+ * these was, at some point, a real save on somebody's machine.
+ */
+function migrate(expedition: ExpeditionState): ExpeditionState {
+  const crew = (expedition.crew ?? []).map((member) => ({
+    ...member,
+    xp: member.xp ?? 0,
+    mentor: member.mentor ?? null,
+  }))
+  return {
+    ...expedition,
+    flags: expedition.flags ?? [],
+    marks: expedition.marks ?? [],
+    // Without a number here the level becomes NaN on the first week.
+    darkeningShift: expedition.darkeningShift ?? 0,
+    dials: normaliseDials(expedition.dials),
+    crew,
+    heroRecords: {
+      runesmith: expedition.heroRecords?.runesmith ?? newHeroRecord(),
+      echoreader: expedition.heroRecords?.echoreader ?? newHeroRecord(),
+    },
+    relics: expedition.relics ?? [],
+    attention: expedition.attention ?? 0,
+    herald: expedition.herald ?? null,
+    directives: expedition.directives ?? [],
+    directiveCount: expedition.directiveCount ?? 0,
+    tally: expedition.tally ?? {
+      landingsWon: 0,
+      puzzlesSolved: 0,
+      researchDone: 0,
+      heraldsFaced: 0,
+      relicsFound: 0,
+    },
+    heartRead: expedition.heartRead ?? false,
+    activeMission:
+      expedition.activeMission?.k === 'battle'
+        ? {
+            ...expedition.activeMission,
+            // The Bond used to be a constant of the rules rather than a number on
+            // the state, so a battle saved before that has none.
+            battle: {
+              ...expedition.activeMission.battle,
+              bondRange: expedition.activeMission.battle.bondRange ?? 2,
+              installations: expedition.activeMission.battle.installations ?? [],
+            },
+          }
+        : expedition.activeMission,
   }
 }
 

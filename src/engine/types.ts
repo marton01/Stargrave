@@ -166,6 +166,14 @@ export type Card = {
   top: CardHalf
   bottom: CardHalf
   symbols: TrialSymbol[]
+  /**
+   * Not part of the starting deck.
+   *
+   * An advancement card only enters a deck when the hero buys the perk that
+   * grants it (see content/advance.ts). `cardsOfClass` therefore has to leave
+   * these out, or everybody would start with them.
+   */
+  advanced?: boolean
 }
 
 // ---------------------------------------------------------------- enemies
@@ -337,6 +345,16 @@ export type BattleState = {
   exit: Coord | null
   /** Tiles about to give way, for exploration pressure. */
   collapsing: Collapsing[]
+
+  /**
+   * How close the two heroes have to be for the Bond, in tiles.
+   *
+   * Two, unless the expedition has widened it — the Echo-reader's Tether perk or
+   * the Binding cord relic. It has to live on the battle state rather than being
+   * looked up from the expedition, because the battle engine knows nothing about
+   * the ship and must stay that way.
+   */
+  bondRange: number
 
   /**
    * The ship's own modules, standing on the board.
