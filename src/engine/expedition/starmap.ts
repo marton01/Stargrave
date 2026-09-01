@@ -194,6 +194,38 @@ function puzzleEvent(rng: Rng, column: number, columns: number, kinds: readonly 
   }
 }
 
+/**
+ * A split task: a lock whose description is scattered across the party.
+ *
+ * Put on anomalies and stations rather than ruins, because it is a made thing
+ * with a manual rather than something the dead left lying about — and because
+ * ruins already carry the fights and the mechanisms.
+ */
+function taskEvent(rng: Rng, column: number, columns: number): NodeEvent {
+  const depth = column / Math.max(1, columns - 1)
+  const difficulty = Math.min(3, 1 + Math.floor(depth * 2))
+  const rewards: Reward[] = [{ k: 'archive', amount: 1 }]
+  const roll = rng.next()
+  if (roll < 0.35) rewards.push({ k: 'resource', id: 'information', amount: 6 + difficulty * 2 })
+  else if (roll < 0.7) rewards.push({ k: 'resource', id: 'credits', amount: 10 + difficulty * 4 })
+  else rewards.push({ k: 'understanding', amount: 2 })
+  if (difficulty >= 2 && rng.next() < 0.3) rewards.push({ k: 'relic' })
+
+  return {
+    k: 'task',
+    difficulty,
+    rewards,
+    briefing: {
+      hu:
+        'Egy zárósor, és a leírása nem egy helyen van. Mindenki más darabját látja, és mindenki ' +
+        'csak a saját rúnáit tudja megnyomni. Ezt nem lehet egyedül kinyitni.',
+      en:
+        'A closing line whose description is not in one place. Each of you sees a different part, ' +
+        'and each of you can only press your own runes. Nobody opens this alone.',
+    },
+  }
+}
+
 function marketEvent(rng: Rng, column: number, id: string): NodeEvent {
   const offers: MarketOffer[] = []
   const count = rng.between(2, 4)
@@ -251,9 +283,11 @@ function eventFor(
     if (roll < 0.45) return { k: 'mission', spec: missionFor(rng, column, columns, 0) }
     if (roll < 0.7) return puzzleEvent(rng, column, columns, puzzleKinds)
   } else if (kind === 'anomaly') {
-    if (roll < 0.45) return puzzleEvent(rng, column, columns, puzzleKinds)
+    if (roll < 0.35) return puzzleEvent(rng, column, columns, puzzleKinds)
+    if (roll < 0.6) return taskEvent(rng, column, columns)
   } else if (kind === 'station') {
-    if (roll < 0.4) return marketEvent(rng, column, nodeId)
+    if (roll < 0.35) return marketEvent(rng, column, nodeId)
+    if (roll < 0.5) return taskEvent(rng, column, columns)
   }
 
   const candidates = encountersFor(tags, usedOnce, archiveOpen)

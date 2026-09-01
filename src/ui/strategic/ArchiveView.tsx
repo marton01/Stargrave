@@ -15,12 +15,36 @@ import {
 } from '../../engine/expedition/archive'
 import { LENGTHS } from '../../engine/expedition/starmap'
 import { useLang } from '../../i18n/LangContext'
+import { HERO_CLASSES } from '../../content/heroes'
+import { HERO_ORDER, partyForSeats } from '../../engine/expedition/expedition'
+import type { HeroClassId } from '../../engine/types'
+import {
+  GAME_MODES,
+  assignHero,
+  formatRoomCode,
+  normaliseRoomCode,
+  parseRoomCode,
+  seatsAllowed,
+} from '../../engine/session/room'
+import type { GameMode } from '../../engine/session/room'
+import type { RoomRecord } from '../../engine/expedition/save'
 import type {
   ArchiveState,
   ArchiveUnlockId,
   EndingId,
   ExpeditionLength,
 } from '../../engine/expedition/types'
+
+const MODE_NAME: Record<GameMode, 'modeSolo' | 'modeLocal' | 'modeOnline'> = {
+  solo: 'modeSolo',
+  local: 'modeLocal',
+  online: 'modeOnline',
+}
+const MODE_TEXT: Record<GameMode, 'modeSoloText' | 'modeLocalText' | 'modeOnlineText'> = {
+  solo: 'modeSoloText',
+  local: 'modeLocalText',
+  online: 'modeOnlineText',
+}
 
 /**
  * Which understanding tier each ending needs. Mirrors `availableEndings`, and is
@@ -39,6 +63,8 @@ export function ArchiveView({
   archive,
   hasRunningExpedition,
   onStart,
+  onJoin,
+  rooms,
   onContinue,
   onUnlock,
   onExport,
@@ -47,7 +73,15 @@ export function ArchiveView({
 }: {
   archive: ArchiveState
   hasRunningExpedition: boolean
-  onStart: (length: ExpeditionLength, seed: number | null) => void
+  onStart: (
+    length: ExpeditionLength,
+    seed: number | null,
+    mode: GameMode,
+    players: number,
+    party: HeroClassId[],
+  ) => void
+  onJoin: (code: string) => void
+  rooms: RoomRecord[]
   onContinue: () => void
   onUnlock: (id: ArchiveUnlockId) => void
   onExport: () => void
@@ -58,6 +92,15 @@ export function ArchiveView({
   // Which ending is open for reading. Only one at a time, so the list stays a list.
   const [openEnding, setOpenEnding] = useState<EndingId | null>(null)
   const [length, setLength] = useState<ExpeditionLength>('medium')
+  // How this table is going to play. Solo and local are the game as it was;
+  // online opens a room whose code the others type in.
+  const [mode, setMode] = useState<GameMode>('local')
+  const [players, setPlayers] = useState(2)
+  // Who plays whom, before there is a room to decide it in. Picking somebody
+  // else's hero trades with them, so the list can never hold two of anybody.
+  const [party, setParty] = useState<HeroClassId[]>(() => partyForSeats(2))
+  const [joinText, setJoinText] = useState('')
+  const [joinError, setJoinError] = useState(false)
   const [seedText, setSeedText] = useState('')
   const [importError, setImportError] = useState(false)
   const fileInput = useRef<HTMLInputElement | null>(null)
@@ -84,6 +127,73 @@ export function ArchiveView({
         <header className="panel-head">
           <h2>{t.newExpedition}</h2>
         </header>
+
+        <div className="mode-choices">
+          {GAME_MODES.map((option) => (
+            <button
+              key={option}
+              className={`mode-card ${mode === option ? 'on' : ''}`}
+              data-action="setMode"
+              data-mode={option}
+              onClick={() => {
+                setMode(option)
+                // Solo seats one; the others start at two.
+                const seats = option === 'solo' ? 1 : Math.max(2, players)
+                setPlayers(seats)
+                setParty(partyForSeats(seats))
+              }}
+            >
+              <strong>{t[MODE_NAME[option]] as string}</strong>
+              <span>{t[MODE_TEXT[option]] as string}</span>
+            </button>
+          ))}
+        </div>
+
+        {mode !== 'solo' && (
+          <div className="player-choices">
+            <span className="setting-label">{t.playersHeading}</span>
+            {seatsAllowed(mode).map((count) => (
+              <button
+                key={count}
+                className={`button button-small ${players === count ? 'button-primary' : ''}`}
+                data-action="setPlayers"
+                data-players={count}
+                onClick={() => {
+                  setPlayers(count)
+                  setParty(partyForSeats(count))
+                }}
+              >
+                {t.playersCount(count)}
+              </button>
+            ))}
+            <span className="muted">{t.playersHint(players)}</span>
+          </div>
+        )}
+
+        {mode !== 'online' && (
+          <div className="party-choices">
+            <span className="setting-label">{t.partyHeading}</span>
+            {party.map((heroClass, i) => (
+              <select
+                key={i}
+                className="seat-hero"
+                data-action="pickHero"
+                data-seat={i + 1}
+                value={heroClass}
+                onChange={(event) =>
+                  setParty(assignHero(party, i, event.target.value as HeroClassId))
+                }
+              >
+                {HERO_ORDER.map((id) => (
+                  <option key={id} value={id}>
+                    {s(HERO_CLASSES[id].name)}
+                  </option>
+                ))}
+              </select>
+            ))}
+            <span className="muted">{t.partyHint}</span>
+          </div>
+        )}
 
         <div className="length-choices">
           {(['short', 'medium', 'long'] as const).map((option) => (
@@ -119,10 +229,16 @@ export function ArchiveView({
             data-action="launchExpedition"
             onClick={() => {
               const parsed = seedText.trim() ? Number(seedText.trim()) : null
-              onStart(length, parsed !== null && Number.isFinite(parsed) ? parsed : null)
+              onStart(
+                length,
+                parsed !== null && Number.isFinite(parsed) ? parsed : null,
+                mode,
+                players,
+                party,
+              )
             }}
           >
-            {t.launch}
+            {mode === 'online' ? t.launchRoom : t.launch}
           </button>
           {hasRunningExpedition && (
             <button className="button" data-action="continueExpedition" onClick={onContinue}>
@@ -131,6 +247,62 @@ export function ArchiveView({
           )}
         </div>
         <p className="panel-meta">{t.seedHint}</p>
+      </section>
+
+      <section className="panel">
+        <header className="panel-head">
+          <h2>{t.joinHeading}</h2>
+        </header>
+        <p className="panel-intro">{t.joinIntro}</p>
+        <div className="launch-row">
+          <label className="setting">
+            {t.roomCode}
+            <input
+              type="text"
+              data-action="roomCode"
+              value={joinText}
+              placeholder="XXXX-XXXX"
+              onChange={(event) => {
+                setJoinText(event.target.value)
+                setJoinError(false)
+              }}
+              size={12}
+            />
+          </label>
+          <button
+            className="button button-primary"
+            data-action="joinRoom"
+            onClick={() => {
+              if (parseRoomCode(joinText)) onJoin(normaliseRoomCode(joinText))
+              else setJoinError(true)
+            }}
+          >
+            {t.joinRoom}
+          </button>
+          {joinError && <span className="bad">{t.joinBadCode}</span>}
+        </div>
+
+        {rooms.length > 0 && (
+          <div className="room-list">
+            <h3>{t.roomsKnown}</h3>
+            {rooms.map((record) => (
+              <div key={record.code} className="room-row">
+                <strong>{formatRoomCode(record.code)}</strong>
+                <span className="muted">
+                  {t.roomRowMeta(record.players, record.week)}
+                </span>
+                <button
+                  className="button button-small"
+                  data-action="rejoinRoom"
+                  data-room={record.code}
+                  onClick={() => onJoin(record.code)}
+                >
+                  {t.roomRejoin}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="panel">

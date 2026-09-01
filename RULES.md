@@ -9,7 +9,7 @@
 > differ per language. The order is: 1. Overview, 2. The weekly turn, 3. Star map,
 > 4. Landings, 5. Puzzles, 6. Research, 7. The Stargrave, 8. The Archive,
 > 9. Consoles, 10. Attention and the Herald, 11. Orders from home,
-> 12. When does it end?, 13. Tips.
+> 12. When does it end?, 13. Game modes, 14. Tips.
 >
 > The game pieces (units, terrain, badges) are not described here: the help **draws
 > them live** with the same components the grid uses, so they can never drift from
@@ -17,8 +17,8 @@
 
 ## Overview
 
-The two of you are the command crew of an expedition ship, **at one machine with one
-mouse**. A Gate has opened onto a galaxy where a civilisation fused magic and
+You are the command crew of an expedition ship: **one to four of you**, at one
+machine or on your own machines (see the *Game modes* chapter). A Gate has opened onto a galaxy where a civilisation fused magic and
 technology and then vanished within a single generation. No war destroyed it:
 something *finished* them.
 
@@ -363,6 +363,26 @@ the Runesmith hits it for +2 in the same round — which requires lining up the
 
 **Shield** stacks only up to 3; it subtracts from every hit, then drops by 1.
 
+### The site takes a turn too
+
+The enemies show their intent a round ahead. The **ground** gets the same courtesy:
+every battlefield has two or three events of its own, and each is **announced a
+round before it happens**, next to the objective.
+
+- **a rune surge** — the runework under the floor gives +2 Flux;
+- **ashfall** — part of the floor turns to ash: walkable, at twice the cost;
+- **a collapse** — some tiles are marked and give way at the end of the next round
+  (never the exit, never a relic);
+- **something comes through** — one more enemy, as far from the party as the ground
+  allows. Exploration missions are spared this: those already run against a clock.
+
+### Focus
+
+If somebody has **already wounded the same enemy this round**, your hit takes off
+one more. It does not stack from the same hero, and it **resets every round** — so
+it is a decision to strike now, together, rather than a mark that accumulates. With
+four heroes it is the most important thing to be saying out loud.
+
 ## Puzzles
 
 Roughly a third of missions are logic puzzles. **There are nine kinds, all generated**,
@@ -391,6 +411,29 @@ opens new places on the star map. That is why they are not interchangeable, and 
 every one of them is worth solving.
 
 The first expedition starts with three kinds. The Archive opens up the rest.
+
+### The closing line: the puzzle that needs everybody
+
+This is the tenth kind, and it works by different rules, because it is built on
+the fact that **everybody has their own screen**.
+
+A line of runes has to be pressed in the right order. The order is pinned down by
+written clues — and **the clues are dealt out**: each of you sees different ones,
+and nobody sees enough to solve it alone. On top of that **every rune belongs to
+somebody**: only its owner can press it.
+
+- **The answer is always unambiguous.** At generation the game tries every
+  possible order and only hands out a task with exactly one solution. You never
+  have to guess — but you do have to talk.
+- **Everybody gets clues and runes.** Nobody can be sat there with nothing to say.
+- **A wrong press does not reset the line**, it costs a mistake: at three (two on
+  the hardest settings) the line shuts. So it is safe to say your guess out loud
+  and be corrected.
+- **At one keyboard** the same screen shows every panel, and it is simply a logic
+  puzzle. The split only means something when the screens really are apart —
+  hiding something from somebody who can lean over and read it would be theatre.
+
+They turn up at anomalies and stations, and a few decisions lead to one.
 
 ## Research and understanding
 
@@ -577,6 +620,93 @@ nothing, it only narrows the list down to what is yours. The other half stays
 readable — a co-operative game where you cannot see your partner's screen is just
 two solitaires.
 
+## Life aboard: loyalty, things that happen, debts
+
+The week does not only happen on the map. It happens on the ship as well — and
+these three systems are what stop it feeling like "I clicked once and my week is
+over".
+
+One rule runs through all three: **consequence, never ambush.** Nothing here lands
+on you without warning. While somebody is making up their mind you can read it on
+the crew list for weeks — they have stopped speaking to anybody — and you can still
+stop it.
+
+### Loyalty: the crew are not stat blocks
+
+Every crew member has a **loyalty** from 0 to 10, and the list shows it in words
+rather than numbers:
+
+| Loyalty | How the list reads |
+| --- | --- |
+| 9–10 | committed |
+| 7–8 | steady |
+| 5–6 | tired |
+| 3–4 | withdrawn |
+| 0–2 | **not speaking to anybody** |
+
+Loyalty moves **one step a week** towards what the ship has actually been like to
+live on. It never jumps, so there is always time to step in. What moves it:
+
+- **Morale.** +2 above eight, +1 above five, −2 below that. The largest shared term.
+- **Life support.** Under-powered for the number of people aboard: −2.
+- **Hunger.** Out of food: −3.
+- **A mentor: +3.** The strongest single term on the list — and the one *you* choose.
+  Somebody who is being looked after stays.
+- **Rank.** +1 trained, +2 master. It is the ship saying "you are good at this".
+- **Traits.** Devout and brave +1; sceptical and restless −1.
+- **Darkening.** −1 per two levels. Nobody is at ease this far out.
+
+### When somebody makes up their mind
+
+**At loyalty 2 or below** the ship writes it down: **they leave in four weeks.** It
+shows up in the log the same week and on the ship screen under what is coming. It is
+a summons, not a punishment.
+
+Two things call it off, and both are in your hands:
+
+- **Loyalty back to 4 or above** — better morale, power to life support, food aboard.
+- **Somebody starts mentoring them.** That cancels the departure immediately, even
+  while loyalty is still low. Somebody who has been given a person stays.
+
+If nothing happens, they go — and **they take something with them**: a relic, if the
+hold has one nobody is wearing (they never touch a relic somebody is attuned to),
+otherwise 6 fuel and 10 credits. Morale −2. You will feel it, and it will never end
+an expedition on its own.
+
+### Things that happen aboard
+
+Each week there is **roughly a 30% chance** (a little more on low morale or low
+loyalty, a little more under way, 55% at the very most) that **something happens on
+the ship**: a fight in the hold, a leak in hydroponics, somebody touching what they
+should not have touched.
+
+Two things matter about it:
+
+- **Never two weeks running.** A quiet week is part of the rhythm. A ship that asks
+  a question every single week stops being a place and becomes a list to work
+  through.
+- **Somebody answers for it.** Every situation names **which hero it belongs to** —
+  the fight in the hold is the Cantor's, the rune leak is the Runesmith's. Their
+  buttons are live on their own screen; everybody else sees the situation and says
+  what they think without clicking. It is the same interface as a map encounter:
+  what an answer costs and gives is written out, and **the week cannot turn over
+  until it is answered.**
+
+### Debts: what arrives in a few weeks
+
+Plenty of decisions do not ask for payment now. When an answer comes back later (or
+pays off later) the ship **puts a date on it**, and from then on that week sits on
+the ship screen under what is coming, with a line saying where it came from.
+
+- When it lands, **the log says which decision it came from.** You never have to
+  guess where the food went.
+- If it was about somebody who is no longer aboard, **it lapses.** The story ended
+  with them; it does not fall on somebody else.
+
+This is what turns one player's decision into the crew's fate: whoever talks their
+way out of a corner on somebody else's account today, you all pay for it in three
+weeks.
+
 ## Attention and the Herald
 
 The Gate's clock is the same on every expedition, and once you know it you stop
@@ -656,6 +786,127 @@ There are three answers, and that is deliberate:
 3. **Run out of time** on the far side. That is a defeat — and now it was a
    *decision* rather than a rule that ambushed you: the interesting week is the one
    where you could still turn round, and do not.
+
+## Game modes: how many, and how
+
+The title screen offers three modes, and the number of players decides **how many
+heroes land**.
+
+| Mode | Who | What happens |
+|---|---|---|
+| **On your own** | 1 | You run the whole party. Every console is yours; nothing is locked. |
+| **One machine, several of you** | 2-4 | The original game: one keyboard, and whoever has the mouse can press anything. The consoles only show whose job is whose. |
+| **Online, on your own machines** | 2-4 | Everybody at their own machine. You join each other with a room code. |
+
+### Who lands
+
+- **1-2 players:** Runesmith and Echo-reader.
+- **3 players:** plus the **Cantor** — the one who sets the note. A support:
+  healing, shields, Flux for the party. She is the only hit points on the grid.
+- **4 players:** plus the **Surveyor** — the artillery. Long range, ranging marks,
+  area fire, but the highest initiative numbers in the game (slow) and eight hit
+  points. Whatever reaches him kills him.
+
+With four heroes the **Bond** works differently too: it is no longer "the other
+one" but **anybody close enough** — if an ally is near you, both of you hit for one
+more. Scattering costs far more with four than with two.
+
+### Who plays whom
+
+On the title screen (one machine) and in the lobby (online) **everybody picks the
+hero they want**. Pick one that somebody already has and **the two of you trade**,
+so there can never be two Runesmiths at the table. The default line-up for a given
+number of players is only a default: two people can set out with the Cantor and the
+Surveyor if they like (a healer and an artillery piece with nobody in front — hard,
+but yours to choose).
+
+### The weekly duty
+
+Every hero has **three duties**, and one can be set each week from their own
+console. It runs at the end of the week, and then the game asks again.
+
+The three are never "small, medium, large": one is safe, one **pays something to be
+strong**, and one is quiet. So there is no single right answer to work out once — it
+depends on what the week is for.
+
+- **Runesmith:** patching (+3 hull) · tempering (+2 Flux for the next landing, at
+  the price of 1 hull) · damping (−2 attention)
+- **Echo-reader:** study (+4 information) · listening (+1 understanding, at the
+  price of 1 morale) · charting (one column further than you can currently see)
+- **Cantor:** tending (every hero +3 hit points) · singing (+2 morale) · teaching
+  (her mentees +2 weeks of work, at the price of 1 morale)
+- **Surveyor:** sweeping (two columns) · plotting (+3 fuel) · watching
+  (+2 information, −1 attention)
+
+A seat that sets nothing simply does nothing — **no penalty**, you just miss out.
+The week bar says how many consoles have not set one yet.
+
+### The room code
+
+Eight characters, shown as `ABCD-EFGH`. Not a random identifier: it **carries the
+seed, the length and the party size**. Since every random draw in the game comes
+from the seed, that means whoever types the code in **gets a bitwise identical
+galaxy** — before a single byte has crossed the network.
+
+- It never contains `I`, `L`, `O` or `U`, because those are misheard. If you type
+  one anyway it is read as `1`, `1`, `0` and `V`.
+- It has a check digit: a mistyped code **does not open a different galaxy**, it
+  reports an error.
+- The code is also a **filing name**: every player's browser stores its own copy of
+  the game under it. That is what makes "we will finish this on Thursday" work.
+
+### Seats: what is yours and what is shared
+
+In an online room:
+
+- **Your hero is yours.** Only you pick their cards, move them, spend their marks,
+  take off their relic, take on their mentees.
+- **The ship is everybody's.** Power allocation, crew postings, the route, the
+  answers in encounters, ending the week — **anybody** can press those.
+
+This is deliberate. There is nothing to cheat at in a co-operative game, and the
+arguments worth having (where do we go, who gets the reactor, do we take the risky
+answer) are arguments precisely because everybody can reach the button. What nobody
+can do for you is play your character.
+
+The battle is therefore turn-based by ownership: initiative decides who acts, and
+when it is your hero, only your machine can move.
+
+**Undo (Ctrl+Z) is off in an online room** — rewinding one machine without the
+others would pull the game apart. A battle's "Stuck?" menu still works, and it goes
+over the network like everything else.
+
+### Your player key
+
+When you first play, your browser makes a secret key. **It is what puts you back in
+your own chair**, from any machine, weeks later. The lobby shows it with a copy
+button — write it down, because it is the only thing the others cannot give back to
+you.
+
+If it is lost anyway: **the host can free your seat**, and you sit down again with a
+new key.
+
+### Who is the host
+
+Whoever opens the code first. The host does not know more about the rules —
+everybody runs the same engine — they only **decide the order**: their machine
+numbers the moves, so that the same things happen on four machines in the same
+sequence.
+
+If the host closes their laptop the room is not lost: **whoever opens the code next
+becomes the host** and seeds it from their own saved copy. The others reconnect.
+
+### Worth knowing
+
+- The introduction goes through a **free public signalling service** (PeerJS).
+  After that the *game* runs directly between your machines and passes through
+  nobody's server — but that first introduction needs the internet.
+- On a strictly locked-down corporate or university network the direct connection
+  sometimes cannot be made. The header then says the connection dropped; try from
+  another network.
+- **Everybody keeps their own Archive.** In a room the *host's* Archive decides
+  what unlocks the expedition starts with, but at the end **everybody banks what
+  they lived through into their own** — all of you were there.
 
 ## Tips
 

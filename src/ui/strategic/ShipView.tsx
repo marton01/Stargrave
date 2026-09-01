@@ -20,7 +20,13 @@ import {
   SYSTEM_ORDER,
   lifeSupportNeeded,
 } from '../../content/ship'
-import { CREW_TRAITS, RANK_NAMES, SPECIALITY_NAMES, crewRank } from '../../content/crew'
+import {
+  CREW_TRAITS,
+  RANK_NAMES,
+  SPECIALITY_NAMES,
+  crewRank,
+  loyaltyBand,
+} from '../../content/crew'
 import { HERO_CLASSES } from '../../content/heroes'
 import { portrait } from '../assets'
 import { Portrait } from '../Portrait'
@@ -198,6 +204,26 @@ export function ShipView({
         </div>
       </section>
 
+      {state.debts.length > 0 && (
+        <section className="panel">
+          <header className="panel-head">
+            <h2>{t.debtsHeading}</h2>
+            <span className="panel-meta">{t.debtsMeta(state.debts.length)}</span>
+          </header>
+          <p className="panel-intro">{t.debtsIntro}</p>
+          <div className="debt-list">
+            {[...state.debts]
+              .sort((a, b) => a.at - b.at)
+              .map((debt, i) => (
+                <div key={i} className="debt">
+                  <span className="debt-when">{t.debtIn(Math.max(0, debt.at - state.week))}</span>
+                  <span className="debt-note">{s(debt.note)}</span>
+                </div>
+              ))}
+          </div>
+        </section>
+      )}
+
       <section className="panel">
         <header className="panel-head">
           <h2>{t.crewHeading}</h2>
@@ -215,6 +241,11 @@ export function ShipView({
               <p className="crew-home">
                 {t.crewHome(homeStations(member.speciality, lang))}
               </p>
+              {member.alive && (
+                <p className={`crew-loyalty tone-${loyaltyBand(member).tone}`}>
+                  {t.crewLoyalty(s(loyaltyBand(member).name), member.loyalty)}
+                </p>
+              )}
               <div className="crew-traits">
                 <span className={`trait trait-rank rank-${crewRank(member)}`}>
                   {s(RANK_NAMES[crewRank(member)])}

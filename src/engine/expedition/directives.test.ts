@@ -29,6 +29,7 @@ function ship(directives = 3): ExpeditionState {
     ...defaultDials(),
     directives,
     attention: 1,
+    aboard: 1,
   })
 }
 
@@ -146,6 +147,32 @@ describe('missing one', () => {
     const after = weeks(s, 1)
     expect(after.directives[0]!.state).toBe('failed')
     expect(after.resources.morale).toBeLessThan(morale)
+  })
+
+  it('does not take morale for failing an order about morale', () => {
+    // The loop that closes on itself: the ship sags, so the order to keep spirits
+    // up fails, so the ship sags further, and nothing the players do can catch
+    // it. A smoke run went from eleven morale to none in three weeks down this
+    // exact path. Home can be disappointed without the crew paying twice.
+    const s = ship()
+    const d = s.directives[0]!
+    s.directives = [{ ...d, kind: 'morale', target: 99, startedAt: 0, due: s.week + 1 }]
+    s.dials.directives = 1
+    s.dials.aboard = 1
+    s.dials.attention = 1
+
+    const after = weeks(s, 1)
+    expect(after.directives[0]!.state).toBe('failed')
+    // It is still in the log — the players are told it was missed.
+    expect(after.log.some((entry) => entry.event.k === 'directiveFailed')).toBe(true)
+    // Whatever else the week did, no morale was charged FOR the failure: the only
+    // way to state that cleanly is that the week is no worse than a week with the
+    // same order still open.
+    const open = weeks(
+      { ...s, directives: [{ ...s.directives[0]!, due: s.week + 9 }] } as typeof s,
+      1,
+    )
+    expect(after.resources.morale).toBe(open.resources.morale)
   })
 
   it('judges the "have this much at the deadline" kinds only at the deadline', () => {

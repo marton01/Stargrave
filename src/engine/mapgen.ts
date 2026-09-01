@@ -41,7 +41,14 @@ function roomTiles(r: Room): Coord[] {
   return out
 }
 
-export function generateMap(rng: Rng, enemyCount: number): GeneratedMap {
+/**
+ * @param partySize how many heroes need somewhere to stand. Two for most of the
+ * game's life; up to four once more than two people are playing. The spawns come
+ * out of one room so the party starts together — that is what the Bond is for —
+ * and they are always distinct tiles, because two heroes on one tile is a state
+ * nothing else in the engine expects.
+ */
+export function generateMap(rng: Rng, enemyCount: number, partySize = 2): GeneratedMap {
   const map: BattleMap = {
     width: MAP_WIDTH,
     height: MAP_HEIGHT,
@@ -96,10 +103,16 @@ export function generateMap(rng: Rng, enemyCount: number): GeneratedMap {
   const heroRoom = rooms[heroRoomIndex]!
   const heroCentre = roomCentre(heroRoom)
 
-  const heroSpawns = roomTiles(heroRoom)
+  const wanted = Math.max(1, partySize)
+  const inRoom = roomTiles(heroRoom)
     .filter((c) => walkable(map, c))
     .sort((a, b) => distance(a, heroCentre) - distance(b, heroCentre))
-    .slice(0, 2)
+  // A room this small is possible in principle; spilling into the nearest
+  // walkable ground outside it beats stacking two heroes on one tile.
+  const spillover = allTiles(map)
+    .filter((c) => walkable(map, c) && !inRoom.some((h) => sameTile(h, c)))
+    .sort((a, b) => distance(a, heroCentre) - distance(b, heroCentre))
+  const heroSpawns = [...inRoom, ...spillover].slice(0, wanted)
 
   const enemyCandidates = rooms
     .filter((_, i) => i !== heroRoomIndex)

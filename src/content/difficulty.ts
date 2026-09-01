@@ -24,6 +24,7 @@ export type DialId =
   | 'boardingStakes'
   | 'attention'
   | 'directives'
+  | 'aboard'
 
 /** When a change starts to matter. Honest, because some cannot apply at once. */
 export type DialScope = 'nextLanding' | 'nextWeek' | 'nextExpedition'
@@ -399,6 +400,64 @@ export const DIALS: DialDef[] = [
         text: {
           hu: 'Négy egyszerre. Az útvonalat a határidők írják, nem a kíváncsiság.',
           en: 'Four at once. The route is written by deadlines, not by curiosity.',
+        },
+      },
+    ],
+  },
+  {
+    id: 'aboard',
+    name: { hu: 'Fedélzeti élet', en: 'Life aboard' },
+    about: {
+      hu:
+        'Milyen sűrűn történik valami a hajón a héten — veszekedés a raktérben, szivárgás, ' +
+        'valaki, aki nem jön ki a kabinjából. Mindegyiket egy konkrét játékos válaszolja meg.',
+      en:
+        'How often something happens aboard during the week — a fight in the hold, a leak, ' +
+        'somebody who will not come out of their cabin. Each one is answered by one player.',
+    },
+    scope: 'nextWeek',
+    levels: [
+      {
+        value: 0,
+        text: {
+          hu: 'Semmi. A hét egy kattintás, és a legénység nem szól semmiért.',
+          en: 'Nothing. The week is one click, and the crew never speaks up.',
+        },
+      },
+      {
+        value: 0.6,
+        text: {
+          hu: 'Ritkán. Négy-öt hetente egyszer áll meg a hét valamiért.',
+          en: 'Rarely. The week stops for something once every four or five weeks.',
+        },
+      },
+      {
+        value: 1,
+        text: {
+          hu:
+            'Ahogy tervezve van: nagyjából minden harmadik hét hoz valamit, és rossz ' +
+            'morálnál vagy elhúzódó legénységnél többet.',
+          en:
+            'As designed: roughly every third week brings something, and more when morale is bad ' +
+            'or somebody aboard has withdrawn.',
+        },
+      },
+      {
+        value: 1.4,
+        text: {
+          hu: 'Sűrűn. A hajó folyamatosan kérdez valamit, és a hetek zsúfoltak.',
+          en: 'Often. The ship is always asking something, and the weeks are crowded.',
+        },
+      },
+      {
+        value: 2,
+        text: {
+          hu:
+            'Szinte minden héten. Ez már nem expedíció, hanem hajóvezetés — és a legénység ' +
+            'sorsa fontosabb lesz, mint a Csillagsír.',
+          en:
+            'Nearly every week. This stops being an expedition and becomes ship-keeping — and the ' +
+            'crew matters more than the Stargrave does.',
         },
       },
     ],

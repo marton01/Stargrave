@@ -13,6 +13,9 @@ import { Sidebar } from './Sidebar'
 import { missionSettled } from '../engine/expedition/expedition'
 import type { ExpeditionAction } from '../engine/expedition/expedition'
 import { useLang } from '../i18n/LangContext'
+import { TaskView } from './TaskView'
+import { siteName } from '../i18n/describe'
+import type { RoomState } from '../engine/session/room'
 import type { ExpeditionState } from '../engine/expedition/types'
 import { TERRAIN_TEXT } from './gridStyle'
 import type { BattleState, Objective, TerrainKind } from '../engine/types'
@@ -229,7 +232,7 @@ function ObjectiveBar({
   onUndo: () => void
   rescue: React.ReactNode
 }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const parts: string[] = [objectiveText(battle.objective, t)]
 
   if (battle.objective.k === 'collect') {
@@ -243,6 +246,17 @@ function ObjectiveBar({
   }
   if (battle.roundLimit !== null) {
     parts.push(t.roundLimitLeft(Math.max(0, battle.roundLimit - battle.round)))
+  }
+  // What the ground is about to do. The enemies announce their intent a round
+  // ahead; the site gets the same courtesy, or it is a surprise rather than a
+  // problem to plan around.
+  const coming = battle.site?.find((event) => event.at >= battle.round)
+  if (coming) {
+    parts.push(
+      coming.at === battle.round
+        ? t.siteNow(siteName(coming.kind, lang))
+        : t.siteIn(siteName(coming.kind, lang), coming.at - battle.round),
+    )
   }
   if (battle.collapsing.length > 0) {
     parts.push(t.collapsingWarning(battle.collapsing.length))
@@ -271,11 +285,17 @@ export function MissionView({
   dispatch,
   canUndo,
   onUndo,
+  room,
+  mySeats,
 }: {
   state: ExpeditionState
   dispatch: (action: ExpeditionAction) => void
   canUndo: boolean
   onUndo: () => void
+  /** The table, when there is one: whose seat is whose. */
+  room: RoomState | null
+  /** Which seats this machine plays. Every seat, at one keyboard. */
+  mySeats: number[]
 }) {
   const { t, s } = useLang()
   const mission = state.activeMission
@@ -287,6 +307,19 @@ export function MissionView({
   const [editKind, setEditKind] = useState<TerrainKind | null>(null)
   if (!mission) return null
   const settled = missionSettled(state)
+
+  if (mission.k === 'task') {
+    return (
+      <TaskView
+        task={mission.task}
+        room={room}
+        mine={mySeats}
+        briefing={mission.briefing}
+        onPress={(rune) => dispatch({ k: 'taskPress', rune })}
+        onFinish={() => dispatch({ k: 'missionFinish' })}
+      />
+    )
+  }
 
   if (mission.k === 'puzzle') {
     return (

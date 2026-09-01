@@ -12,6 +12,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   allTiles,
+  distance,
   fullyConnected,
   reachableTiles,
   setTerrain,
@@ -149,6 +150,39 @@ describe('wouldDisconnect', () => {
     const from = { x: 0, y: 1 }
     for (const c of allTiles(map).filter((c) => walkable(map, c))) {
       expect(wouldDisconnect(map, c, 'ash', from), tileKey(c)).toBe(false)
+    }
+  })
+})
+
+describe('room for the whole party', () => {
+  // Two heroes was a constant of the map generator until more than two people
+  // could play. Everyone needs their own tile: two units on one tile is a state
+  // nothing else in the engine expects, and it would show up as a hero who
+  // cannot be clicked.
+  it('gives every hero a tile of their own, for parties of two to four', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      for (const partySize of [2, 3, 4]) {
+        const { map, heroSpawns } = generateMap(createRng(seed), 6, partySize)
+        expect(heroSpawns, `seed ${seed}, party ${partySize}`).toHaveLength(partySize)
+        const distinct = new Set(heroSpawns.map((c) => `${c.x},${c.y}`))
+        expect(distinct.size, `seed ${seed}: two heroes on one tile`).toBe(partySize)
+        for (const spawn of heroSpawns) {
+          expect(walkable(map, spawn), `seed ${seed}: a hero spawned in a wall`).toBe(true)
+        }
+      }
+    }
+  })
+
+  it('keeps the party together, so the Bond is reachable from the start', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const { heroSpawns } = generateMap(createRng(seed), 6, 4)
+      const home = heroSpawns[0]!
+      for (const spawn of heroSpawns) {
+        // Not necessarily adjacent, but on the same ground rather than scattered
+        // across the map: landing a hero alone in a far corner is a punishment
+        // the mission never chose to hand out.
+        expect(distance(home, spawn), `seed ${seed}`).toBeLessThanOrEqual(6)
+      }
     }
   })
 })

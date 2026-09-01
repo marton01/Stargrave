@@ -15,7 +15,6 @@
 
 import { useState } from 'react'
 import {
-  HERO_ORDER,
   attunementSlots,
   directiveProgress,
   heroMaxHp,
@@ -23,10 +22,11 @@ import {
   mentorLimit,
 } from '../../engine/expedition/expedition'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
-import { directiveAtDeadline, directiveLabel } from '../../engine/expedition/expedition'
+import { directiveAtDeadline, directiveLabel, party } from '../../engine/expedition/expedition'
 import { HERO_CLASSES } from '../../content/heroes'
 import { MARK_NAMES, MARK_SOURCES, perkAvailable, perksOf } from '../../content/advance'
 import { RANK_NAMES, SPECIALITY_NAMES, crewRank, xpToNextRank } from '../../content/crew'
+import { dutiesOf } from '../../content/watch'
 import { STATIONS } from '../../content/ship'
 import { relic, relicFits } from '../../content/relics'
 import { describeReward } from '../../i18n/describeChoice'
@@ -45,7 +45,9 @@ export function ConsoleView({
   dispatch: (action: ExpeditionAction) => void
 }) {
   const { t, s } = useLang()
-  const [who, setWho] = useState<HeroClassId>('runesmith')
+  // One tab per seat at the table, in seat order.
+  const seats = party(state)
+  const [who, setWho] = useState<HeroClassId>(seats[0] ?? 'runesmith')
 
   return (
     <div className="consoles">
@@ -56,7 +58,7 @@ export function ConsoleView({
       <p className="panel-intro">{t.consolesIntro}</p>
 
       <div className="console-tabs">
-        {HERO_ORDER.map((hero) => (
+        {seats.map((hero) => (
           <button
             key={hero}
             className={`console-tab console-tab-${hero} ${who === hero ? 'on' : ''}`}
@@ -114,6 +116,7 @@ function Console({
         </div>
       </section>
 
+      <Watch state={state} dispatch={dispatch} hero={hero} />
       <Directives state={state} hero={hero} />
       <Perks state={state} dispatch={dispatch} hero={hero} />
       <Relics state={state} dispatch={dispatch} hero={hero} />
@@ -260,8 +263,13 @@ function Relics({
   const { t, s } = useLang()
   const record = state.heroRecords[hero]
   const slots = attunementSlots(state, hero)
-  const other = hero === 'runesmith' ? 'echoreader' : 'runesmith'
-  const wornByOther = new Set(state.heroRecords[other].attuned)
+  // Who else is wearing what. With four people this is no longer "the other one",
+  // so the relic says whose neck it is on by name.
+  const wornByOthers = new Map<string, HeroClassId>()
+  for (const seat of party(state)) {
+    if (seat === hero) continue
+    for (const id of state.heroRecords[seat].attuned) wornByOthers.set(id, seat)
+  }
 
   return (
     <section className="panel">
@@ -277,7 +285,7 @@ function Relics({
         {state.relics.map((id) => {
           const def = relic(id)
           const mine = record.attuned.includes(id)
-          const theirs = wornByOther.has(id)
+          const wearer = wornByOthers.get(id)
           const fits = relicFits(id, hero)
           const room = record.attuned.length < slots
           return (
@@ -300,9 +308,9 @@ function Relics({
                 >
                   {t.relicStow}
                 </button>
-              ) : theirs ? (
+              ) : wearer ? (
                 <span className="relic-state muted">
-                  {t.relicWornBy(s(HERO_CLASSES[other].name))}
+                  {t.relicWornBy(s(HERO_CLASSES[wearer].name))}
                 </span>
               ) : !fits ? (
                 <span className="relic-state muted">
@@ -370,7 +378,6 @@ function Mentees({
   const { t, s } = useLang()
   const mine = menteesOf(state, hero)
   const limit = mentorLimit(state, hero)
-  const other = hero === 'runesmith' ? 'echoreader' : 'runesmith'
 
   return (
     <section className="panel">
@@ -386,7 +393,7 @@ function Mentees({
           .map((member) => {
             const rank = crewRank(member)
             const isMine = member.mentor === hero
-            const isTheirs = member.mentor === other
+            const mentor = member.mentor && member.mentor !== hero ? member.mentor : null
             const needed = xpToNextRank(member)
             const station = member.station as StationId | null
             return (
@@ -412,9 +419,9 @@ function Mentees({
                   >
                     {t.menteeRelease}
                   </button>
-                ) : isTheirs ? (
+                ) : mentor ? (
                   <span className="mentee-state muted">
-                    {t.menteeOther(s(HERO_CLASSES[other].name))}
+                    {t.menteeOther(s(HERO_CLASSES[mentor].name))}
                   </span>
                 ) : (
                   <button
@@ -438,4 +445,57 @@ function Mentees({
 /** Shared by the star map and the console: one order in one line. */
 export function directiveOneLine(d: Directive, lang: 'hu' | 'en'): string {
   return directiveLabel(d)[lang]
+}
+
+// ---------------------------------------------------------------- the watch
+
+/**
+ * What this hero is doing with the week.
+ *
+ * The one decision on this screen that comes round again every single week, and
+ * the reason a player who is not driving the mouse still has to think. Cleared
+ * when the week turns over — see `runWatches`.
+ */
+function Watch({
+  state,
+  dispatch,
+  hero,
+}: {
+  state: ExpeditionState
+  dispatch: (action: ExpeditionAction) => void
+  hero: HeroClassId
+}) {
+  const { t, s } = useLang()
+  const chosen = state.watch?.[hero]
+
+  return (
+    <section className="panel">
+      <header className="panel-head">
+        <h3>{t.watchHeading}</h3>
+        <span className={`panel-meta ${chosen ? 'good' : ''}`}>
+          {chosen ? t.watchSetLabel : t.watchUnset}
+        </span>
+      </header>
+      <p className="panel-intro">{t.watchIntro}</p>
+
+      <div className="watch-list">
+        {dutiesOf(hero).map((duty) => {
+          const on = chosen === duty.id
+          return (
+            <button
+              key={duty.id}
+              className={`watch-duty ${on ? 'on' : ''}`}
+              data-action="setWatch"
+              data-hero={hero}
+              data-duty={duty.id}
+              onClick={() => dispatch({ k: 'setWatch', hero, duty: duty.id })}
+            >
+              <strong>{s(duty.name)}</strong>
+              <span>{s(duty.description)}</span>
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
 }

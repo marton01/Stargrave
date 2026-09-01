@@ -85,6 +85,8 @@ thumbnail. **The grid keeps its silhouettes**, because those read better. All wi
 |---|---|---|---|
 | ☑ | ✔ | `portraits/hero-runesmith.webp` | Páncélos, súlyos alak; borostyán rúnafény a fémen · An armoured, heavy figure; amber rune light on metal |
 | ☑ | ✔ | `portraits/hero-echoreader.webp` | Törékeny, csuklyás alak; hideg ciánkék fény · A fragile, hooded figure; cold cyan light |
+| ☐ | ✔ | `portraits/hero-cantor.webp` | **Új.** A hangadó: idősebb, nyugodt arc, torok és állkapocs hangsúlyos; halvány zöldes fény, mint egy lámpás egy kápolnában. Nem harcos. · **New.** The one who sets the note: an older, calm face, throat and jaw emphasised; a faint green light, like a lamp in a chapel. Not a fighter. |
+| ☐ | ✔ | `portraits/hero-surveyor.webp` | **Új.** A távolságok embere: műszeres szemvédő vagy monokli, egyik szem eltakarva; hideg fehér fénypont a lencsén; keskeny, feszült alkat. · **New.** The man of distances: an instrumented eyepiece or monocle, one eye covered; a cold white point of light on the lens; a narrow, tense build. |
 | ☑ | ✔ | `portraits/enemy-ash-husk.webp` | Hamuból álló, összeomló váz · A collapsing husk made of ash |
 | ☑ | ✔ | `portraits/enemy-rune-sentinel.webp` | Álló, pajzsos gépi őrszem · A standing, shielded mechanical sentry |
 | ☑ | ✔ | `portraits/enemy-choir-wraith.webp` | Alaktalan, éneklő jelenés · A formless, singing apparition |
@@ -159,12 +161,12 @@ fallback does not work the same way here. Drop the files in and it is a one-line
 
 **HU:** Be van kötve: ha ott a fájl, halványan (22% átlátszóság) a lap szövege *mögé*
 kerül, mert a szöveggel játszol, nem a képpel. **A fájlnév pontosan a lap azonosítója.**
-Ez 26 kép, tehát ne ezzel kezdd — a hangok sokkal többet adnak. Nem baj, ha csak néhány
+Ez 54 kép, tehát ne ezzel kezdd — a hangok sokkal többet adnak. Nem baj, ha csak néhány
 van meg: a többi lap ugyanúgy működik.
 
 **EN:** Wired: when the file is there it sits *behind* the card text at 22% opacity,
 because you play with the words, not the picture. **The filename is exactly the card id.**
-26 images, so do not start here. A partial set is fine — the rest simply have no art.
+54 images, so do not start here. A partial set is fine — the rest simply have no art.
 
 **Rúnakovács / Runesmith:** `rs-hammer-arc`, `rs-iron-ward`, `rs-rune-pillar`,
 `rs-earthquake`, `rs-shove`, `rs-set-trap`, `rs-forge-wrath`, `rs-endurance`,
@@ -173,6 +175,19 @@ because you play with the words, not the picture. **The filename is exactly the 
 **Visszhang-olvasó / Echo-reader:** `er-rune-mark`, `er-ashing-wind`, `er-echo`,
 `er-dimming`, `er-choir-shard`, `er-hex-ring`, `er-flux-tap`, `er-memory-shred`,
 `er-weakening-song`, `er-silent-command`, `er-ash-veil`, `er-soul-swap`, `er-echo-choir`
+
+**Kántor / Cantor** (új, 3-4 játékosnál · new, for 3-4 players)**:** `ct-steady-note`,
+`ct-litany`, `ct-hold-the-line`, `ct-open-throat`, `ct-hymn-of-iron`, `ct-breath`,
+`ct-choir-call`, `ct-marching-song`, `ct-flux-hymn`, `ct-shield-of-voices`, `ct-rebuke`,
+`ct-name-the-fallen`, `ct-last-verse`
+
+**Csillagmérő / Surveyor** (új · new)**:** `sv-quick-sight`, `sv-star-fix`, `sv-fall-back`,
+`sv-range-mark`, `sv-spotter`, `sv-set-the-legs`, `sv-plumb-line`, `sv-triangulate`,
+`sv-scatter-shot`, `sv-shell`, `sv-long-shot`, `sv-steady-hand`, `sv-final-measure`
+
+**Fejlesztéssel szerezhető lapok / Advancement cards** (jegyekért vehetők, ezért ritkán
+látszanak — a legvégére valók · bought with marks, so rarely seen; leave these for last)**:**
+`rs-rampart`, `er-still-note`
 
 **Formátum / Format:** `.webp` **vagy `.png`**, 400×400 px (a lap kétszerese; a kép a lap
 egész felületét kitölti, tehát a széleken vághat), sötét alaptónussal. Példa útvonal:

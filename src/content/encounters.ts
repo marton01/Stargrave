@@ -51,8 +51,29 @@ export type EncounterEffect =
   | { k: 'attention'; amount: number }
   /** Advancement marks. Without a hero, both of them. */
   | { k: 'heroXp'; amount: number; who?: HeroClassId }
+  /**
+   * Move somebody's loyalty. See content/crew.ts for what it is.
+   *
+   * `who` says whom: the person the situation is about, whoever is lowest, or
+   * everybody aboard. A decision about one person is felt by the others.
+   */
+  | { k: 'loyalty'; amount: number; who: 'subject' | 'lowest' | 'all' }
+  /**
+   * Something that happens LATER: in `weeks` weeks, these effects run.
+   *
+   * The whole point of it. A decision that costs nothing today and something in
+   * three weeks is a decision you have to think about, and it is the only way a
+   * choice can be remembered by the game rather than by the players.
+   */
+  | { k: 'later'; weeks: number; note: Text; effects: EncounterEffect[] }
+  /** The person this situation is about leaves, and takes something with them. */
+  | { k: 'defect' }
+  /** Open a situation on the ship. Used by the departure chain. */
+  | { k: 'aboard'; id: string }
   | { k: 'startMission'; flavour: 'boarding' | 'ruins' | 'explore' }
   | { k: 'startPuzzle'; kind?: PuzzleKind }
+  /** A split task: the rune line. See engine/task/runeline.ts. */
+  | { k: 'startTask'; difficulty?: number }
   /** Remember this for the rest of the expedition. */
   | { k: 'flag'; id: string }
   /** Remember this for good: it goes into the Archive and comes back next run. */
@@ -86,6 +107,10 @@ export type ChoiceRequirement =
   | { k: 'relicsAtLeast'; value: number }
   /** This much attention on the ship — the loud options open late. */
   | { k: 'attentionAtLeast'; value: number }
+  /** Somebody aboard is at or below this loyalty. */
+  | { k: 'loyaltyAtMost'; value: number }
+  /** The person this situation is about is somebody's mentee. */
+  | { k: 'subjectIsMentee' }
 
 export type EncounterChoice = {
   text: Text
@@ -96,8 +121,27 @@ export type EncounterChoice = {
   requires?: ChoiceRequirement
 }
 
+/**
+ * A situation, wherever it comes from.
+ *
+ * Aboard events are encounters with two extra fields, deliberately: everything a
+ * situation needs — costs, requirements, results, further scenes, the whole
+ * interface that renders it — already exists here, and inventing a second kind of
+ * situation would have meant maintaining two of all of it.
+ */
 export type Encounter = {
   id: string
+  /**
+   * Set on the events that happen ON THE SHIP rather than at a place.
+   *
+   * They are rolled during the week instead of found on the map, and `owner`
+   * says whose call the answer is: that player decides, and the whole table
+   * lives with it. That is the shape of the thing — a ship run by four people
+   * is not four people voting, it is four people each answering for something.
+   */
+  aboard?: true
+  /** Whose call it is. Absent means anybody at the table. */
+  owner?: HeroClassId
   title: Text
   text: Text
   tags: EncounterTag[]
@@ -116,6 +160,14 @@ export type Encounter = {
   requiresFlag?: string
   /** Only appears if an earlier expedition left this mark. */
   requiresMark?: string
+  /**
+   * Only comes up while this holds of the ship.
+   *
+   * The same requirement type a choice uses, applied to the whole situation:
+   * "somebody aboard is at the end of their tether" is a condition for the
+   * scene existing, not for one answer to it.
+   */
+  requires?: ChoiceRequirement
   choices: EncounterChoice[]
 }
 
@@ -2066,6 +2118,16 @@ export function encounter(id: string): Encounter {
   const e = ENCOUNTER_INDEX.get(id)
   if (!e) throw new Error(`No such encounter: ${id}`)
   return e
+}
+
+/** The same lookup, for callers that have to cope with an unknown id. */
+export function findEncounter(id: string): Encounter | undefined {
+  return ENCOUNTER_INDEX.get(id)
+}
+
+/** Register more situations into the one index. Used by content/aboard.ts. */
+export function registerEncounters(extra: readonly Encounter[]): void {
+  for (const e of extra) ENCOUNTER_INDEX.set(e.id, e)
 }
 
 export function encountersFor(

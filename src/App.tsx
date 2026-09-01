@@ -14,14 +14,32 @@ import { canAdvanceWeek, expeditionStep, livingCrew } from './engine/expedition/
 import type { ExpeditionAction } from './engine/expedition/expedition'
 import {
   clearSave,
+  ensurePlayer,
+  listRooms,
   loadDialPreset,
   loadGame,
+  loadRoomGame,
   parseSave,
   saveDialPreset,
   saveFileName,
   saveGame,
+  savePlayer,
+  saveRoomGame,
   serialiseSave,
 } from './engine/expedition/save'
+import {
+  keyTag,
+  newRoom,
+  parseRoomCode,
+  roomCode as makeRoomCode,
+} from './engine/session/room'
+import type { GameMode, PlayerIdentity, RoomState } from './engine/session/room'
+import { blockedBy, mayAct } from './engine/session/permissions'
+import { needsSeconding, proposalLabel } from './engine/expedition/expedition'
+import { HERO_CLASSES } from './content/heroes'
+import { pick } from './i18n/ui'
+import { useRoomNetwork } from './net/useRoomNetwork'
+import { LobbyView } from './ui/strategic/LobbyView'
 import { describeExpeditionEvent } from './i18n/describeExpedition'
 import { EncounterView, MarketView } from './ui/strategic/EncounterView'
 import { GateView, HeartView, OverView } from './ui/strategic/EndView'
@@ -44,6 +62,7 @@ import { StarMapView } from './ui/strategic/StarMapView'
 import {
   HERALD_WAKES_AT,
   heraldDistance,
+  partyForSeats,
   projectWeek,
   resourceMax,
   startExpedition,
@@ -55,7 +74,7 @@ import type {
   GameState,
   Screen,
 } from './engine/expedition/types'
-import type { Lang } from './engine/types'
+import type { HeroClassId, Lang } from './engine/types'
 import { useEventSounds } from './ui/useEventSounds'
 
 export function App() {
@@ -160,7 +179,7 @@ function rewindable(action: ExpeditionAction, before: ExpeditionState, after: Ex
 function Game() {
   const { t, s, lang, setLang } = useLang()
   const [session, setSession] = useState<Session>(() => ({
-    game: loadGame() ?? { archive: newArchive(), expedition: null },
+    game: loadGame() ?? { archive: newArchive(), expedition: null, room: null },
     undo: [],
     mark: null,
     summary: null,
@@ -178,6 +197,13 @@ function Game() {
       return { game, undo: [], mark: null, summary: null }
     })
   }, [])
+  // Who this browser is. Made once, kept for good, and the thing that puts
+  // somebody back in their own chair after a week away.
+  const [identity, setIdentity] = useState<PlayerIdentity>(() => ensurePlayer())
+  const tag = useMemo(() => keyTag(identity.key), [identity.key])
+  const [rooms, setRooms] = useState(() => listRooms())
+  /** Why the last click did nothing, when it did nothing. Clears itself. */
+  const [refused, setRefused] = useState<string | null>(null)
   const [showArchive, setShowArchive] = useState(() => !loadGame()?.expedition)
   const [helpOpen, setHelpOpen] = useState(false)
   const [wipeOpen, setWipeOpen] = useState(false)
@@ -188,7 +214,14 @@ function Game() {
   const [sound, setSound] = useState(() => soundEnabled())
   const downloadRef = useRef<HTMLAnchorElement | null>(null)
 
-  const dispatch = useCallback((action: ExpeditionAction) => {
+  /**
+   * Apply an action to the game here, on this machine.
+   *
+   * In an online room this is never called directly by a click: it is called by
+   * the network layer when an action arrives with its place in the order on it.
+   * That is the whole of how four machines stay identical — see net/protocol.ts.
+   */
+  const applyAction = useCallback((action: ExpeditionAction) => {
     setSession((current) => {
       const before = current.game.expedition
       if (!before) return current
@@ -214,6 +247,93 @@ function Game() {
     })
   }, [])
 
+  const setRoom = useCallback((room: RoomState) => {
+    setSession((current) => ({ ...current, game: { ...current.game, room } }))
+  }, [])
+
+  const setExpedition = useCallback((expedition: ExpeditionState) => {
+    setSession((current) => ({
+      ...current,
+      game: { ...current.game, expedition },
+      undo: [],
+      mark: null,
+      summary: null,
+    }))
+    setShowArchive(false)
+  }, [])
+
+  const net = useRoomNetwork({
+    room: game.room,
+    identity,
+    expedition: game.expedition,
+    onApply: applyAction,
+    onRoom: setRoom,
+    onExpedition: setExpedition,
+  })
+
+  /**
+   * What a click does.
+   *
+   * Offline it applies straight away. In an online room it goes through the
+   * network first — and if the action belongs to somebody else's hero, it does
+   * not go at all. See engine/session/permissions.ts for what "belongs" means.
+   */
+  /**
+   * Which seats this machine is playing.
+   *
+   * All of them at one keyboard — there is one mouse, and hiding half a puzzle
+   * from somebody who can lean over and read it would be theatre. In an online
+   * room it is whichever chairs this player's key has claimed.
+   */
+  const mySeats = useMemo(() => {
+    const room = game.room
+    if (!room) return [1, 2, 3, 4]
+    if (room.mode !== 'online') return room.seats.map((seat) => seat.slot)
+    return room.seats.filter((seat) => seat.claimedBy === tag).map((seat) => seat.slot)
+  }, [game.room, tag])
+
+  /**
+   * What a click does — and what it says when it does nothing.
+   *
+   * A refused action used to vanish in silence, which is the worst possible
+   * answer: the player cannot tell whether the game is broken, the click missed,
+   * or the rule is that it is not their move. So it names whose move it is.
+   */
+  const dispatch = useCallback(
+    (action: ExpeditionAction) => {
+      if (!mayAct(game.room, tag, game.expedition, action)) {
+        const owner = blockedBy(game.room, game.expedition, action)
+        const seat = owner
+          ? game.room?.seats.find((entry) => entry.heroClass === owner)
+          : undefined
+        setRefused(
+          owner
+            ? t.notYourTurn(seat?.name || pick(HERO_CLASSES[owner].name, lang))
+            : t.notYourHero,
+        )
+        return
+      }
+
+      // Irreversible and everybody's: over a network it takes two people. At one
+      // keyboard the button's own two-step confirmation is the second pair of
+      // hands, so nothing changes there.
+      const claimed = game.room?.seats.filter((seat) => seat.claimedBy !== null).length ?? 0
+      const mySeat = mySeats[0]
+      if (
+        game.room?.mode === 'online' &&
+        claimed > 1 &&
+        mySeat !== undefined &&
+        needsSeconding(action)
+      ) {
+        net.dispatch({ k: 'propose', action, by: mySeat })
+        return
+      }
+
+      net.dispatch(action)
+    },
+    [game.room, game.expedition, tag, net, t, lang, mySeats],
+  )
+
   /** One step back in the current battle. */
   const undo = useCallback(() => {
     setSession((current) => {
@@ -227,7 +347,53 @@ function Game() {
     })
   }, [])
 
-  const canUndo = session.undo.length > 0
+  // Not in an online room: taking a move back here would rewind one machine and
+  // leave the other three where they were. The escape hatches in a battle's
+  // "Stuck?" menu are the answer there, and they go through the network like
+  // everything else.
+  // Fades on its own: it is a nudge, not an error to be dismissed.
+  useEffect(() => {
+    if (!refused) return
+    const timer = window.setTimeout(() => setRefused(null), 3500)
+    return () => window.clearTimeout(timer)
+  }, [refused])
+
+  const canUndo = session.undo.length > 0 && game.room?.mode !== 'online'
+
+  /**
+   * Which screen THIS player is looking at.
+   *
+   * The expedition carries a screen, and it has to: arriving somewhere opens the
+   * encounter, launching a landing opens the grid, and everybody at the table
+   * needs to be looking at that together. But browsing is not an event — and
+   * because every action is replicated, one player opening the star map used to
+   * drag all four of them there.
+   *
+   * So the browsing screens get a local override, held here and nowhere near the
+   * engine (a divergence in the shared state, however harmless, is not worth
+   * having). Anything the engine moves to clears the override, so the table is
+   * pulled together again the moment something actually happens.
+   */
+  const [ownScreen, setOwnScreen] = useState<Screen | null>(null)
+  const tableScreen = game.expedition?.screen ?? 'ship'
+  useEffect(() => {
+    setOwnScreen(null)
+  }, [tableScreen])
+
+  /** The screens a player may wander off to on their own. */
+  const browsable: Screen[] = ['ship', 'starmap', 'research', 'consoles', 'crew']
+
+  const openScreen = useCallback(
+    (target: Screen) => {
+      if (game.room?.mode === 'online' && browsable.includes(target) && browsable.includes(tableScreen)) {
+        setOwnScreen(target)
+        return
+      }
+      dispatch({ k: 'openScreen', screen: target })
+    },
+    [game.room?.mode, tableScreen, dispatch],
+  )
+
 
   const closeSummary = useCallback(() => {
     setSession((current) => (current.summary ? { ...current, summary: null } : current))
@@ -249,6 +415,9 @@ function Game() {
   // week — but there is also nothing to lose when the evening ends mid-week.
   useEffect(() => {
     saveGame(game)
+    // A room is also filed under its own code, so the same people can come back
+    // to it next week — and so anybody at the table can re-host it.
+    saveRoomGame(game)
   }, [game])
 
   useEffect(() => {
@@ -274,25 +443,83 @@ function Game() {
     return () => window.removeEventListener('keydown', handler)
   }, [closeSummary, undo])
 
-  const startNew = (length: ExpeditionLength, seed: number | null) => {
+  const startNew = (
+    length: ExpeditionLength,
+    seed: number | null,
+    mode: GameMode,
+    players: number,
+    party: HeroClassId[],
+  ) => {
+    // The seed is cut to what a room code can carry, so that the code somebody
+    // reads down the phone rebuilds exactly this galaxy.
+    const setup = { seed: (seed ?? randomSeed()) & 0xfffffff, length, players }
+    const room = newRoom(setup, mode, party, identity)
+
     setGame((previous) => ({
       ...previous,
-      // A saved preset is the terms this player likes; a new expedition starts on
-      // them rather than making them dial it in again.
-      expedition: startExpedition(
-        seed ?? randomSeed(),
-        length,
-        previous.archive,
-        loadDialPreset() ?? undefined,
-      ),
+      room,
+      // An online table has to gather before it sets out; the others are
+      // sitting down while the host looks at the code.
+      expedition:
+        mode === 'online'
+          ? null
+          : startExpedition(
+              setup.seed,
+              length,
+              previous.archive,
+              // A saved preset is the terms this player likes; a new expedition
+              // starts on them rather than making them dial it in again.
+              loadDialPreset() ?? undefined,
+              party,
+            ),
+    }))
+    setRooms(listRooms())
+    setShowArchive(false)
+  }
+
+  /**
+   * Go to a room by its code: one this browser knows, or one somebody read out.
+   *
+   * Either way the setup comes out of the code itself, so a guest can be sitting
+   * in the right galaxy before the host has even noticed them.
+   */
+  const joinRoom = (code: string) => {
+    const known = loadRoomGame(code)
+    if (known) {
+      setGame((previous) => ({ ...previous, room: known.room, expedition: known.expedition }))
+      setShowArchive(false)
+      return
+    }
+    const setup = parseRoomCode(code)
+    if (!setup) return
+    const party = partyForSeats(setup.players)
+    // A room with nobody in it yet: the host's copy arrives when we connect, and
+    // whatever it says replaces this.
+    const room = newRoom(setup, 'online', party, { key: '', name: identity.name })
+    setGame((previous) => ({
+      ...previous,
+      room: { ...room, code: makeRoomCode(setup), hostKey: '', seats: room.seats.map((s) => ({ ...s, claimedBy: null, name: '' })) },
+      expedition: null,
     }))
     setShowArchive(false)
+  }
+
+  const renamePlayer = (name: string) => {
+    const next = { ...identity, name }
+    setIdentity(next)
+    savePlayer(next)
   }
 
   const returnToArchive = () => {
     setGame((previous) => {
       if (!previous.expedition) return { ...previous, expedition: null }
-      return { archive: bankExpedition(previous.archive, previous.expedition), expedition: null }
+      // The room is kept: the table is still the table, and the same people can
+      // start another expedition together without swapping the code again.
+      return {
+        archive: bankExpedition(previous.archive, previous.expedition),
+        expedition: null,
+        room: previous.room,
+      }
     })
     setShowArchive(true)
   }
@@ -318,7 +545,7 @@ function Game() {
   const wipeEverything = useCallback(() => {
     clearSave()
     setHasPreset(false)
-    setGame({ archive: newArchive(), expedition: null })
+    setGame({ archive: newArchive(), expedition: null, room: null })
     setShowArchive(true)
   }, [setGame])
 
@@ -340,6 +567,58 @@ function Game() {
     return [...expedition.log].reverse().slice(0, 60)
   }, [expedition])
 
+  /**
+   * An online room that has not set out yet: the lobby.
+   *
+   * It comes before the archive check on purpose — a guest who has just typed a
+   * code has no expedition yet, and sending them to the title screen would be
+   * exactly the wrong answer to "I joined, now what?".
+   */
+  if (game.room && game.room.mode === 'online' && !expedition && !showArchive) {
+    return (
+      <div className="app app-archive" data-screen="lobby" data-lang={lang}>
+        <TopBarSlim
+          lang={lang}
+          setLang={setLang}
+          onHelp={() => setHelpOpen(true)}
+          sound={sound}
+          onToggleSound={toggleSound}
+        />
+        <LobbyView
+          room={game.room}
+          identity={identity}
+          status={net.status}
+          isHost={net.isHost}
+          onName={renamePlayer}
+          onSit={net.sit}
+          onStand={net.stand}
+          onPick={net.pick}
+          onBegin={() => {
+            const room = game.room
+            if (!room) return
+            const setup = parseRoomCode(room.code)
+            if (!setup) return
+            const opening = startExpedition(
+              setup.seed,
+              setup.length,
+              game.archive,
+              loadDialPreset() ?? undefined,
+              room.seats.map((seat) => seat.heroClass),
+            )
+            net.begin(opening)
+            setExpedition(opening)
+          }}
+          onLeave={() => {
+            setGame((previous) => ({ ...previous, room: null, expedition: null }))
+            setRooms(listRooms())
+            setShowArchive(true)
+          }}
+        />
+        {helpOpen && <Help topic="overview" onClose={() => setHelpOpen(false)} />}
+      </div>
+    )
+  }
+
   if (!expedition || showArchive) {
     return (
       <div className="app app-archive" data-screen="archive" data-lang={lang}>
@@ -354,6 +633,8 @@ function Game() {
         <ArchiveView
           archive={game.archive}
           hasRunningExpedition={!!expedition}
+          rooms={rooms}
+          onJoin={joinRoom}
           onStart={startNew}
           onContinue={() => setShowArchive(false)}
           onUnlock={(id: ArchiveUnlockId) =>
@@ -369,7 +650,9 @@ function Game() {
     )
   }
 
-  const screen = expedition.screen
+  // What this player is looking at: their own choice while the table is idle,
+  // and whatever the expedition says the moment something happens.
+  const screen = (ownScreen && browsable.includes(expedition.screen) ? ownScreen : expedition.screen)
   const inMission = screen === 'mission'
 
   // Surfaced for the smoke test: when a landing mission is waiting for a target
@@ -505,7 +788,7 @@ function Game() {
                   className={`nav-button ${screen === entry.screen ? 'on' : ''}`}
                   data-action="nav"
                   data-screen={entry.screen}
-                  onClick={() => dispatch({ k: 'openScreen', screen: entry.screen })}
+                  onClick={() => openScreen(entry.screen)}
                 >
                   {t[entry.labelKey]}
                 </button>
@@ -526,6 +809,18 @@ function Game() {
               </button>
             ))}
           </div>
+
+          {game.room?.mode === 'online' && (
+            <span className={`net-badge net-${net.status.k}`} title={t.lobbyIntro}>
+              {net.status.k === 'live'
+                ? net.status.role === 'host'
+                  ? t.netHosting(net.status.peers)
+                  : t.netJoined
+                : net.status.k === 'opening'
+                  ? t.netOpening
+                  : t.netLost}
+            </span>
+          )}
 
           <SoundButton on={sound} onToggle={toggleSound} />
 
@@ -571,7 +866,14 @@ function Game() {
         {screen === 'market' && <MarketView state={expedition} dispatch={dispatch} />}
         {screen === 'encounter' && <EncounterView state={expedition} dispatch={dispatch} />}
         {screen === 'mission' && (
-          <MissionView state={expedition} dispatch={dispatch} canUndo={canUndo} onUndo={undo} />
+          <MissionView
+            state={expedition}
+            dispatch={dispatch}
+            canUndo={canUndo}
+            onUndo={undo}
+            room={game.room}
+            mySeats={mySeats}
+          />
         )}
         {screen === 'heart' && <HeartView state={expedition} dispatch={dispatch} />}
         {screen === 'over' && <OverView state={expedition} onReturn={returnToArchive} />}
@@ -588,6 +890,18 @@ function Game() {
           >
             {t.endWeek}
           </button>
+
+          {(() => {
+            // Whose week is still undecided. A prompt rather than a block: the
+            // week can always be ended, but nobody should end it by accident
+            // while three people still have a decision open.
+            const pending = expedition.heroes.filter(
+              (hero) => !expedition.watch?.[hero.heroClass],
+            ).length
+            return pending > 0 ? (
+              <span className="watch-pending">{t.watchPending(pending)}</span>
+            ) : null
+          })()}
 
           <div className="weeklog">
             {logLines.slice(0, 4).map((entry, i) => (
@@ -621,6 +935,54 @@ function Game() {
             ))}
           </div>
         </aside>
+      )}
+
+      {expedition.proposal && (
+        <div className="proposal" role="status">
+          <div className="proposal-text">
+            <strong>{t.proposalHeading}</strong>
+            <span>
+              {t.proposalAsked(
+                seatLabel(game.room, expedition.proposal.by, lang),
+                s(proposalLabel(expedition.proposal.action)),
+              )}
+            </span>
+          </div>
+          <div className="button-row">
+            {mySeats.includes(expedition.proposal.by) ? (
+              <button
+                className="button button-small"
+                data-action="dropProposal"
+                onClick={() => dispatch({ k: 'dropProposal' })}
+              >
+                {t.proposalWithdraw}
+              </button>
+            ) : (
+              <>
+                <button
+                  className="button button-primary button-small"
+                  data-action="second"
+                  onClick={() => dispatch({ k: 'second', by: mySeats[0] ?? 0 })}
+                >
+                  {t.proposalAgree}
+                </button>
+                <button
+                  className="button button-small"
+                  data-action="dropProposal"
+                  onClick={() => dispatch({ k: 'dropProposal' })}
+                >
+                  {t.proposalRefuse}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {refused && (
+        <div className="refused" role="status">
+          {refused}
+        </div>
       )}
 
       <a ref={downloadRef} hidden />
@@ -684,6 +1046,7 @@ function WipeDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: 
           <li>{t.wipeItemExpedition}</li>
           <li>{t.wipeItemArchive}</li>
           <li>{t.wipeItemSave}</li>
+          <li>{t.wipeItemRooms}</li>
         </ul>
         <p className="wipe-hint">{t.wipeHint}</p>
         <div className="button-row">
@@ -797,4 +1160,11 @@ function SoundButton({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       {'♪'}
     </button>
   )
+}
+
+/** Who a seat is, for a sentence about it. */
+function seatLabel(room: GameState['room'], slot: number, lang: Lang): string {
+  const seat = room?.seats.find((entry) => entry.slot === slot)
+  if (!seat) return `#${slot}`
+  return seat.name || pick(HERO_CLASSES[seat.heroClass].name, lang)
 }

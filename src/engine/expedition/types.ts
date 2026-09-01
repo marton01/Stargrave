@@ -9,12 +9,14 @@
 
 import type { CrewMember } from '../../content/crew'
 import type { ModuleId, ResourceId, StationId, SystemId } from '../../content/ship'
-import type { EncounterTag } from '../../content/encounters'
+import type { EncounterEffect, EncounterTag } from '../../content/encounters'
 import type { PuzzleKind, Puzzle } from '../puzzles/types'
+import type { RuneLineTask } from '../task/runeline'
 import type { BattleState, HeroClassId, MissionKind, Objective, Text, TrialSymbol } from '../types'
 import type { CarriedHero } from '../battle'
 import type { DialId, Dials } from '../../content/difficulty'
 import type { DirectiveKind } from '../../content/directives'
+import type { RoomState } from '../session/room'
 
 // ---------------------------------------------------------------- rewards
 
@@ -65,6 +67,20 @@ export type MissionSpec = {
 
 export type ActiveMission =
   | { k: 'battle'; nodeId: string; spec: MissionSpec; battle: BattleState }
+  /**
+   * A split task: the rune line. See engine/task/runeline.ts.
+   *
+   * Its own kind rather than another puzzle, because it is the only activity in
+   * the game where the screens differ: what each player can see and press
+   * depends on which seat they are in.
+   */
+  | {
+      k: 'task'
+      nodeId: string
+      task: RuneLineTask
+      rewards: Reward[]
+      briefing: Text
+    }
   | {
       k: 'puzzle'
       nodeId: string
@@ -104,6 +120,7 @@ export type NodeEvent =
   | { k: 'mission'; spec: MissionSpec }
   | { k: 'puzzle'; kind: PuzzleKind | null; difficulty: number; rewards: Reward[]; briefing: Text }
   | { k: 'market'; offers: MarketOffer[] }
+  | { k: 'task'; difficulty: number; rewards: Reward[]; briefing: Text }
   | { k: 'heart' }
 
 export type MapNode = {
@@ -173,6 +190,8 @@ export type ExpeditionEvent =
   | { k: 'storageFull'; id: ResourceId; lost: number; max: number }
   | { k: 'puzzleSolved' }
   | { k: 'puzzleFailed' }
+  | { k: 'taskSolved' }
+  | { k: 'taskFailed' }
   | { k: 'encounterChoice'; result: Text }
   | { k: 'cardsSacrificed'; count: number; symbol: TrialSymbol }
   | { k: 'understandingGained'; amount: number; total: number }
@@ -205,6 +224,18 @@ export type ExpeditionEvent =
   | { k: 'directiveFailed'; label: Text }
   /** The Heart, read before anything is decided there. */
   | { k: 'heartRead' }
+  // -------------------------------------------------- the ship's own weeks
+  | { k: 'aboardEvent'; title: Text; owner: HeroClassId | null }
+  | { k: 'debtCame'; note: Text }
+  | { k: 'loyaltyShift'; name: string; amount: number; band: Text }
+  | { k: 'crewRestless'; name: string; weeks: number }
+  | { k: 'crewSettled'; name: string }
+  | { k: 'crewDefected'; name: string; took: Text }
+  | { k: 'proposalMade'; by: number; what: Text }
+  | { k: 'proposalCarried'; what: Text }
+  | { k: 'proposalDropped' }
+  | { k: 'watchSet'; hero: HeroClassId; duty: Text }
+  | { k: 'watchDone'; hero: HeroClassId; duty: Text }
 
 export type ExpeditionLogEntry = { week: number; event: ExpeditionEvent }
 
@@ -339,6 +370,44 @@ export type Directive = {
  * log is trimmed to the last four hundred entries and a long expedition would
  * quietly lose its early landings.
  */
+/** Somebody has asked for something irreversible, and is waiting to be seconded. */
+export type Proposal = {
+  /** What would happen. Only the kinds `needsSeconding` allows get in here. */
+  action: ProposedAction
+  /** The seat that asked. */
+  by: number
+  /** Seats that have agreed since. One is enough. */
+  seconds: number[]
+}
+
+/** The irreversible table decisions. Deliberately a short, closed list. */
+export type ProposedAction =
+  | { k: 'settleBattle'; as: 'victory' | 'defeat' | 'skip' }
+  | { k: 'restartBattle' }
+  | { k: 'rerollBattle' }
+  | { k: 'withdrawBeforeLanding' }
+  | { k: 'chooseEnding'; endingId: EndingId }
+  | { k: 'abandon' }
+
+/** A consequence that has not happened yet. */
+export type Debt = {
+  /** The week it comes due. */
+  at: number
+  /** Which crew member it is about, if any — see `subject`. */
+  subject: string | null
+  /**
+   * What sort of debt this is, when something needs to find it again.
+   *
+   * Only the departure chain uses it: the ship getting better has to be able to
+   * cancel a scheduled leaving, which means being able to look it up.
+   */
+  kind?: 'leaving'
+  /** One line in the log when it lands, so it is never a mystery. */
+  note: Text
+  /** Applied through the same path as an encounter's effects. */
+  effects: EncounterEffect[]
+}
+
 export type Tally = {
   landingsWon: number
   puzzlesSolved: number
@@ -434,6 +503,30 @@ export type ExpeditionState = {
   /** Has the Heart already been read? It can only be read once. */
   heartRead: boolean
 
+  /**
+   * What each hero is doing with their week. See content/watch.ts.
+   *
+   * Set from that player's own console and cleared when the week turns over, so
+   * it is a decision every seat makes every week rather than a setting somebody
+   * fixes once in week one.
+   */
+  watch: Partial<Record<HeroClassId, string>>
+  /** Flux a duty has promised the next landing party. Spent when they land. */
+  watchFlux: number
+
+  /**
+   * A table decision waiting for somebody else to agree to it.
+   *
+   * Only used in an online room with more than one player in a chair. The
+   * handful of actions that go through here are the ones that cannot be taken
+   * back and affect everybody — calling a landing a loss, redealing the
+   * battlefield, ending the expedition, choosing how the story ends. At one
+   * keyboard they are a two-step confirmation because there is one mouse; over a
+   * network the same principle needs a second pair of hands, or any one player
+   * can end everybody's evening with two clicks.
+   */
+  proposal: Proposal | null
+
   map: StarMap
   at: string
   travel: { to: string; weeksLeft: number } | null
@@ -442,6 +535,26 @@ export type ExpeditionState = {
   pendingEncounter: PendingEncounter | null
   /** Encounter ids already used, so `once` holds. */
   usedEncounters: string[]
+
+  /**
+   * Which crew member the situation on screen is about.
+   *
+   * Aboard events are about a PERSON — the one who will not come out of their
+   * cabin, the one packing a bag — and the effects say "the subject". Held here
+   * rather than inside the pending situation so that a `later` effect fired three
+   * weeks afterwards can still mean the same person.
+   */
+  subject: string | null
+
+  /**
+   * Consequences with a date on them.
+   *
+   * The whole reason this exists: a decision that costs nothing today and
+   * something in three weeks is a decision worth thinking about, and it is the
+   * only way the game can remember a choice rather than leaving it to the
+   * players to remember. Fired at the start of the week they name.
+   */
+  debts: Debt[]
 
   /**
    * What this expedition has done that something later can notice.
@@ -509,4 +622,13 @@ export type ArchiveState = {
 export type GameState = {
   archive: ArchiveState
   expedition: ExpeditionState | null
+  /**
+   * The table this game is being played at, if it has one.
+   *
+   * Null for a game started before rooms existed, and for anything that never
+   * needed a code. The Archive stays outside it on purpose: an archive belongs
+   * to a PERSON, not to a table, so four players in one room each bank their own
+   * — everybody was there, and everybody learned something.
+   */
+  room: RoomState | null
 }

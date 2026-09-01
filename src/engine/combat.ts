@@ -4,7 +4,7 @@
 // combos, Shield and status effects all meet in a single place, so none of them
 // can be quietly forgotten.
 
-import { applyStatus, hasStatus, log, partnerOf } from './state'
+import { applyStatus, hasStatus, heroes, log } from './state'
 import { distance, onMap, sameTile, unitAt, walkable } from './grid'
 import type { BattleState, Unit } from './types'
 
@@ -26,11 +26,27 @@ export type DamageOptions = {
  * Echo-reader's Tether perk and the Binding cord both mean "we do not have to
  * see each other any more".
  */
+/**
+ * Has another hero already struck this target this round?
+ *
+ * The record is cleared at the start of every round, so concentrating is a thing
+ * you do together *now* rather than a mark that accumulates. Only heroes count:
+ * an enemy hitting its own ally is not teamwork.
+ */
+export function focusedOn(s: BattleState, attacker: Unit | null, target: Unit): boolean {
+  if (!attacker || attacker.side !== 'hero' || target.side !== 'enemy') return false
+  const already = s.struck?.[target.id] ?? []
+  return already.some((id) => id !== attacker.id)
+}
+
 export function bondActive(s: BattleState, unit: Unit | null): boolean {
   if (!unit || unit.side !== 'hero') return false
-  const partner = partnerOf(s, unit.id)
-  return (
-    partner !== undefined && partner.alive && distance(unit.pos, partner.pos) <= (s.bondRange || 2)
+  // Any living ally close enough, not one nominated partner: with three or four
+  // on the board the Bond is about not fighting alone, and asking which one it
+  // was would be a rule nobody could see on the grid.
+  const range = s.bondRange || 2
+  return heroes(s).some(
+    (other) => other.id !== unit.id && other.alive && distance(unit.pos, other.pos) <= range,
   )
 }
 
@@ -52,8 +68,14 @@ export function predictDamage(
     if (hasStatus(attacker, 'blind')) return 0
     if (hasStatus(attacker, 'weakened')) power -= 1
 
-    // Bond: when the two heroes work close together they hit harder.
+    // Bond: when the heroes work close together they hit harder.
     if (bondActive(s, attacker)) power += 1
+
+    // Focused fire: somebody else has already hit this one this round, so the
+    // second hand knows where the crack is. With four heroes this is the rule
+    // that makes "leave the sentinel to me" worth saying out loud — and it is
+    // shown on the target before the blow lands, like everything else.
+    if (focusedOn(s, attacker, target)) power += 1
   }
 
   // The target's statuses.
@@ -79,6 +101,15 @@ export function dealDamage(
   if (!target.alive) return 0
 
   const damage = predictDamage(s, attacker, target, basePower, options)
+
+  // Note who hit what, before the record is used to score the next blow. The
+  // list is per round and is cleared when the round turns over.
+  if (attacker && attacker.side === 'hero' && target.side === 'enemy' && basePower > 0) {
+    if (focusedOn(s, attacker, target)) log(s, { k: 'focused', target: target.name })
+    const struck = s.struck ?? (s.struck = {})
+    const already = struck[target.id] ?? []
+    if (!already.includes(attacker.id)) struck[target.id] = [...already, attacker.id]
+  }
 
   // Shield wears down even when it absorbed the hit completely — that is the
   // "armour gets used up" feel, and it stops a Shield 2 from lasting forever.

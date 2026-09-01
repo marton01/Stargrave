@@ -11,8 +11,8 @@ export type HeroClass = {
   name: Text
   description: Text
   hp: number
-  /** Which silhouette to draw. */
-  shape: 'smith' | 'reader'
+  /** Which silhouette to draw. See ui/shapes.tsx. */
+  shape: 'smith' | 'reader' | 'cantor' | 'surveyor'
 }
 
 export const HERO_CLASSES: Record<HeroClassId, HeroClass> = {
@@ -43,5 +43,33 @@ export const HERO_CLASSES: Record<HeroClassId, HeroClass> = {
     },
     hp: 8,
     shape: 'reader',
+  },
+  cantor: {
+    id: 'cantor',
+    name: { hu: 'Kántor', en: 'Cantor' },
+    description: {
+      hu:
+        'A hangadó. Támogató: gyógyítás, vért, Fluxus a csapatnak. Nem ő öl meg semmit — ' +
+        'ő tartja állva a többieket, és ő az egyetlen, aki a rácson vissza tud adni életerőt.',
+      en:
+        'The one who sets the note. A support: healing, shields, Flux for the party. She kills ' +
+        'nothing — she keeps the others standing, and she is the only hit points on the grid.',
+    },
+    hp: 10,
+    shape: 'cantor',
+  },
+  surveyor: {
+    id: 'surveyor',
+    name: { hu: 'Csillagmérő', en: 'Surveyor' },
+    description: {
+      hu:
+        'A távolságok embere. Tüzérség: nagy hatótáv, bemérés, területsebzés — de lassú ' +
+        '(a legmagasabb kezdeményezés-számok) és törékeny. Aki eléri, az meg is öli.',
+      en:
+        'The man of distances. Artillery: long range, ranging marks, area fire — but slow (the ' +
+        'highest initiative numbers in the game) and fragile. Whatever reaches him kills him.',
+    },
+    hp: 8,
+    shape: 'surveyor',
   },
 }

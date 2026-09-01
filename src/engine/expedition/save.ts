@@ -9,10 +9,12 @@
 // in the whole game that could not be forgiven.
 
 import { newArchive, ARCHIVE_VERSION } from './archive'
-import { newHeroRecord } from './expedition'
+import { blankHeroRecords } from './expedition'
 import { normaliseDials } from '../../content/difficulty'
 import type { Dials } from '../../content/difficulty'
 import type { ArchiveState, ExpeditionState, GameState } from './types'
+import type { PlayerIdentity, RoomState } from '../session/room'
+import { newPlayerKey } from '../session/room'
 
 export const SAVE_VERSION = 1
 const STORAGE_KEY = 'stargrave.save'
@@ -31,6 +33,8 @@ export type SaveFile = {
   savedAt: string
   archive: ArchiveState
   expedition: ExpeditionState | null
+  /** The table this was played at, if it had one. Absent in older saves. */
+  room?: RoomState | null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -63,7 +67,11 @@ export function parseSave(raw: string): GameState | null {
 
   if (version !== SAVE_VERSION) {
     // Keep what we understand, discard what we do not.
-    return { archive: { ...newArchive(), ...archive, version: ARCHIVE_VERSION }, expedition: null }
+    return {
+      archive: { ...newArchive(), ...archive, version: ARCHIVE_VERSION },
+      expedition: null,
+      room: null,
+    }
   }
 
   // A save written before a field existed is not a broken save; it is an older
@@ -72,6 +80,9 @@ export function parseSave(raw: string): GameState | null {
   return {
     archive: { ...newArchive(), ...archive },
     expedition: expedition ? migrate(expedition) : null,
+    // A save from before rooms existed was a game at one keyboard, and it still
+    // is: no code, no seats, nothing to rejoin.
+    room: (parsed.room as RoomState | undefined) ?? null,
   }
 }
 
@@ -87,6 +98,9 @@ function migrate(expedition: ExpeditionState): ExpeditionState {
     ...member,
     xp: member.xp ?? 0,
     mentor: member.mentor ?? null,
+    // Somebody from before loyalty existed has been getting on with it: start
+    // them where a new hire starts rather than at nought.
+    loyalty: member.loyalty ?? 7,
   }))
   return {
     ...expedition,
@@ -95,11 +109,7 @@ function migrate(expedition: ExpeditionState): ExpeditionState {
     // Without a number here the level becomes NaN on the first week.
     darkeningShift: expedition.darkeningShift ?? 0,
     dials: normaliseDials(expedition.dials),
-    crew,
-    heroRecords: {
-      runesmith: expedition.heroRecords?.runesmith ?? newHeroRecord(),
-      echoreader: expedition.heroRecords?.echoreader ?? newHeroRecord(),
-    },
+    heroRecords: { ...blankHeroRecords(), ...(expedition.heroRecords ?? {}) },
     relics: expedition.relics ?? [],
     attention: expedition.attention ?? 0,
     herald: expedition.herald ?? null,
@@ -113,6 +123,12 @@ function migrate(expedition: ExpeditionState): ExpeditionState {
       relicsFound: 0,
     },
     heartRead: expedition.heartRead ?? false,
+    watch: expedition.watch ?? {},
+    watchFlux: expedition.watchFlux ?? 0,
+    proposal: expedition.proposal ?? null,
+    subject: expedition.subject ?? null,
+    debts: expedition.debts ?? [],
+    crew,
     activeMission:
       expedition.activeMission?.k === 'battle'
         ? {
@@ -123,6 +139,9 @@ function migrate(expedition: ExpeditionState): ExpeditionState {
               ...expedition.activeMission.battle,
               bondRange: expedition.activeMission.battle.bondRange ?? 2,
               installations: expedition.activeMission.battle.installations ?? [],
+              // A battle saved before the site took turns simply has none left.
+              site: expedition.activeMission.battle.site ?? [],
+              struck: expedition.activeMission.battle.struck ?? {},
             },
           }
         : expedition.activeMission,
@@ -136,6 +155,7 @@ export function serialiseSave(state: GameState): string {
     savedAt: new Date().toISOString(),
     archive: state.archive,
     expedition: state.expedition,
+    room: state.room,
   }
   return JSON.stringify(file, null, 2)
 }
@@ -180,8 +200,13 @@ export function loadDialPreset(): Dials | null {
 
 export function clearSave(): void {
   try {
+    for (const room of listRooms()) localStorage.removeItem(ROOM_PREFIX + room.code)
+    localStorage.removeItem(ROOM_INDEX)
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(DIALS_KEY)
+    // The player key goes too. It is the one thing that cannot be recovered from
+    // the other players, which is exactly why the wipe dialog warns about it.
+    localStorage.removeItem(PLAYER_KEY)
   } catch {
     // Nothing to do about it.
   }
@@ -191,4 +216,136 @@ export function clearSave(): void {
 export function saveFileName(state: GameState): string {
   const week = state.expedition ? String(state.expedition.week).padStart(2, '0') : 'archive'
   return `stargrave-week-${week}.json`
+}
+
+// ------------------------------------------------------------------- rooms
+//
+// A room code is a filing name as well as an address. Everybody at the table
+// keeps their own copy of the game under it, which is what makes "we will finish
+// this on Thursday" possible without a server holding anything: on Thursday
+// whoever opens the code first is the host, and they seed the room from their own
+// copy. The others rejoin and are sent it.
+
+const PLAYER_KEY = 'stargrave.player'
+const ROOM_PREFIX = 'stargrave.room.'
+const ROOM_INDEX = 'stargrave.rooms'
+
+/** A room in the list of rooms this browser knows about. */
+export type RoomRecord = {
+  code: string
+  mode: string
+  players: number
+  /** Week the local copy reached, for the "carry on" list. */
+  week: number
+  savedAt: string
+}
+
+/**
+ * Who this browser is.
+ *
+ * Made once and kept for good, across every room. It is what puts somebody back
+ * in their own chair, so it is also shown in the lobby with a copy button: a
+ * browser can be wiped, and the only thing that cannot be recovered from the
+ * others is this.
+ */
+export function loadPlayer(): PlayerIdentity | null {
+  try {
+    const raw = localStorage.getItem(PLAYER_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<PlayerIdentity>
+    if (typeof parsed?.key !== 'string' || parsed.key.length < 8) return null
+    return { key: parsed.key, name: typeof parsed.name === 'string' ? parsed.name : '' }
+  } catch {
+    return null
+  }
+}
+
+export function savePlayer(player: PlayerIdentity): void {
+  try {
+    localStorage.setItem(PLAYER_KEY, JSON.stringify(player))
+  } catch {
+    // Same as the save: never worth interrupting a game over.
+  }
+}
+
+/** This browser's identity, made on the spot if this is the first time. */
+export function ensurePlayer(): PlayerIdentity {
+  const found = loadPlayer()
+  if (found) return found
+  const made: PlayerIdentity = { key: newPlayerKey(), name: '' }
+  savePlayer(made)
+  return made
+}
+
+export function saveRoomGame(state: GameState): void {
+  const room = state.room
+  if (!room) return
+  try {
+    const file: SaveFile = {
+      version: SAVE_VERSION,
+      savedAt: new Date().toISOString(),
+      // Not the archive: that is yours, not the table's.
+      archive: newArchive(),
+      expedition: state.expedition,
+      room,
+    }
+    localStorage.setItem(ROOM_PREFIX + room.code, JSON.stringify(file))
+    rememberRoom({
+      code: room.code,
+      mode: room.mode,
+      players: room.seats.length,
+      week: state.expedition?.week ?? 0,
+      savedAt: file.savedAt,
+    })
+  } catch {
+    // Nothing to do about it.
+  }
+}
+
+/** What this browser has of a room: the expedition and the seating. */
+export function loadRoomGame(
+  code: string,
+): { expedition: ExpeditionState | null; room: RoomState } | null {
+  try {
+    const raw = localStorage.getItem(ROOM_PREFIX + code)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as SaveFile
+    if (!parsed?.room) return null
+    return {
+      expedition: parsed.expedition ? migrate(parsed.expedition) : null,
+      room: parsed.room,
+    }
+  } catch {
+    return null
+  }
+}
+
+export function listRooms(): RoomRecord[] {
+  try {
+    const raw = localStorage.getItem(ROOM_INDEX)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as RoomRecord[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function rememberRoom(record: RoomRecord): void {
+  const rooms = listRooms().filter((r) => r.code !== record.code)
+  rooms.unshift(record)
+  try {
+    localStorage.setItem(ROOM_INDEX, JSON.stringify(rooms.slice(0, 12)))
+  } catch {
+    // Nothing to do about it.
+  }
+}
+
+export function forgetRoom(code: string): void {
+  try {
+    localStorage.removeItem(ROOM_PREFIX + code)
+    localStorage.setItem(ROOM_INDEX, JSON.stringify(listRooms().filter((r) => r.code !== code)))
+  } catch {
+    // Nothing to do about it.
+  }
 }

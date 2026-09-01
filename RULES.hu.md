@@ -9,7 +9,7 @@
 > fejezetcímek nyelvenként mások. A sorrend: 1. Áttekintés, 2. A heti kör,
 > 3. Csillagtérkép, 4. Partraszállás, 5. Feladványok, 6. Kutatás, 7. A Csillagsír,
 > 8. Az Archívum, 9. Pultok, 10. A figyelem és a Hírnök, 11. Parancsok otthonról,
-> 12. Mikor van vége?, 13. Tippek.
+> 12. Mikor van vége?, 13. Játékmódok, 14. Tippek.
 >
 > A játékelemek (egységek, terep, jelvények) nincsenek itt leírva: azokat a súgó
 > **élőben kirajzolja** ugyanazokkal a komponensekkel, amiket a rács használ, hogy
@@ -17,8 +17,8 @@
 
 ## Áttekintés
 
-Ketten vagytok egy expedíciós hajó parancsnoki csapata, **egy gép előtt, egy
-egérrel**. Megnyílt a Kapu egy galaxisra, ahol egy civilizáció egyesítette a mágiát
+Egy expedíciós hajó parancsnoki csapata vagytok: **egytől négy főig**, egy gép előtt
+vagy külön gépeken (lásd a *Játékmódok* fejezetet). Megnyílt a Kapu egy galaxisra, ahol egy civilizáció egyesítette a mágiát
 és a technológiát, aztán egyetlen nemzedék alatt eltűnt. Nem háború pusztította el:
 valami *befejezte* őket.
 
@@ -360,6 +360,26 @@ ugyanabban a körben +2-vel csap le rá — ehhez viszont a **kezdeményezést**
 
 A **Vért** legfeljebb 3-ig gyűlhet, és minden találatból levon, majd 1-gyel fogy.
 
+### A helyszín is lép
+
+Az ellenfelek egy körrel előre mutatják a szándékukat. Ugyanezt megkapja a
+**terep** is: minden pályának van két-három saját eseménye, és mindegyik **egy
+körrel előre ki van írva** a cél mellett.
+
+- **rúnalöket** — a padló alatti rúnák +2 Fluxust adnak;
+- **hamuhullás** — a padló egy része hamuvá válik: járható, de kétszer annyiba kerül;
+- **beszakadás** — kijelöl néhány mezőt, ami a következő kör végén beomlik (a
+  kijáratra és az ereklyékre soha);
+- **átjön valami** — még egy ellenfél, a csapattól a lehető legmesszebb. Feltárós
+  küldetéseken ez nem fordul elő: azok már órával mennek.
+
+### Összehangolás
+
+Ha ugyanabban a körben **már megsebezte valaki ugyanazt az ellenfelet**, a te
+találatod +1-et visz. Nem halmozódik ugyanattól a hőstől, és **minden kör elején
+nullázódik** — tehát az „üssük most, együtt" döntés, nem egy gyűjtögetett jelölés.
+Négy hőssel ez a legfontosabb beszédtéma a csatában.
+
 ## Feladványok
 
 A küldetések körülbelül harmada logikai feladvány. **Kilenc típus van, mindegyik
@@ -390,6 +410,29 @@ Mindegyiknek **más a jutalomterülete**: a Csillagtérkép-illesztés például
 mindegyiket megfejteni.
 
 Az első expedíció három típussal indul. A többit az Archívum nyitja meg.
+
+### A zárósor: a feladvány, ami mindenkinek kell
+
+Ez a tizedik típus, és külön szabályok szerint működik, mert **arra épül, hogy
+mindenkinek külön képernyője van**.
+
+Egy rúnasort a helyes sorrendben kell megnyomni. A sorrendet leírások rögzítik — és
+**a leírásokat szétosztja a játék**: mindenki mást lát, és senki nem lát eleget
+ahhoz, hogy egyedül megoldja. Ráadásul **minden rúna valakié**: csak az tudja
+megnyomni, akié.
+
+- **A megoldás mindig egyértelmű.** A játék generáláskor végigpróbálja az összes
+  sorrendet, és csak olyan feladványt ad ki, amire pontosan egy jó válasz van.
+  Tippelni sosem kell — beszélni viszont muszáj.
+- **Mindenkinek jut leírás és rúna is.** Senki nem ülhet ott anélkül, hogy legyen
+  mondanivalója.
+- **A rossz nyomás nem nulláz le**, csak hibapont: háromnál (nehezebben kettőnél)
+  bezárul a sor. Így ki lehet mondani hangosan a tippet, és lehet javítani.
+- **Egy gépen** ugyanaz a képernyő mutatja az összes panelt: ott ez sima logikai
+  feladvány. A megosztás csak akkor jelent valamit, ha a képernyők tényleg külön
+  vannak — elrejteni valamit az elől, aki átnézhet a válladon, színház lenne.
+
+Anomáliáknál és állomásokon bukkan fel, és néhány döntés is idehoz.
 
 ## Kutatás és megértés
 
@@ -572,6 +615,87 @@ A Hajó képernyő tetején van egy **szűrő**: „Kinek a pultja”. Nem zár 
 csak leszűkíti a listát arra, ami a tiéd. A másik fele attól is olvasható marad —
 egy kooperatív játék, amiben nem látod a párod képernyőjét, két pasziánsz.
 
+## A hajó élete: hűség, váratlan események, adósságok
+
+A hét nemcsak a térképen történik. A hajón is telik — és ez a három rendszer az,
+amitől nem az az érzés, hogy „kattintottam egyet, és vége a hetemnek”.
+
+Egy szabály mindhármon átmegy: **következmény, nem csapda.** Semmi nem esik rád
+előjel nélkül. Amíg valaki elhatározza magát, hetekig olvashatod a legénységi
+listán, hogy már nem beszél senkivel — és meg is állíthatod.
+
+### Hűség: a legénység nem statisztika
+
+Minden legénységi tagnak van egy **hűség**e 0-tól 10-ig, és a listán szóval áll ott,
+nem számmal:
+
+| Hűség | Ahogy a listán áll |
+| --- | --- |
+| 9–10 | elkötelezett |
+| 7–8 | rendben van |
+| 5–6 | fáradt |
+| 3–4 | elhúzódott |
+| 0–2 | **nem beszél senkivel** |
+
+A hűség **hetente egy lépést** tesz afelé, amilyen a hajón élni. Sosem ugrik, tehát
+mindig van idő közbelépni. Ami mozgatja:
+
+- **Morál.** 8 fölött +2, 5 fölött +1, alatta −2. Ez a legnagyobb közös tétel.
+- **Életfenntartás.** Ha kevesebb energiát kap, mint amennyi a létszámhoz kell: −2.
+- **Éhezés.** Ha elfogyott az élelem: −3.
+- **Mentor: +3.** Ez a legerősebb egyetlen tétel a listán — és ez az, amit ti
+  választotok. Akire figyel valaki, az marad.
+- **Rang.** A képzett +1, a mester +2. A hajó azzal mondja meg, hogy jó valamiben.
+- **Jellemvonás.** A hívő és a bátor +1, a kétkedő és a nyugtalan −1.
+- **Sötétedés.** Minden második szint −1. Itt kint senki nincs békében.
+
+### Amikor valaki elhatározza magát
+
+**2-es hűségen vagy alatta** a hajó feljegyzi: **négy hét múlva lelép.** Ez azonnal
+megjelenik a naplóban és a hajó képernyőjén az „ami jön” listán. Nem büntetés, hanem
+felszólítás.
+
+Két dolog állítja meg — és mindkettő a ti kezükben van:
+
+- **A hűség 4-re vagy fölé megy** (jobb morál, energia az életfenntartásra, élelem).
+- **Valaki mentorálni kezdi.** Ez azonnal érvényteleníti a lelépést, akkor is, ha a
+  hűség még alacsony. Aki kap egy embert, az marad.
+
+Ha nem történik semmi, elmegy — és **visz magával valamit**: egy ereklyét, ha van a
+raktárban olyan, amit épp senki nem hord (a valakire hangolt ereklyéhez nem ér hozzá),
+egyébként 6 üzemanyagot és 10 kreditet. A morál −2. Fájni fog, de egyedül soha nem ér
+véget tőle az expedíció.
+
+### Váratlan események a hajón
+
+Hetente **kb. 30% esély** (rossz morálon és alacsony hűségen kicsit több, út közben
+kicsit több, összesen legfeljebb 55%), hogy **történik valami a hajón**: verekedés a
+raktárban, szivárgás a hidropóniában, valaki hozzáért ahhoz, amihez nem kellett volna.
+
+Két dolog fontos benne:
+
+- **Sosem két hét egymás után.** A csendes hét is a ritmus része. Egy hajó, ami minden
+  héten kérdez egyet, nem hely, hanem egy lista, amit le kell darálni.
+- **Van, akinek a dolga.** Minden esemény megnevezi, **melyik hős felel érte** — a
+  raktári verekedés a Kántoré, a rúnaszivárgás a Rúnakovácsé. Az ő gépén az ő gombjai
+  élnek, a többiek látják a helyzetet és beszélnek, de nem kattintanak. Ez ugyanaz a
+  felület, mint a térképes találkozásoké: ott áll, mit ad és mit kér egy válasz, és
+  **a hét nem tud eltelni, amíg nincs válasz.**
+
+### Adósságok: ami pár hét múlva jön
+
+Sok döntés nem most kér fizetést. Amikor egy válasz később üt vissza (vagy később
+térül meg), a hajó **dátumot ír rá**, és az a hét onnantól ott áll a hajó képernyőjén
+az „ami jön” listán, egy sorral, hogy miből jön.
+
+- Amikor beérik, **a napló megmondja, melyik döntésből jött.** Sosem kell találgatni,
+  hová lett az élelem.
+- Ha arról szólt, aki már nincs a hajón, **elévül.** A történet vele ért véget, nem
+  száll át másra.
+
+Ez az, amitől egy egyéni döntés a csapat sorsává válik: aki most kivágja magát egy
+helyzetből a másik számlájára, azt három hét múlva együtt fizetitek.
+
 ## A figyelem és a Hírnök
 
 A Kapu órája minden expedícióban ugyanaz, és ha egyszer megismertétek, nem
@@ -649,6 +773,126 @@ Három válasz van, és ez szándékos:
 3. **Elfogy az idő** a túloldalon. Az a vereség — és most már *döntés* volt, nem
    szabály, ami rátok ugrott: az az érdekes hét, amikor még meg tudnátok fordulni,
    és nem fordultok meg.
+
+## Játékmódok: hányan és hogyan
+
+A címképernyőn három mód közül lehet választani, és a létszám dönti el, **hány hős
+száll partra**.
+
+| Mód | Kik | Mi történik |
+|---|---|---|
+| **Egyedül** | 1 fő | Te viszed az egész csapatot. Minden pult a tiéd, semmi nincs zárolva. |
+| **Egy gépen, többen** | 2-4 fő | Ez az eredeti játék: egy billentyűzet, és aki az egérnél ül, bármit megnyomhat. A pultok csak megmutatják, kinek mi a dolga. |
+| **Online, külön gépeken** | 2-4 fő | Mindenki a saját gépén. Szobakóddal léptek be egymáshoz. |
+
+### Kik szállnak partra
+
+- **1-2 játékos:** Rúnakovács és Visszhang-olvasó.
+- **3 játékos:** + **Kántor** — a hangadó. Támogató: gyógyítás, vért, Fluxus a
+  csapatnak. Ő az egyetlen, aki a rácson vissza tud adni életerőt.
+- **4 játékos:** + **Csillagmérő** — a tüzérség. Nagy hatótáv, bemérés,
+  területsebzés, de a legmagasabb kezdeményezés-számok (lassú) és nyolc életerő.
+  Aki eléri, az meg is öli.
+
+Négy hőssel a **Kötés** is másképp működik: nem „a másik", hanem **bárki, aki elég
+közel van** — ha van melletted társ, mindkettőtök találata +1. Négyen szétszóródni
+így sokkal drágább, mint ketten.
+
+### Ki kivel: a karakterválasztás
+
+A címképernyőn (egy gépen) és a lobbiban (online) **mindenki kiválaszthatja, kivel
+akar játszani**. Ha olyat választasz, amit már visz valaki, **cseréltek** — így
+sosem lehet két Rúnakovács az asztalnál. Nem kötelező a létszám szerinti alap
+felállás: két játékos akár Kántorral és Csillagmérővel is nekivághat (gyógyító és
+tüzérség, elöl senkivel — kemény, de a tiétek a döntés).
+
+### A heti őrség
+
+Minden hősnek van **három feladata**, és minden héten egyet lehet kiadni a saját
+pultjáról. A hét végén lefut, aztán a játék újra kérdez.
+
+A három sosem „kicsi, közepes, nagy": az egyik biztonságos, az egyik **fizet
+valamit azért, hogy erős legyen**, az egyik pedig csendes. Ezért nem lehet egyszer
+kitalálni a jó választ — attól függ, mire megy a hét.
+
+- **Rúnakovács:** foltozás (+3 hajótest) · edzés (+2 Fluxus a következő
+  partraszállásra, 1 hajótestbe kerül) · tompítás (−2 figyelem)
+- **Visszhang-olvasó:** tanulmányozás (+4 információ) · hallgatózás (+1 megértés,
+  1 morálba kerül) · térképezés (egy oszloppal messzebb látsz, mint eddig)
+- **Kántor:** kötözés (minden hős +3 életerő) · éneklés (+2 morál) · tanítás
+  (a tanítványai +2 munkahét, 1 morálba kerül)
+- **Csillagmérő:** pásztázás (két oszlop) · útvonalszámítás (+3 üzemanyag) ·
+  figyelés (+2 információ, −1 figyelem)
+
+Aki nem ad ki őrséget, az egyszerűen nem csinál semmit — **nincs büntetés**, csak
+kimarad belőle. A hét lezárása alatt kiírja, hány pulton nincs még kiadva.
+
+### A szobakód
+
+Nyolc karakter, `ABCD-EFGH` formában. Nem egy véletlen azonosító: **magában hordozza
+a magot, a hosszt és a létszámot**. Mivel a játék minden véletlene a magból jön, ez
+azt jelenti, hogy aki beírja a kódot, **bitre ugyanazt a galaxist kapja** — még
+mielőtt bárki bármit átküldene a hálózaton.
+
+- Nem tartalmaz `I`, `L`, `O` vagy `U` betűt, mert azokat félre lehet hallani. Ha
+  mégis ilyet írsz be, a játék `1`, `1`, `0` és `V` néven olvassa.
+- Van benne ellenőrző jel: az elgépelt kód **nem nyit meg egy másik galaxist**,
+  hanem hibát jelez.
+- A kód egyben **fájlnév** is: mindenki böngészője a kód alatt tárolja a saját
+  másolatát a játékról. Ezért lehet jövő héten folytatni.
+
+### Székek: mi a tiéd és mi közös
+
+Online módban:
+
+- **A hősöd a tiéd.** Csak te választhatsz neki lapot, csak te lépsz vele, csak te
+  költöd a jegyeit, veszed le az ereklyéjét, fogadsz neki tanítványt.
+- **A hajó közös.** Az energia-elosztás, a legénység beosztása, az útvonal, a
+  találkozások döntései, a hét lezárása — ezeket **bárki** megnyomhatja.
+
+Ez szándékos. Nincs mit csalni egy kooperatív játékban, és az érdekes viták (hova
+menjünk, ki kapja a reaktort, vállaljuk-e a kockázatot) pont attól viták, hogy
+mindenki oda tud nyúlni. Amit viszont senki nem tehet meg helyetted, az a te
+karaktered.
+
+A csata így magától körökre oszlik: a kezdeményezés dönti el, ki jön, és ha te
+következel, csak a te géped tud lépni.
+
+**Online módban a visszavonás (Ctrl+Z) ki van kapcsolva** — egy gépen visszaléptetni
+a többiek nélkül szétcsúsztatná a játékot. A csata „Beragadt?" menüje viszont
+ugyanúgy működik, és az a hálózaton is átmegy.
+
+### A játékoskulcs
+
+Belépéskor a böngésződ csinál egy titkos kulcsot. **Ez tesz vissza a saját
+székedbe**, bármelyik gépről, akár hetekkel később. A lobbiban meg lehet nézni és ki
+lehet másolni — érdemes felírni, mert ez az egyetlen dolog, amit a többiektől nem
+lehet visszakérni.
+
+Ha mégis elveszne: **a házigazda fel tudja szabadítani a székedet**, és új kulccsal
+beülsz megint.
+
+### Ki a házigazda
+
+Aki elsőnek megnyitja a kódot. A házigazda nem tud többet a szabályokról — mindenki
+ugyanazt a motort futtatja —, ő csak **eldönti a sorrendet**: az ő gépe számozza meg
+a lépéseket, hogy négy gépen ugyanaz történjen ugyanabban a sorrendben.
+
+Ha a házigazda lecsukja a laptopot, a szoba nem vész el: **aki legközelebb megnyitja
+a kódot, az lesz a házigazda**, és a saját mentett másolatából indítja újra. A többiek
+visszacsatlakoznak.
+
+### Amit tudni érdemes
+
+- Az összekapcsolás egy **ingyenes, nyilvános jelzőszolgáltatáson** keresztül megy
+  (PeerJS). A *játék* utána közvetlenül a gépeitek között zajlik, nem megy át
+  senki szerverén — de az első összeismertetéshez kell internet.
+- Szigorúan zárt céges vagy egyetemi hálózaton a közvetlen kapcsolat néha nem jön
+  létre. Ilyenkor a fejlécben „megszakadt a kapcsolat" áll; próbáljátok másik
+  hálózatról.
+- **Az Archívum mindenkinél a sajátja.** Egy szobában a *házigazda* Archívuma dönti
+  el, milyen feloldásokkal indul az expedíció, de a végén **mindenki a saját
+  Archívumába könyveli el**, amit átélt — mindenki ott volt.
 
 ## Tippek
 

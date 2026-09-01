@@ -25,13 +25,18 @@ import {
   weeklyAttention,
 } from './expedition'
 import { startMission } from '../battle'
+import { defaultDials } from '../../content/difficulty'
 import type { ExpeditionState, MissionSpec } from './types'
 
 function ship(): ExpeditionState {
-  const s = startExpedition(101, 'medium', newArchive())
-  // Orders would pull the numbers around; this file is about the Herald.
+  // Orders and the ship's own weeks would both pull the numbers around, and an
+  // aboard event blocks the week outright — this file is about the Herald.
+  const s = startExpedition(101, 'medium', newArchive(), {
+    ...defaultDials(),
+    directives: 1,
+    aboard: 1,
+  })
   s.directives = []
-  s.dials.directives = 1
   return s
 }
 

@@ -6,11 +6,13 @@
 // the power allocation matters.
 
 import { encounter } from '../../content/encounters'
+import { HERO_CLASSES } from '../../content/heroes'
+import { pendingIsAboard, pendingOwner } from '../../engine/expedition/expedition'
 import type { EncounterChoice, EncounterCost, EncounterEffect } from '../../content/encounters'
 import {
-  HERO_ORDER,
   choiceAffordable,
   choiceAvailable,
+  party,
   payableCards,
 } from '../../engine/expedition/expedition'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
@@ -106,11 +108,26 @@ export function EncounterView({
   const chosen = pending.chosen !== null ? def.choices[pending.chosen] : null
   const cardCost = chosen?.costs.find((c) => c.k === 'cards')
 
+  // A situation on the ship is a different kind of thing from a place on the
+  // map, and it says so: it names whose call the answer is, and the subject of
+  // it is somebody with a name.
+  const isAboard = pendingIsAboard(state)
+  const owner = pendingOwner(state)
+  const subject = state.crew.find((member) => member.id === state.subject)
+
   return (
-    <div className="encounter" data-encounter={def.id}>
+    <div className={`encounter ${isAboard ? 'encounter-aboard' : ''}`} data-encounter={def.id}>
       <header className="encounter-head">
-        <span className="encounter-label">{t.encounterHeading}</span>
+        <span className="encounter-label">
+          {isAboard ? t.aboardHeading : t.encounterHeading}
+        </span>
         <h2>{s(def.title)}</h2>
+        {isAboard && (
+          <span className="encounter-meta">
+            {owner ? t.aboardOwner(s(HERO_CLASSES[owner].name)) : t.aboardAnybody}
+            {subject ? ` · ${t.aboardSubject(subject.name)}` : ''}
+          </span>
+        )}
       </header>
 
       <p className="encounter-text">{s(def.text)}</p>
@@ -353,7 +370,7 @@ function RelicCounter({
 }) {
   const { t, s } = useLang()
   const [confirming, setConfirming] = useState<string | null>(null)
-  const worn = new Set(HERO_ORDER.flatMap((hero) => state.heroRecords[hero].attuned))
+  const worn = new Set(party(state).flatMap((hero) => state.heroRecords[hero].attuned))
   const sellable = state.relics.filter((id) => !worn.has(id))
   if (state.relics.length === 0) return null
 

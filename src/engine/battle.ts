@@ -41,9 +41,12 @@ import type {
   MissionKind,
   Installation,
   Objective,
+  SiteEvent,
+  SiteEventKind,
   TerrainKind,
   Unit,
 } from './types'
+import type { Rng } from './rng'
 
 /** The landing party's default starting Flux, when no ship supplies one. */
 export const STARTING_FLUX = 5
@@ -146,13 +149,52 @@ export function startBattle(seed: number, difficulty = 2): BattleState {
   })
 }
 
+/**
+ * What the site will do, and when.
+ *
+ * Fixed at generation from the seed — part of the battlefield, like the walls.
+ * The first one is deliberately late enough that the party has found its feet,
+ * and they come every three rounds after that, so a long fight is a fight the
+ * ground is joining in on.
+ *
+ * Exploration runs get the gentler half of the table: those missions are already
+ * against a clock, and reinforcements on top of a collapsing floor is not
+ * tension, it is a wall.
+ */
+function siteSchedule(rng: Rng, difficulty: number, kind: MissionKind): SiteEvent[] {
+  const kinds: SiteEventKind[] =
+    kind === 'exploration'
+      ? ['surge', 'ashfall', 'collapse']
+      : ['surge', 'ashfall', 'reinforcement', 'collapse']
+  const count = difficulty >= 3 ? 3 : 2
+  const out: SiteEvent[] = []
+  for (let i = 0; i < count; i++) {
+    out.push({ at: 3 + i * 3, kind: rng.pick(kinds) ?? 'surge' })
+  }
+  return out
+}
+
 export function startMission(setup: BattleSetup): BattleState {
   const setupRng = createRng(setup.seed)
   const roster = buildEncounter(setupRng, setup.difficulty)
   const scale = setup.enemyScale ?? 1
   const typeIds = roster.slice(0, Math.max(0, Math.round(roster.length * scale)))
 
-  const { map, heroSpawns, enemySpawns } = generateMap(setupRng, Math.max(typeIds.length, 1))
+  // Who landed. The expedition's own party list decides — the two starting
+  // classes when nothing says otherwise, so a standalone battle is unchanged.
+  const party: HeroClassId[] = setup.heroes?.length
+    ? setup.heroes.map((h) => h.heroClass)
+    : ['runesmith', 'echoreader']
+  const slots = party.map((heroClass, i) => ({
+    heroClass,
+    playerSlot: (Math.min(i + 1, 4) as 1 | 2 | 3 | 4),
+  }))
+
+  const { map, heroSpawns, enemySpawns } = generateMap(
+    setupRng,
+    Math.max(typeIds.length, 1),
+    party.length,
+  )
   const features = generateMissionFeatures(setupRng, map, heroSpawns, enemySpawns, setup.objective)
 
   // Modules go on floor tiles away from where the party lands: far enough that
@@ -179,10 +221,6 @@ export function startMission(setup: BattleSetup): BattleState {
     }
   }
 
-  const slots: { heroClass: HeroClassId; playerSlot: 1 | 2 }[] = [
-    { heroClass: 'runesmith', playerSlot: 1 },
-    { heroClass: 'echoreader', playerSlot: 2 },
-  ]
 
   const heroUnits: Hero[] = slots.map((slot, i) => {
     const cls = HERO_CLASSES[slot.heroClass]
@@ -249,6 +287,8 @@ export function startMission(setup: BattleSetup): BattleState {
     exit: features.exit,
     collapsing: features.collapsing,
     bondRange: setup.bondRange ?? 2,
+    site: siteSchedule(setupRng, setup.difficulty, setup.missionKind),
+    struck: {},
     installations,
     setupInstallations: moduleIds,
     roundLimit: setup.roundLimit ?? null,
@@ -494,6 +534,9 @@ function endRound(s: BattleState): void {
   wreckInstallations(s)
   for (const e of livingEnemies(s)) e.intent = null
   collapseFloor(s)
+  runSiteEvent(s)
+  // Concentrating on one target is a thing you do together *this* round.
+  s.struck = {}
 
   // Timed objectives resolve at the end of the round they name.
   const objective = s.objective
@@ -515,6 +558,98 @@ function endRound(s: BattleState): void {
 
   if (checkOutcome(s)) return
   beginRound(s)
+}
+
+/**
+ * The site takes its turn.
+ *
+ * Fires at the END of the round it is scheduled for, and the one after it is
+ * announced at the same moment — so there is always exactly one round of
+ * warning, the same deal the enemies' intents offer.
+ */
+function runSiteEvent(s: BattleState): void {
+  const due = s.site.find((event) => event.at === s.round)
+  if (due) {
+    log(s, { k: 'siteFired', kind: due.kind })
+    applySiteEvent(s, due.kind)
+  }
+  const next = s.site.find((event) => event.at === s.round + 1)
+  if (next) log(s, { k: 'siteComing', kind: next.kind })
+}
+
+function applySiteEvent(s: BattleState, kind: SiteEventKind): void {
+  const rng = rngFor(s)
+  switch (kind) {
+    case 'surge':
+      s.flux += 2
+      return
+
+    case 'ashfall': {
+      // A stretch of open floor, near nobody in particular.
+      const spots = rng
+        .shuffle(allTiles(s.map).filter((c) => terrainAt(s.map, c) === 'floor'))
+        .slice(0, 5)
+      for (const spot of spots) setTerrain(s.map, spot, 'ash')
+      return
+    }
+
+    case 'collapse': {
+      // Floor that is about to go, announced by the same countdown the
+      // exploration missions already use.
+      const taken = new Set(s.units.filter((u) => u.alive).map((u) => tileKey(u.pos)))
+      const spots = rng
+        .shuffle(
+          allTiles(s.map).filter(
+            (c) =>
+              terrainAt(s.map, c) === 'floor' &&
+              !taken.has(tileKey(c)) &&
+              !s.collapsing.some((x) => sameTile(x.pos, c)) &&
+              !(s.exit && sameTile(s.exit, c)) &&
+              !s.relics.some((r) => sameTile(r, c)),
+          ),
+        )
+        .slice(0, 3)
+      for (const spot of spots) s.collapsing.push({ pos: spot, roundsLeft: 2 })
+      if (spots.length > 0) log(s, { k: 'floorAboutToGive', rounds: 2 })
+      return
+    }
+
+    case 'reinforcement': {
+      // One more, as far from the party as the ground allows.
+      const type = rng.pick(['ash-husk', 'ash-husk', 'rune-sentinel']) ?? 'ash-husk'
+      const heroTiles = livingHeroes(s).map((h) => h.pos)
+      const spot = allTiles(s.map)
+        .filter(
+          (c) =>
+            walkable(s.map, c) &&
+            !unitAt(s.units, c) &&
+            !s.collapsing.some((x) => sameTile(x.pos, c)),
+        )
+        .sort(
+          (a, b) =>
+            Math.min(...heroTiles.map((h) => distance(b, h))) -
+            Math.min(...heroTiles.map((h) => distance(a, h))),
+        )[0]
+      if (!spot) return
+      const def = enemyType(type)
+      s.units.push({
+        id: `enemy-late-${s.round}-${s.units.length}`,
+        side: 'enemy',
+        name: def.name,
+        enemyType: type,
+        pos: spot,
+        hp: def.hp,
+        maxHp: def.hp,
+        statuses: {},
+        alive: true,
+        intentDeck: rng.shuffle(def.intents.map((intent) => intent.id)),
+        intentIndex: 0,
+        intent: null,
+      })
+      log(s, { k: 'reinforcements', count: 1 })
+      return
+    }
+  }
 }
 
 function finish(s: BattleState, outcome: 'victory' | 'defeat'): void {

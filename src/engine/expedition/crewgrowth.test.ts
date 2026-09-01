@@ -33,6 +33,9 @@ function ship(): ExpeditionState {
     // Orders and the Herald both move numbers this file is measuring.
     directives: 1,
     attention: 1,
+    // And the ship's own weeks: an aboard event blocks the week, which is the
+    // point of it, and would make these counts measure the wrong thing.
+    aboard: 1,
   })
   s.map.nodes.find((n) => n.id === s.at)!.resolved = true
   return s

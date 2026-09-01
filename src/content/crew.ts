@@ -155,6 +155,19 @@ export type CrewMember = {
    */
   xp: number
   /**
+   * How much this person still believes in the expedition. Nought to ten.
+   *
+   * Not a mood: a judgement. It drifts towards what the ship has actually been
+   * like to live on — morale, whether the air holds, whether anybody noticed them
+   * — and at the bottom of it people leave, and take things with them.
+   *
+   * The point of it is that a betrayal must never be a die roll. By the time
+   * somebody walks off with the fuel, the crew list has been saying for three
+   * weeks that they stopped talking to anybody. That is the difference between a
+   * consequence and an ambush.
+   */
+  loyalty: number
+  /**
    * The hero who took them under their wing, if either did.
    *
    * Mentoring is the smallest possible co-operative hook and the one that was
@@ -249,6 +262,7 @@ export function generateCrewMember(rng: Rng, id: string, speciality?: CrewSpecia
     weeksAboard: 0,
     xp: 0,
     mentor: null,
+    loyalty: 7,
   }
 }
 
@@ -270,3 +284,24 @@ export function traitBonus(
       0,
     )
 }
+
+// ---------------------------------------------------------------- loyalty
+
+/** Where somebody's loyalty sits, in words, for the crew list. */
+export const LOYALTY_BANDS: { min: number; name: Text; tone: 'good' | 'plain' | 'warn' | 'bad' }[] = [
+  { min: 9, name: { hu: 'elkötelezett', en: 'committed' }, tone: 'good' },
+  { min: 7, name: { hu: 'rendben van', en: 'steady' }, tone: 'plain' },
+  { min: 5, name: { hu: 'fáradt', en: 'tired' }, tone: 'plain' },
+  { min: 3, name: { hu: 'elhúzódott', en: 'withdrawn' }, tone: 'warn' },
+  { min: 0, name: { hu: 'nem beszél senkivel', en: 'not speaking to anybody' }, tone: 'bad' },
+]
+
+export function loyaltyBand(member: CrewMember): (typeof LOYALTY_BANDS)[number] {
+  return LOYALTY_BANDS.find((band) => member.loyalty >= band.min) ?? LOYALTY_BANDS[LOYALTY_BANDS.length - 1]!
+}
+
+/** At or below this, somebody starts thinking about leaving. */
+export const LOYALTY_BREAKS = 2
+
+/** Above this, they have thought better of it. */
+export const LOYALTY_RECOVERS = 4

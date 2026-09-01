@@ -12,6 +12,7 @@
 import { describe, expect, it } from 'vitest'
 import { newArchive } from './archive'
 import {
+  HERO_ORDER,
   attunedRelics,
   bondRange,
   expeditionStep,
@@ -31,7 +32,8 @@ import { startMission } from '../battle'
 import type { ExpeditionState, MissionSpec } from './types'
 
 function ship(relics: string[] = []): ExpeditionState {
-  const s = startExpedition(77, 'medium', newArchive())
+  // The whole table, so a relic bound to any of the four can be tried on.
+  const s = startExpedition(77, 'medium', newArchive(), undefined, HERO_ORDER)
   s.directives = []
   s.dials.directives = 1
   s.relics = [...relics]
@@ -121,8 +123,8 @@ describe('who may wear what', () => {
     expect(after.heroRecords.echoreader.attuned).toHaveLength(0)
   })
 
-  it('gives each of them at least one relic the other cannot take', () => {
-    for (const hero of ['runesmith', 'echoreader'] as const) {
+  it('gives every hero at least one relic nobody else can take', () => {
+    for (const hero of HERO_ORDER) {
       expect(RELICS.some((r) => r.bearer === hero), hero).toBe(true)
     }
   })

@@ -31,14 +31,15 @@ import {
   mentorLimit,
 } from './expedition'
 import { HERO_PERKS, perksOf } from '../../content/advance'
+import { HERO_ORDER, moraleTarget } from './expedition'
 import { startMission } from '../battle'
 import { generatePuzzle } from '../puzzles/index'
 import type { Puzzle } from '../puzzles/types'
 import type { ExpeditionState, MissionSpec } from './types'
 import type { HeroClassId } from '../types'
 
-function ship(): ExpeditionState {
-  const s = startExpedition(31, 'medium', newArchive())
+function ship(withParty?: HeroClassId[]): ExpeditionState {
+  const s = startExpedition(31, 'medium', newArchive(), undefined, withParty)
   // The dials are the designed game; the orders are not what this file is about,
   // and an order coming good would pay marks and muddy every count below.
   s.directives = []
@@ -209,18 +210,16 @@ describe('no perk is a lie', () => {
    */
   function probe(s: ExpeditionState): string {
     return [
-      heroMaxHp(s, 'runesmith'),
-      heroMaxHp(s, 'echoreader'),
+      ...HERO_ORDER.map((hero) => heroMaxHp(s, hero)),
+      ...HERO_ORDER.map((hero) => attunementSlots(s, hero)),
+      ...HERO_ORDER.map((hero) => mentorLimit(s, hero)),
       shipBonus(s, 'flux'),
       shipBonus(s, 'wards'),
       sensorOutput(s),
       labOutput(s),
       forgeOutput(s),
+      moraleTarget(s),
       bondRange(s),
-      attunementSlots(s, 'runesmith'),
-      attunementSlots(s, 'echoreader'),
-      mentorLimit(s, 'runesmith'),
-      mentorLimit(s, 'echoreader'),
       weeklyAttention(s),
       s.heroes.map((h) => h.hand.length).join('/'),
     ].join('|')
@@ -240,7 +239,8 @@ describe('no perk is a lie', () => {
   it('changes something measurable for every perk in the game', () => {
     for (const perk of HERO_PERKS) {
       if (excused[perk.id]) continue
-      const s = ship()
+      // The whole table, so the perk's owner is actually aboard.
+      const s = ship(HERO_ORDER)
       // Every station manned and powered, so the outputs a perk adds to are
       // actually running and a change can be seen. This matters: a bonus to the
       // Sensors is worth exactly nothing while nobody is standing on them, which
@@ -263,8 +263,8 @@ describe('no perk is a lie', () => {
     }
   })
 
-  it('gives both heroes something to spend marks on', () => {
-    for (const hero of ['runesmith', 'echoreader'] as HeroClassId[]) {
+  it('gives every hero something to spend marks on', () => {
+    for (const hero of HERO_ORDER) {
       expect(perksOf(hero).length, hero).toBeGreaterThanOrEqual(5)
       // And a first purchase that needs nothing: a track whose every entry has a
       // prerequisite can never be started.
@@ -319,3 +319,35 @@ function settledFrom(
   }
   return expeditionStep(staged, { k: 'settleBattle', as })
 }
+
+describe('four seats, four different accounts', () => {
+  // The point of separate currencies is that they are earned differently. If
+  // every class is paid for the same things then this is one currency with four
+  // names, and the "your own track" idea is decoration.
+  it('pays the Cantor for a party that all walked back', () => {
+    const s = ship(HERO_ORDER)
+    const after = settledFrom(s, LANDING, 'victory')
+    // Nobody fell in a settled victory, which is exactly her condition.
+    expect(marks(after, 'cantor')).toBeGreaterThan(marks(after, 'echoreader'))
+  })
+
+  it('pays the Surveyor for the week the Sensors read the road', () => {
+    const s = ship(HERO_ORDER)
+    // Somebody on the Sensors, and power for them.
+    s.crew[0]!.station = 'sensors'
+    s.power.sensors = 2
+    const after = expeditionStep(s, { k: 'advanceWeek' })
+    expect(marks(after, 'surveyor')).toBeGreaterThan(0)
+    expect(marks(after, 'runesmith')).toBe(0)
+  })
+
+  it('pays nothing to a class that stayed at home', () => {
+    // A party of two: the Cantor is not on this expedition, so the landing that
+    // would have paid her pays her nothing.
+    const s = ship()
+    const after = settledFrom(s, LANDING, 'victory')
+    expect(after.heroRecords.cantor.marks).toBe(0)
+    expect(after.heroRecords.surveyor.marks).toBe(0)
+    expect(marks(after, 'runesmith')).toBeGreaterThan(0)
+  })
+})

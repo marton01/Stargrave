@@ -153,6 +153,45 @@ export function describeEffect(effect: EncounterEffect, lang: Lang): ChoiceLine 
       // saying "this sets flag x" would turn a story into a checklist. The
       // consequence announces itself when it arrives.
       return { text: '', tone: 'plain' }
+    case 'loyalty': {
+      const where =
+        effect.who === 'all'
+          ? hu
+            ? 'az egész legénységnél'
+            : 'across the crew'
+          : effect.who === 'lowest'
+            ? hu
+              ? 'akinek a legkevesebb'
+              : 'for whoever has least'
+            : hu
+              ? 'nála'
+              : 'for them'
+      return {
+        text: hu
+          ? `Hűség ${effect.amount >= 0 ? '+' : '−'}${Math.abs(effect.amount)} ${where}`
+          : `Loyalty ${effect.amount >= 0 ? '+' : '−'}${Math.abs(effect.amount)} ${where}`,
+        tone: effect.amount >= 0 ? 'gain' : 'loss',
+      }
+    }
+    case 'later':
+      return {
+        text: hu
+          ? `${effect.weeks} hét múlva: ${pick(effect.note, lang)}`
+          : `In ${effect.weeks} weeks: ${pick(effect.note, lang)}`,
+        tone: 'echo',
+      }
+    case 'defect':
+      return {
+        text: hu ? 'Elmegy, és elvisz valamit' : 'They leave, and take something',
+        tone: 'loss',
+      }
+    case 'aboard':
+      return { text: '', tone: 'plain' }
+    case 'startTask':
+      return {
+        text: hu ? 'Egy zárósor, közösen' : 'A closing line, together',
+        tone: 'plain',
+      }
     case 'relic':
       return {
         text: effect.id
@@ -228,6 +267,12 @@ export function describeRequirement(need: ChoiceRequirement, lang: Lang): string
         : `${pick(RESOURCES[need.id].name, lang)} ${need.value}+`
     case 'relicsAtLeast':
       return hu ? `${need.value}+ ereklye a fedélzeten` : `${need.value}+ relics aboard`
+    case 'loyaltyAtMost':
+      return hu
+        ? 'Valaki a legénységből a végét járja'
+        : 'Somebody aboard is at the end of their tether'
+    case 'subjectIsMentee':
+      return hu ? 'Ő valakinek a tanítványa' : 'They are somebody’s mentee'
     case 'attentionAtLeast':
       return hu ? `Figyelem ${need.value}+` : `Attention ${need.value}+`
     case 'flag':

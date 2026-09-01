@@ -15,7 +15,10 @@ import { createRng } from '../rng'
 import {
   CREW_TRAITS,
   LEARNABLE_TRAITS,
+  LOYALTY_BREAKS,
+  LOYALTY_RECOVERS,
   crewRank,
+  loyaltyBand,
   generateCrewMember,
   rankBonus,
   traitBonus,
@@ -39,20 +42,26 @@ import {
   lifeSupportNeeded,
 } from '../../content/ship'
 import type { ModuleId, ResourceId, StationId, SystemId } from '../../content/ship'
-import { encounter, encountersFor } from '../../content/encounters'
+import { encounter, encountersFor, findEncounter } from '../../content/encounters'
+import type { Encounter } from '../../content/encounters'
+import { ABOARD_EVENTS } from '../../content/aboard'
 import { dialValue, normaliseDials } from '../../content/difficulty'
 import type { DialId } from '../../content/difficulty'
-import type { EncounterChoice, EncounterEffect } from '../../content/encounters'
+import type { ChoiceRequirement, EncounterChoice, EncounterEffect } from '../../content/encounters'
 import { availableProjects, researchProject, understandingTier } from '../../content/research'
+import { watchDuty } from '../../content/watch'
 import { card, cardsOfClass } from '../../content/cards'
 import { generatePuzzle, puzzleStatus, applyPuzzleMove, STARTING_PUZZLE_KINDS } from '../puzzles/index'
+import { generateRuneLine, press, taskStatus } from '../task/runeline'
 import type { PuzzleKind, PuzzleMove } from '../puzzles/types'
 import { missionResult, startMission, step as battleStep } from '../battle'
 import type { Action as BattleAction, CarriedHero } from '../battle'
 import { KIND_TAGS, LENGTHS, generateStarMap, mapNode, revealAhead } from './starmap'
 import type {
   ArchiveState,
+  Debt,
   Directive,
+  ProposedAction,
   EndingId,
   ExpeditionEvent,
   ExpeditionLength,
@@ -82,6 +91,24 @@ export type ExpeditionAction =
   | { k: 'encounterClose' }
   | { k: 'battleAction'; action: BattleAction }
   | { k: 'puzzleMove'; move: PuzzleMove }
+  /**
+   * Press one rune of a split task.
+   *
+   * Which runes a player may press depends on their seat — see
+   * engine/session/permissions.ts. At one keyboard that is everybody's.
+   */
+  | { k: 'taskPress'; rune: number }
+  /** Set this hero's duty for the week. Theirs alone — see content/watch.ts. */
+  | { k: 'setWatch'; hero: HeroClassId; duty: string }
+  /**
+   * Ask the table for something irreversible, and agree to somebody else's ask.
+   *
+   * Used only when more than one person is playing on more than one machine. See
+   * `needsSeconding` for why, and for the short list of what goes through it.
+   */
+  | { k: 'propose'; action: ProposedAction; by: number }
+  | { k: 'second'; by: number }
+  | { k: 'dropProposal' }
   | { k: 'missionFinish' }
   /** Same battlefield, from the beginning. */
   | { k: 'restartBattle' }
@@ -162,7 +189,7 @@ type BonusField =
 
 /** The relics actually being worn — the only ones that do anything. */
 export function attunedRelics(s: ExpeditionState): string[] {
-  return HERO_ORDER.flatMap((hero) => s.heroRecords[hero].attuned)
+  return party(s).flatMap((hero) => s.heroRecords[hero].attuned)
 }
 
 function relicEffects(s: ExpeditionState): RelicEffect[] {
@@ -170,7 +197,7 @@ function relicEffects(s: ExpeditionState): RelicEffect[] {
 }
 
 function perkEffects(s: ExpeditionState, hero?: HeroClassId): PerkEffect[] {
-  const heroes = hero ? [hero] : HERO_ORDER
+  const heroes = hero ? [hero] : party(s)
   return heroes.flatMap((h) => s.heroRecords[h].perks.map((id) => heroPerk(id).effect))
 }
 
@@ -202,8 +229,24 @@ function numberField(source: object, field: string): number {
   return typeof value === 'number' ? value : 0
 }
 
-/** The two, in a fixed order, so nothing depends on object key order. */
-export const HERO_ORDER: HeroClassId[] = ['runesmith', 'echoreader']
+/**
+ * Every hero class there is, in a fixed order, so nothing depends on object key
+ * order. This is the catalogue — for who is actually on a given expedition, ask
+ * `party`.
+ */
+export const HERO_ORDER: HeroClassId[] = ['runesmith', 'echoreader', 'cantor', 'surveyor']
+
+/**
+ * The heroes on this expedition, in seat order.
+ *
+ * Read off `s.heroes`, which is the record of the party the ship actually
+ * carries. Everything that used to say "both of them" says this instead: with
+ * two people at one keyboard it is the same two classes it always was, and with
+ * three or four players it is however many landed.
+ */
+export function party(s: ExpeditionState): HeroClassId[] {
+  return s.heroes.map((h) => h.heroClass)
+}
 
 /** How many relics this hero may wear at once. */
 export function attunementSlots(s: ExpeditionState, hero: HeroClassId): number {
@@ -249,6 +292,20 @@ export function menteesOf(s: ExpeditionState, hero: HeroClassId): CrewMember[] {
 /** A blank private record, for a new expedition or an older save. */
 export function newHeroRecord(): HeroRecord {
   return { marks: 0, marksEarned: 0, perks: [], attuned: [] }
+}
+
+/**
+ * One record per class, whether or not that class is on this expedition.
+ *
+ * Keyed by every class rather than by the party, because the party can be two of
+ * four and a lookup for somebody who is not aboard should give an empty record
+ * rather than undefined.
+ */
+export function blankHeroRecords(): Record<HeroClassId, HeroRecord> {
+  return Object.fromEntries(HERO_ORDER.map((id) => [id, newHeroRecord()])) as Record<
+    HeroClassId,
+    HeroRecord
+  >
 }
 
 export function resourceMax(s: ExpeditionState, id: ResourceId): number {
@@ -550,7 +607,11 @@ export function lifeSupportStatus(s: ExpeditionState): { has: number; needs: num
 export function missionFlux(s: ExpeditionState): number {
   return Math.max(
     1,
-    s.power.runeCore + armouryOutput(s) + shipBonus(s, 'flux') + dialValue(s.dials, 'flux'),
+    s.power.runeCore +
+      armouryOutput(s) +
+      shipBonus(s, 'flux') +
+      (s.watchFlux ?? 0) +
+      dialValue(s.dials, 'flux'),
   )
 }
 
@@ -594,6 +655,11 @@ function hasTrait(s: ExpeditionState, trait: CrewTraitId): boolean {
  */
 function grantMarks(s: ExpeditionState, hero: HeroClassId, amount: number, reason: Text): void {
   if (amount <= 0) return
+  // Nobody is paid for a run they were not on. Three of the four sources are
+  // written for one class in particular, and with a party of two the other two
+  // classes are at home — their records must stay empty rather than quietly
+  // filling up with marks no console can ever spend.
+  if (!party(s).includes(hero)) return
   const record = s.heroRecords[hero]
   record.marks += amount
   record.marksEarned += amount
@@ -607,6 +673,8 @@ const MARK_REASONS = {
   herald: { hu: 'a Hírnök elhallgatott', en: 'the Herald silenced' },
   directive: { hu: 'teljesített parancs', en: 'an order carried out' },
   mentees: { hu: 'a tanítványok munkája', en: 'the work of your mentees' },
+  unhurt: { hu: 'mindenki a saját lábán jött vissza', en: 'everybody walked back' },
+  scouted: { hu: 'felderített út', en: 'the road scouted' },
 } satisfies Record<string, Text>
 
 function buyPerk(s: ExpeditionState, hero: HeroClassId, perkId: string): void {
@@ -652,9 +720,9 @@ function attuneRelic(s: ExpeditionState, hero: HeroClassId, relicId: string): vo
   if (!relicFits(relicId, hero)) return
   const record = s.heroRecords[hero]
   if (record.attuned.includes(relicId)) return
-  // Worn by the other one? Then it is not free to take: they have to put it down
-  // first. Two consoles must never be able to take things off each other.
-  for (const other of HERO_ORDER) {
+  // Worn by somebody else? Then it is not free to take: they have to put it down
+  // first. One console must never be able to take things off another.
+  for (const other of party(s)) {
     if (s.heroRecords[other].attuned.includes(relicId)) return
   }
   if (record.attuned.length >= attunementSlots(s, hero)) return
@@ -673,7 +741,7 @@ function sellRelic(s: ExpeditionState, relicId: string): void {
   if (s.screen !== 'market') return
   if (!s.relics.includes(relicId)) return
   // Only what nobody is wearing.
-  for (const hero of HERO_ORDER) {
+  for (const hero of party(s)) {
     if (s.heroRecords[hero].attuned.includes(relicId)) return
   }
   const def = relic(relicId)
@@ -905,6 +973,8 @@ function issueDirectives(s: ExpeditionState): void {
   if (s.gateWeeksLeft <= 3) return
 
   const context = directiveContext(s)
+  // Orders are dealt round the table, so everybody has one of their own.
+  const seats = party(s)
   while (s.directives.filter((d) => d.state === 'open').length < wanted) {
     const live = s.directives.filter((d) => d.state === 'open').map((d) => d.kind)
     const pool = DIRECTIVE_DEFS.filter((def) => !live.includes(def.kind))
@@ -928,7 +998,7 @@ function issueDirectives(s: ExpeditionState): void {
     }
 
     const owner: HeroClassId =
-      def.owner === 'either' ? HERO_ORDER[s.directiveCount % HERO_ORDER.length]! : def.owner
+      def.owner === 'either' ? seats[s.directiveCount % seats.length]! : def.owner
     const directive: Directive = {
       id: `d${s.directiveCount}`,
       kind: def.kind,
@@ -970,8 +1040,12 @@ function checkDirectives(s: ExpeditionState): void {
     } else {
       d.state = 'failed'
       log(s, { k: 'directiveFailed', label: directiveLabel(d) })
-      // Home is disappointed, and the crew hears about it.
-      gain(s, 'morale', -2)
+      // Home is disappointed, and the crew hears about it — except when the
+      // order was ABOUT morale. Charging morale for failing to hold morale up is
+      // a loop that closes on itself: the ship sags, the order fails, the ship
+      // sags further, and nothing the players do can catch it. Home can be
+      // disappointed without the crew being punished twice for the same thing.
+      if (d.kind !== 'morale') gain(s, 'morale', -2)
     }
   }
 }
@@ -1026,13 +1100,300 @@ function setMentor(s: ExpeditionState, crewId: string, hero: HeroClassId | null)
 
 /** Marks a mentor earns from the people they trained, when a landing is won. */
 function menteeMarks(s: ExpeditionState): void {
-  for (const hero of HERO_ORDER) {
+  for (const hero of party(s)) {
     const trained = menteesOf(s, hero).filter((c) => crewRank(c) >= 2).length
     if (trained >= 2) grantMarks(s, hero, 1, MARK_REASONS.mentees)
   }
 }
 
+// -------------------------------------------------- the ship's own weeks
+//
+// The week used to be one click. Power and postings are a standing
+// configuration, which is right — and it left "end the week" as the only thing
+// four people did on a ship for weeks at a time. Everything that happened
+// happened at a place on the map.
+//
+// Three things here give the week its own life, and they are one system:
+//
+//   loyalty  — the crew stop being stat blocks. It drifts towards what the ship
+//              has actually been like to live on, and at the bottom of it people
+//              leave and take things with them.
+//   aboard   — situations that happen on the ship, each with ONE player who
+//              answers for it while the others say what they think.
+//   debts    — consequences with a date on them, so a decision can land three
+//              weeks after it was made.
+//
+// The rule that ties them together: nothing here may ambush anybody. A betrayal
+// is preceded by weeks of the crew list saying somebody stopped talking; a debt
+// announces itself in the log when it lands and says which decision it came
+// from. Consequence, never surprise.
+
+/** Where somebody's loyalty is heading, given how the ship is being run. */
+export function loyaltyTarget(s: ExpeditionState, member: CrewMember): number {
+  let target = 5
+  // The two things everybody aboard can feel.
+  target += s.resources.morale >= 8 ? 2 : s.resources.morale >= 5 ? 1 : -2
+  if (s.power.lifeSupport < lifeSupportNeeded(livingCrew(s).length)) target -= 2
+  if (s.resources.food <= 0) target -= 3
+
+  // Being somebody's responsibility is the single strongest thing on this list.
+  // It is also the one the players choose, which is the point.
+  if (member.mentor) target += 3
+  // Work that was noticed. A rank is the ship saying "you are good at this".
+  target += crewRank(member) - 1
+  // Who they are.
+  for (const trait of member.traits) {
+    if (trait === 'devout' || trait === 'brave') target += 1
+    if (trait === 'sceptical' || trait === 'restless') target -= 1
+  }
+  // Nobody is at ease this far out.
+  target -= Math.floor(s.darkening / 2)
+
+  return Math.max(0, Math.min(10, target))
+}
+
+/** One step a week towards it — never a jump, so it can always be caught. */
+function driftLoyalty(s: ExpeditionState): void {
+  for (const member of livingCrew(s)) {
+    const target = loyaltyTarget(s, member)
+    const gap = target - member.loyalty
+    if (gap === 0) continue
+    const before = loyaltyBand(member)
+    member.loyalty = Math.max(0, Math.min(10, member.loyalty + Math.sign(gap)))
+    const after = loyaltyBand(member)
+    // Only worth a line when it crosses into a different band: a number moving
+    // by one every week would drown the log.
+    if (after.name.en !== before.name.en) {
+      log(s, {
+        k: 'loyaltyShift',
+        name: member.name,
+        amount: Math.sign(gap),
+        band: after.name,
+      })
+    }
+  }
+}
+
+/**
+ * Somebody has had enough — and this is the WARNING, not the event.
+ *
+ * At the bottom of the loyalty scale a departure is scheduled a few weeks out,
+ * and the crew list says so from that moment. If the ship gets better before it
+ * lands, it is cancelled. A crew member walking off with the fuel must always be
+ * the end of a story the players could read.
+ */
+function checkRestlessness(s: ExpeditionState): void {
+  // The dial governs the ship's life as a whole. At nothing it promises that the
+  // crew never speaks up — a departure creeping through anyway would make the
+  // dial's own words a lie.
+  if (dialValue(s.dials, 'aboard') <= 0) return
+  for (const member of livingCrew(s)) {
+    const leaving = s.debts.find((debt) => debt.subject === member.id && debt.kind === 'leaving')
+
+    if (member.loyalty <= LOYALTY_BREAKS && !leaving) {
+      // Four weeks, not three. Loyalty climbs one step a week, so a three-week
+      // fuse could not actually be put out by the ship getting better — the
+      // warning has to leave room for the thing it is warning about.
+      const weeks = 4
+      s.debts.push({
+        at: s.week + weeks,
+        subject: member.id,
+        kind: 'leaving',
+        note: {
+          hu: `${member.name} elhatározta magát, és ma be is mondta.`,
+          en: `${member.name} has made up their mind, and today they said so.`,
+        },
+        effects: [{ k: 'aboard', id: 'aboard-leaving' }],
+      })
+      log(s, { k: 'crewRestless', name: member.name, weeks })
+      continue
+    }
+
+    // Thought better of it. Two ways out, and the second one is the interesting
+    // one: somebody TOOK THEM ON. A mentee is a person somebody answers for, and
+    // that is worth more here than any number — it is also the one thing a player
+    // can do about it directly, on their own console, this week.
+    if (leaving && (member.loyalty >= LOYALTY_RECOVERS || member.mentor !== null)) {
+      s.debts = s.debts.filter((debt) => debt !== leaving)
+      log(s, { k: 'crewSettled', name: member.name })
+      // And being taken on is itself a reason to stay.
+      if (member.mentor) member.loyalty = Math.max(member.loyalty, LOYALTY_RECOVERS)
+    }
+  }
+}
+
+/** They go, and they take what they counted as theirs. */
+function defect(s: ExpeditionState): void {
+  const member = s.crew.find((c) => c.id === s.subject && c.alive) ?? lowestLoyalty(s)
+  if (!member) return
+
+  // What goes with them: a relic if there is one nobody is wearing, otherwise
+  // fuel and credits. Something you will notice, never something that ends the
+  // run on its own.
+  const worn = new Set(party(s).flatMap((hero) => s.heroRecords[hero].attuned))
+  const loose = s.relics.find((id) => !worn.has(id))
+  let took: Text
+  if (loose) {
+    s.relics = s.relics.filter((id) => id !== loose)
+    took = relic(loose).name
+  } else {
+    const fuel = Math.min(s.resources.fuel, 6)
+    const credits = Math.min(s.resources.credits, 10)
+    gain(s, 'fuel', -fuel)
+    gain(s, 'credits', -credits)
+    took = {
+      hu: `${fuel} üzemanyag és ${credits} kredit`,
+      en: `${fuel} fuel and ${credits} credits`,
+    }
+  }
+
+  member.alive = false
+  member.station = null
+  member.mentor = null
+  s.debts = s.debts.filter((debt) => debt.subject !== member.id)
+  gain(s, 'morale', -2)
+  log(s, { k: 'crewDefected', name: member.name, took })
+}
+
+function lowestLoyalty(s: ExpeditionState): CrewMember | undefined {
+  return livingCrew(s)
+    .slice()
+    .sort((a, b) => a.loyalty - b.loyalty)[0]
+}
+
+// ------------------------------------------------------------------- debts
+
+/** Everything that comes due this week, in the order it was promised. */
+function payDebts(s: ExpeditionState): void {
+  const due = s.debts.filter((debt) => debt.at <= s.week)
+  if (due.length === 0) return
+  s.debts = s.debts.filter((debt) => debt.at > s.week)
+
+  for (const debt of due) {
+    // A debt about somebody who is no longer aboard is simply void: the story it
+    // belonged to ended.
+    if (debt.subject && !s.crew.some((c) => c.id === debt.subject && c.alive)) continue
+    if (debt.subject) s.subject = debt.subject
+    log(s, { k: 'debtCame', note: debt.note })
+    applyEncounterEffects(s, debt.effects)
+  }
+}
+
+// ---------------------------------------------------------- aboard events
+
+/** Is this situation one that can come up on the ship right now? */
+function aboardEligible(s: ExpeditionState, event: Encounter): boolean {
+  if (event.once && s.usedEncounters.includes(event.id)) return false
+  // Somebody has to be in the chair that answers for it.
+  if (event.owner && !party(s).includes(event.owner)) return false
+  if (event.requires && !requirementMet(s, event.requires)) return false
+  // The departure scene is never rolled: it is scheduled by `checkRestlessness`.
+  if (event.id === 'aboard-leaving') return false
+  return true
+}
+
+/**
+ * How likely something happens aboard this week.
+ *
+ * Not every week: a ship that produces a decision every single week becomes a
+ * queue to work through rather than a place. Weeks where the ship is under strain
+ * produce more, which is what makes a bad stretch feel like a bad stretch.
+ */
+export function aboardChance(s: ExpeditionState): number {
+  const scale = dialValue(s.dials, 'aboard')
+  if (scale <= 0) return 0
+
+  // Never two weeks running. This is the line between a place and a queue: at
+  // three weeks in four the ship stops being somewhere the crew live and turns
+  // into a list of pop-ups to clear — and worse, a strained ship rolled MORE of
+  // them, several of which cost morale, so one bad week became a spiral that no
+  // play could pull out of. A smoke run lost the expedition to it twice. A quiet
+  // week is part of the rhythm, not a gap in it.
+  if (s.log.some((entry) => entry.week === s.week - 1 && entry.event.k === 'aboardEvent')) {
+    return 0
+  }
+
+  let chance = 0.3
+  // A ship under strain has more going on. The lean is small on purpose: it
+  // tilts the dice, it does not take them over.
+  if (s.resources.morale < 6) chance += 0.1
+  if (livingCrew(s).some((c) => c.loyalty <= 3)) chance += 0.1
+  if (s.travel) chance += 0.05
+  return Math.min(0.6, chance * scale)
+}
+
+/** Roll for a situation on the ship, and open it if one comes up. */
+function rollAboard(s: ExpeditionState): void {
+  if (s.pendingEncounter || s.activeMission || s.outcome) return
+  const chance = aboardChance(s)
+  if (chance <= 0) return
+  const rng = rngFor(s)
+  if (rng.next() >= chance) return
+
+  const pool = ABOARD_EVENTS.filter((event) => aboardEligible(s, event))
+  if (pool.length === 0) return
+  // Weighted, like the map's encounters, so the rarer scenes stay rare.
+  const total = pool.reduce((sum, event) => sum + event.weight, 0)
+  let roll = rng.next() * total
+  let chosen = pool[pool.length - 1]!
+  for (const event of pool) {
+    roll -= event.weight
+    if (roll <= 0) {
+      chosen = event
+      break
+    }
+  }
+  openAboard(s, chosen.id)
+}
+
+/**
+ * Open a situation on the ship.
+ *
+ * It goes through `pendingEncounter`, which is what gives it the whole existing
+ * interface — the account of what a choice costs and gives, the two-step
+ * confirmation, the card payments — and what stops the week from being ended
+ * until somebody has answered.
+ */
+function openAboard(s: ExpeditionState, id: string): void {
+  const event = findEncounter(id)
+  if (!event) return
+  // Whoever it is about. Named here so that `later` effects three weeks out can
+  // still mean the same person.
+  const subject = event.requires?.k === 'loyaltyAtMost' ? lowestLoyalty(s) : rngFor(s).pick(livingCrew(s))
+  s.subject = subject?.id ?? null
+  s.pendingEncounter = { id, chosen: null, payment: [], resolvedText: null }
+  if (!s.usedEncounters.includes(id)) s.usedEncounters.push(id)
+  s.screen = 'encounter'
+  log(s, { k: 'aboardEvent', title: event.title, owner: event.owner ?? null })
+}
+
+/** Is the situation on screen one that happened on the ship? */
+export function pendingIsAboard(s: ExpeditionState): boolean {
+  const id = s.pendingEncounter?.id
+  return id !== undefined && findEncounter(id)?.aboard === true
+}
+
+/** Whose call the situation on screen is, if it is anybody's in particular. */
+export function pendingOwner(s: ExpeditionState): HeroClassId | null {
+  const id = s.pendingEncounter?.id
+  if (!id) return null
+  return findEncounter(id)?.owner ?? null
+}
+
 // ---------------------------------------------------------------- start
+
+/**
+ * The party a run sets out with when nothing says otherwise.
+ *
+ * The original pair, and the party for one or two players. Three and four seats
+ * bring the Cantor and the Surveyor — see `startExpedition`.
+ */
+export const DEFAULT_PARTY: HeroClassId[] = ['runesmith', 'echoreader']
+
+/** Who lands, for a table of this many people. */
+export function partyForSeats(seats: number): HeroClassId[] {
+  return HERO_ORDER.slice(0, Math.max(2, Math.min(4, seats)))
+}
 
 export function startExpedition(
   seed: number,
@@ -1040,6 +1401,8 @@ export function startExpedition(
   archive: ArchiveState,
   /** The difficulty dials to run under. Defaults to the game as designed. */
   startDials?: unknown,
+  /** Which classes land. Two by default — see `partyForSeats`. */
+  withParty: HeroClassId[] = DEFAULT_PARTY,
 ): ExpeditionState {
   const rng = createRng(seed)
   const puzzleKinds = puzzleKindsFrom(archive)
@@ -1088,7 +1451,7 @@ export function startExpedition(
     ),
   )
 
-  const heroes: CarriedHero[] = HERO_ORDER.map((heroClass) => ({
+  const heroes: CarriedHero[] = withParty.map((heroClass) => ({
     heroClass,
     hp: HERO_CLASSES[heroClass].hp,
     hand: cardsOfClass(heroClass).map((c) => c.id),
@@ -1117,7 +1480,7 @@ export function startExpedition(
     understanding: 0,
     puzzleKinds,
     heroes,
-    heroRecords: { runesmith: newHeroRecord(), echoreader: newHeroRecord() },
+    heroRecords: blankHeroRecords(),
     relics: [],
     attention: 0,
     herald: null,
@@ -1131,12 +1494,17 @@ export function startExpedition(
       relicsFound: 0,
     },
     heartRead: false,
+    watch: {},
+    watchFlux: 0,
+    proposal: null,
     map,
     at: map.entryId,
     travel: null,
     activeMission: null,
     pendingEncounter: null,
     usedEncounters: [],
+    subject: null,
+    debts: [],
     // The deeper encounters are an Archive unlock; carried as a flag so that
     // runtime choices can ask about it without reaching for the Archive.
     flags: [
@@ -1199,7 +1567,11 @@ function runStations(s: ExpeditionState): void {
   const columns = sensorOutput(s)
   if (columns > 0) {
     const revealed = revealAhead(s.map, s.at, columns)
-    if (revealed > 0) log(s, { k: 'mapRevealed', columns })
+    if (revealed > 0) {
+      log(s, { k: 'mapRevealed', columns })
+      // Seeing the road first is the Surveyor's account.
+      grantMarks(s, 'surveyor', 1, MARK_REASONS.scouted)
+    }
   }
 
   // Medbay: patch the heroes up between landings.
@@ -1219,6 +1591,59 @@ function runStations(s: ExpeditionState): void {
       log(s, { k: 'stationRan', station: 'archive' })
     }
   }
+}
+
+/**
+ * Everybody's own week.
+ *
+ * Applied after the stations, so a duty is what this person did on top of the
+ * ship's ordinary running — and cleared afterwards, because the point is that it
+ * is asked again next week. A seat that set nothing simply did nothing: no
+ * penalty, because a player who was away should cost the table a bonus rather
+ * than a punishment.
+ */
+function runWatches(s: ExpeditionState): void {
+  for (const hero of party(s)) {
+    const id = s.watch?.[hero]
+    if (!id) continue
+    const duty = watchDuty(id)
+    if (!duty || duty.heroClass !== hero) continue
+    const e = duty.effect
+
+    if (e.hull) gain(s, 'hull', e.hull)
+    if (e.information) gain(s, 'information', e.information)
+    if (e.morale) gain(s, 'morale', e.morale)
+    if (e.fuel) gain(s, 'fuel', e.fuel)
+    if (e.understanding) {
+      s.understanding += e.understanding
+      log(s, { k: 'understandingGained', amount: e.understanding, total: s.understanding })
+    }
+    if (e.reveal) {
+      // Beyond the FARTHEST thing already known, not a fixed distance from the
+      // ship. "One more column ahead" has to mean one more than you can see —
+      // measured from the ship it reveals what the Sensors just revealed, and a
+      // duty that quietly does nothing on a well-run ship is the exact bug this
+      // codebase keeps finding.
+      const here = mapNode(s.map, s.at).column
+      const seen = s.map.nodes.filter((n) => n.known).reduce((max, n) => Math.max(max, n.column), here)
+      const revealed = revealAhead(s.map, s.at, seen - here + e.reveal)
+      if (revealed > 0) log(s, { k: 'mapRevealed', columns: e.reveal })
+    }
+    if (e.flux) s.watchFlux += e.flux
+    if (e.mend) {
+      for (const carried of s.heroes) {
+        carried.hp = Math.min(heroMaxHp(s, carried.heroClass), carried.hp + e.mend)
+      }
+    }
+    if (e.teach) {
+      for (const member of menteesOf(s, hero)) member.xp += e.teach
+    }
+    if (e.attention) changeAttention(s, e.attention)
+
+    log(s, { k: 'watchDone', hero, duty: duty.name })
+  }
+  // Asked again next week: that is the whole point of it.
+  s.watch = {}
 }
 
 function weeklyResources(s: ExpeditionState): void {
@@ -1420,9 +1845,15 @@ function advanceWeek(s: ExpeditionState): void {
 
   for (const member of livingCrew(s)) member.weeksAboard += 1
 
+  // What earlier weeks promised comes due before anything else this week does.
+  payDebts(s)
+
   weeklyResources(s)
   runStations(s)
+  runWatches(s)
   crewWorkWeek(s)
+  driftLoyalty(s)
+  checkRestlessness(s)
   advanceResearch(s)
 
   // What the week did to how loud the expedition is, and what that woke.
@@ -1447,6 +1878,10 @@ function advanceWeek(s: ExpeditionState): void {
   // is judged on where the ship ended the week rather than where it started.
   checkDirectives(s)
   issueDirectives(s)
+
+  // And last: whatever the ship itself wants to say this week. It goes through
+  // `pendingEncounter`, so the next week cannot be ended until somebody answers.
+  rollAboard(s)
 
   checkLoss(s)
 }
@@ -1483,8 +1918,17 @@ function openEncounter(s: ExpeditionState, id: string): void {
 }
 
 export function choiceAvailable(s: ExpeditionState, choice: EncounterChoice): boolean {
-  const need = choice.requires
-  if (!need) return true
+  return choice.requires === undefined || requirementMet(s, choice.requires)
+}
+
+/**
+ * Does the ship meet one requirement?
+ *
+ * Split out from `choiceAvailable` because a whole SITUATION can have one too:
+ * the scene about somebody who will not come out of their cabin only exists
+ * while somebody is at the end of their tether. See `Encounter.requires`.
+ */
+export function requirementMet(s: ExpeditionState, need: ChoiceRequirement): boolean {
   switch (need.k) {
     case 'shieldsAtLeast':
       return s.power.shields >= need.value
@@ -1506,6 +1950,12 @@ export function choiceAvailable(s: ExpeditionState, choice: EncounterChoice): bo
       return s.relics.length >= need.value
     case 'attentionAtLeast':
       return s.attention >= need.value
+    case 'loyaltyAtMost':
+      return livingCrew(s).some((member) => member.loyalty <= need.value)
+    case 'subjectIsMentee': {
+      const subject = s.crew.find((c) => c.id === s.subject)
+      return subject?.mentor != null
+    }
   }
 }
 
@@ -1579,6 +2029,50 @@ function applyEncounterEffects(s: ExpeditionState, effects: readonly EncounterEf
         findRelic(s, effect.id)
         break
 
+      case 'loyalty': {
+        const who =
+          effect.who === 'all'
+            ? livingCrew(s)
+            : effect.who === 'lowest'
+              ? [lowestLoyalty(s)].filter((m): m is CrewMember => m !== undefined)
+              : [s.crew.find((c) => c.id === s.subject && c.alive)].filter(
+                  (m): m is CrewMember => m !== undefined,
+                )
+        for (const member of who) {
+          const before = loyaltyBand(member)
+          member.loyalty = Math.max(0, Math.min(10, member.loyalty + effect.amount))
+          const after = loyaltyBand(member)
+          if (after.name.en !== before.name.en) {
+            log(s, {
+              k: 'loyaltyShift',
+              name: member.name,
+              amount: effect.amount,
+              band: after.name,
+            })
+          }
+        }
+        break
+      }
+
+      case 'later': {
+        const debt: Debt = {
+          at: s.week + Math.max(1, effect.weeks),
+          subject: s.subject,
+          note: effect.note,
+          effects: effect.effects,
+        }
+        s.debts.push(debt)
+        break
+      }
+
+      case 'defect':
+        defect(s)
+        break
+
+      case 'aboard':
+        openAboard(s, effect.id)
+        break
+
       case 'attention':
         if (effect.amount >= 0) raiseAttention(s, effect.amount)
         else changeAttention(s, effect.amount)
@@ -1586,7 +2080,7 @@ function applyEncounterEffects(s: ExpeditionState, effects: readonly EncounterEf
 
       case 'heroXp':
         if (effect.who) grantMarks(s, effect.who, effect.amount, MARK_REASONS.landing)
-        else for (const hero of HERO_ORDER) grantMarks(s, hero, effect.amount, MARK_REASONS.landing)
+        else for (const hero of party(s)) grantMarks(s, hero, effect.amount, MARK_REASONS.landing)
         break
       case 'startMission':
         launchMission(s, missionFromFlavour(s, effect.flavour))
@@ -1595,6 +2089,13 @@ function applyEncounterEffects(s: ExpeditionState, effects: readonly EncounterEf
         launchPuzzle(s, effect.kind ?? null, Math.max(1, 1 + s.darkening), [
           { k: 'archive', amount: 1 },
           { k: 'resource', id: 'information', amount: 5 },
+        ])
+        break
+
+      case 'startTask':
+        launchTask(s, effect.difficulty ?? Math.max(1, 1 + s.darkening), [
+          { k: 'archive', amount: 2 },
+          { k: 'resource', id: 'information', amount: 6 },
         ])
         break
 
@@ -1634,9 +2135,9 @@ function applyEncounterEffects(s: ExpeditionState, effects: readonly EncounterEf
 function resolveEncounter(s: ExpeditionState): void {
   const pending = s.pendingEncounter
   if (!pending || pending.chosen === null) return
-  const def = encounter(pending.id)
-  const choice = def.choices[pending.chosen]
-  if (!choice) return
+  const def = findEncounter(pending.id)
+  const choice = def?.choices[pending.chosen]
+  if (!def || !choice) return
 
   // Pay up.
   for (const cost of choice.costs) {
@@ -1664,8 +2165,13 @@ function resolveEncounter(s: ExpeditionState): void {
   applyEncounterEffects(s, choice.effects)
   log(s, { k: 'encounterChoice', result: choice.result })
 
-  const node = mapNode(s.map, s.at)
-  node.resolved = true
+  // A situation that happened ON THE SHIP has nothing to do with the place the
+  // ship is standing at: marking the node used up would quietly eat whatever was
+  // waiting there.
+  if (!def.aboard) {
+    const node = mapNode(s.map, s.at)
+    node.resolved = true
+  }
 
   pending.resolvedText = choice.result
   // A situation that continues: remembered here, opened when the player closes
@@ -1752,7 +2258,7 @@ function buildBattle(s: ExpeditionState, spec: MissionSpec, seed: number) {
     installations: s.modules.slice(0, atStake),
     // What the two of them have earned and are wearing reaches the grid here:
     // maximum hit points and the Bond's range are both theirs, not the class's.
-    heroMaxHp: { runesmith: heroMaxHp(s, 'runesmith'), echoreader: heroMaxHp(s, 'echoreader') },
+    heroMaxHp: Object.fromEntries(party(s).map((hero) => [hero, heroMaxHp(s, hero)])),
     bondRange: bondRange(s),
     seed,
     difficulty: Math.max(
@@ -1772,6 +2278,8 @@ function launchMission(s: ExpeditionState, spec: MissionSpec): void {
   const seed = s.seed * 977 + s.week * 31 + s.rngStep
   s.rngStep += 1
   s.activeMission = { k: 'battle', nodeId: s.at, spec, battle: buildBattle(s, spec, seed) }
+  // Whatever the Runesmith burned into the weapons went down with them.
+  s.watchFlux = 0
   s.screen = 'mission'
   log(s, { k: 'missionLaunched', briefing: spec.briefing })
 }
@@ -1894,6 +2402,44 @@ function launchPuzzle(
  * an order carried out pays the console it sat on. Without an owner, marks go to
  * both, which is what a landing does.
  */
+/**
+ * Open a split task: the rune line.
+ *
+ * `seats` comes from the party, because the task is dealt per seat and a task
+ * dealt for four when two people are playing would hand half the clues to
+ * nobody. In a solo or one-keyboard game every panel is the same person's, and
+ * the puzzle is simply a logic puzzle with the clues laid out in groups.
+ */
+function launchTask(
+  s: ExpeditionState,
+  difficulty: number,
+  rewards: Reward[],
+  briefing?: Text,
+): void {
+  const seed = s.seed * 8191 + s.week * 29 + s.rngStep
+  s.rngStep += 1
+  s.activeMission = {
+    k: 'task',
+    nodeId: s.at,
+    task: generateRuneLine(createRng(seed), {
+      seats: Math.max(1, party(s).length),
+      difficulty,
+    }),
+    rewards,
+    briefing: briefing ?? {
+      hu:
+        'Egy zárósor, hat rúnával, és egyetlen helyes sorrenddel. A leírása szét van szórva: ' +
+        'mindenki más darabját látja, és mindenki csak a saját rúnáit tudja megnyomni. ' +
+        'Beszéljetek.',
+      en:
+        'A closing line of runes with exactly one right order. Its description is scattered: each ' +
+        'of you sees a different part, and each of you can only press your own runes. Talk.',
+    },
+  }
+  s.screen = 'mission'
+  log(s, { k: 'missionLaunched', briefing: s.activeMission.briefing })
+}
+
 function applyRewards(
   s: ExpeditionState,
   rewards: readonly Reward[],
@@ -1935,7 +2481,7 @@ function applyRewards(
         const who = reward.who ?? owner
         const reason = owner ? MARK_REASONS.directive : MARK_REASONS.landing
         if (who) grantMarks(s, who, reward.amount, reason)
-        else for (const hero of HERO_ORDER) grantMarks(s, hero, reward.amount, reason)
+        else for (const hero of party(s)) grantMarks(s, hero, reward.amount, reason)
         break
       }
     }
@@ -1979,7 +2525,7 @@ function heraldSilenced(s: ExpeditionState): void {
   // The mark outlives the expedition: a later run can be asked about this.
   if (!s.marks.includes('silenced-the-herald')) s.marks.push('silenced-the-herald')
   changeAttention(s, -s.attention)
-  for (const hero of HERO_ORDER) grantMarks(s, hero, 3, MARK_REASONS.herald)
+  for (const hero of party(s)) grantMarks(s, hero, 3, MARK_REASONS.herald)
   log(s, { k: 'heraldSilenced' })
 }
 
@@ -2025,10 +2571,12 @@ function finishMission(s: ExpeditionState): void {
       // Marks. Both of them for the landing; and the Runesmith again if the ship
       // came out of a boarding action with everything still standing, which is
       // the thing he is actually being paid for.
-      for (const hero of HERO_ORDER) grantMarks(s, hero, 1, MARK_REASONS.landing)
+      for (const hero of party(s)) grantMarks(s, hero, 1, MARK_REASONS.landing)
       if (mission.spec.aboard && result.modulesLost.length === 0) {
         grantMarks(s, 'runesmith', 2, MARK_REASONS.intact)
       }
+      // And the Cantor for the thing she is actually there for: nobody fell.
+      if (result.casualties === 0) grantMarks(s, 'cantor', 2, MARK_REASONS.unhurt)
       menteeMarks(s)
       // A fight is loud. A fight aboard the ship is louder.
       raiseAttention(s, mission.spec.aboard ? 2 : 1)
@@ -2053,6 +2601,25 @@ function finishMission(s: ExpeditionState): void {
       if (mission.spec.herald) heraldRepelled(s)
       node.resolved = true
     }
+  } else if (mission.k === 'task') {
+    const status = taskStatus(mission.task)
+    if (status === 'solved') {
+      log(s, { k: 'taskSolved' })
+      s.tally.puzzlesSolved += 1
+      applyRewards(s, mission.rewards)
+      // Reading a mechanism is her craft whatever shape it takes.
+      grantMarks(s, 'echoreader', 2, MARK_REASONS.mechanism)
+    } else {
+      log(s, { k: 'taskFailed' })
+      // The same as a mechanism that would not open, not double it. It was two,
+      // and with orders and the ship's own weeks also charging morale, three
+      // penalties in one week outran the drift that is supposed to make morale
+      // recoverable — a smoke run fell from eleven to nothing in three weeks.
+      gain(s, 'morale', -1)
+      // Forcing a lock is the loudest thing you can do standing still.
+      raiseAttention(s, 1)
+    }
+    node.resolved = true
   } else {
     const status = puzzleStatus(mission.puzzle)
     if (status === 'solved') {
@@ -2100,6 +2667,9 @@ function engageNode(s: ExpeditionState): void {
     case 'puzzle':
       launchPuzzle(s, node.event.kind, node.event.difficulty, node.event.rewards, node.event.briefing)
       break
+    case 'task':
+      launchTask(s, node.event.difficulty, node.event.rewards, node.event.briefing)
+      break
     case 'encounter':
       openEncounter(s, node.event.encounterId)
       break
@@ -2113,6 +2683,93 @@ function engageNode(s: ExpeditionState): void {
     case 'none':
       node.resolved = true
       break
+  }
+}
+
+// ------------------------------------------------------- table decisions
+//
+// Six actions in this game cannot be taken back and land on everybody: calling a
+// landing won or lost without playing it, redealing the ground, backing out of a
+// landing, choosing how the story ends, and stopping the expedition.
+//
+// At one keyboard each of them asks twice, because there is one mouse and one
+// person holding it. Over a network that stops being enough: the same two clicks
+// from any one seat would end the evening for three other people who were in the
+// middle of a sentence. So online they are PROPOSED, and somebody else has to
+// agree — the same principle, carried across the table.
+//
+// Everything else stays open to everybody on purpose. This is a co-operative
+// game; the argument about where to go is supposed to happen out loud, and a
+// game that made every shared decision a vote would be a committee.
+
+/** Does this action need a second pair of hands, when there is more than one? */
+export function needsSeconding(action: ExpeditionAction): action is ProposedAction {
+  switch (action.k) {
+    case 'settleBattle':
+    case 'restartBattle':
+    case 'rerollBattle':
+    case 'withdrawBeforeLanding':
+    case 'chooseEnding':
+    case 'abandon':
+      return true
+    default:
+      return false
+  }
+}
+
+/** How many seats have to want it: the asker, and one more. */
+export const SECONDS_NEEDED = 1
+
+/** Is the proposal on the table carried? */
+export function proposalCarried(s: ExpeditionState): boolean {
+  const proposal = s.proposal
+  return proposal !== null && proposal.seconds.length >= SECONDS_NEEDED
+}
+
+/** What is being asked for, in words, so the log and the banner agree. */
+export function proposalLabel(action: ProposedAction): Text {
+  switch (action.k) {
+    case 'settleBattle':
+      return action.as === 'victory'
+        ? { hu: 'a partraszállás sikeresnek elszámolása', en: 'booking the landing as a success' }
+        : action.as === 'defeat'
+          ? { hu: 'a partraszállás feladása teljes veszteséggel', en: 'giving the landing up at full cost' }
+          : { hu: 'a partraszállás kihagyása', en: 'skipping the landing' }
+    case 'restartBattle':
+      return { hu: 'a csata újrakezdése ugyanezen a pályán', en: 'restarting the battle on the same ground' }
+    case 'rerollBattle':
+      return { hu: 'új pálya ugyanerre a feladatra', en: 'a different battlefield for the same task' }
+    case 'withdrawBeforeLanding':
+      return { hu: 'visszalépés a partraszállás előttre', en: 'pulling back to before the landing' }
+    case 'chooseEnding':
+      return { hu: 'az expedíció befejezése ezzel a végkifejlettel', en: 'ending the expedition this way' }
+    case 'abandon':
+      return { hu: 'az expedíció leállítása', en: 'calling the expedition off' }
+  }
+}
+
+/** Do the thing that was agreed. Only the kinds the type allows can get here. */
+function performProposal(s: ExpeditionState, action: ProposedAction): void {
+  switch (action.k) {
+    case 'settleBattle':
+      settleBattle(s, action.as)
+      return
+    case 'restartBattle':
+      rebuildBattle(s, false)
+      return
+    case 'rerollBattle':
+      rebuildBattle(s, true)
+      return
+    case 'withdrawBeforeLanding':
+      withdrawBeforeLanding(s)
+      return
+    case 'chooseEnding':
+      chooseEnding(s, action.endingId)
+      return
+    case 'abandon':
+      s.outcome = { k: 'lost', reason: 'abandoned' }
+      s.screen = 'over'
+      return
   }
 }
 
@@ -2425,6 +3082,13 @@ export function expeditionStep(
       break
     }
 
+    case 'taskPress': {
+      const mission = s.activeMission
+      if (!mission || mission.k !== 'task') break
+      mission.task = press(mission.task, action.rune)
+      break
+    }
+
     case 'missionFinish':
       finishMission(s)
       break
@@ -2483,6 +3147,49 @@ export function expeditionStep(
       readHeart(s)
       break
 
+    case 'propose': {
+      // One at a time: a second ask replaces the first, so the table is never
+      // looking at two irreversible questions at once.
+      s.proposal = { action: action.action, by: action.by, seconds: [] }
+      log(s, { k: 'proposalMade', by: action.by, what: proposalLabel(action.action) })
+      break
+    }
+
+    case 'second': {
+      const proposal = s.proposal
+      if (!proposal) break
+      // Not your own: the whole point is a second pair of hands.
+      if (action.by === proposal.by) break
+      if (proposal.seconds.includes(action.by)) break
+      proposal.seconds = [...proposal.seconds, action.by]
+      if (proposal.seconds.length >= SECONDS_NEEDED) {
+        const agreed = proposal.action
+        s.proposal = null
+        log(s, { k: 'proposalCarried', what: proposalLabel(agreed) })
+        performProposal(s, agreed)
+      }
+      break
+    }
+
+    case 'dropProposal':
+      if (s.proposal) log(s, { k: 'proposalDropped' })
+      s.proposal = null
+      break
+
+    case 'setWatch': {
+      const duty = watchDuty(action.duty)
+      if (!duty || duty.heroClass !== action.hero) break
+      if (!party(s).includes(action.hero)) break
+      // Setting it again swaps it; setting the same one again puts it down.
+      if (s.watch[action.hero] === action.duty) {
+        delete s.watch[action.hero]
+        break
+      }
+      s.watch[action.hero] = action.duty
+      log(s, { k: 'watchSet', hero: action.hero, duty: duty.name })
+      break
+    }
+
     case 'chooseEnding':
       chooseEnding(s, action.endingId)
       break
@@ -2518,5 +3225,6 @@ export function missionSettled(s: ExpeditionState): boolean {
   const mission = s.activeMission
   if (!mission) return false
   if (mission.k === 'battle') return mission.battle.phase === 'over'
+  if (mission.k === 'task') return taskStatus(mission.task) !== 'open'
   return puzzleStatus(mission.puzzle) !== 'open'
 }

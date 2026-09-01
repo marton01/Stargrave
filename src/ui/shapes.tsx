@@ -23,6 +23,31 @@ export function ReaderShape({ color }: ShapeProps) {
   )
 }
 
+/** The Cantor: an open bell, because she works by sounding. */
+export function CantorShape({ color }: ShapeProps) {
+  return (
+    <g>
+      <path
+        d="M0.5,0.1 Q0.78,0.24 0.8,0.62 L0.86,0.78 L0.14,0.78 L0.2,0.62 Q0.22,0.24 0.5,0.1 Z"
+        fill={color}
+      />
+      <circle cx="0.5" cy="0.86" r="0.08" fill={color} />
+      <rect x="0.42" y="0.34" width="0.16" height="0.26" rx="0.08" fill="rgba(0,0,0,0.45)" />
+    </g>
+  )
+}
+
+/** The Surveyor: a tripod under a sighting head. Everything at a distance. */
+export function SurveyorShape({ color }: ShapeProps) {
+  return (
+    <g>
+      <path d="M0.5,0.5 L0.2,0.9 M0.5,0.5 L0.8,0.9 M0.5,0.5 L0.5,0.9" stroke={color} strokeWidth="0.07" fill="none" />
+      <polygon points="0.5,0.08 0.82,0.3 0.72,0.54 0.28,0.54 0.18,0.3" fill={color} />
+      <circle cx="0.5" cy="0.32" r="0.09" fill="rgba(0,0,0,0.5)" />
+    </g>
+  )
+}
+
 export function HuskShape({ color }: ShapeProps) {
   return <polygon points="0.5,0.16 0.79,0.84 0.21,0.84" fill={color} />
 }
@@ -64,6 +89,8 @@ export function ShardShape({ color }: ShapeProps) {
 const SHAPES = {
   smith: SmithShape,
   reader: ReaderShape,
+  cantor: CantorShape,
+  surveyor: SurveyorShape,
   husk: HuskShape,
   sentinel: SentinelShape,
   wraith: WraithShape,

@@ -56,7 +56,13 @@ export type Statuses = Partial<Record<StatusKind, number>>
 
 export type Side = 'hero' | 'enemy'
 
-export type HeroClassId = 'runesmith' | 'echoreader'
+/**
+ * The four. The first two are the game's original pair and the party for one or
+ * two players; the Cantor and the Surveyor come out when three or four people
+ * are playing, because a healer and an artillery piece only make sense with
+ * somebody standing in front of them.
+ */
+export type HeroClassId = 'runesmith' | 'echoreader' | 'cantor' | 'surveyor'
 
 type UnitBase = {
   id: string
@@ -73,7 +79,11 @@ export type Hero = UnitBase & {
   side: 'hero'
   heroClass: HeroClassId
   /** Which player controls this hero — shown large so hotseat stays clear. */
-  playerSlot: 1 | 2
+  /**
+   * Which seat at the table runs this hero, from one. Two for most of the game's
+   * life; up to four once more than two people are playing.
+   */
+  playerSlot: 1 | 2 | 3 | 4
   hand: string[]
   discard: string[]
   lost: string[]
@@ -245,6 +255,11 @@ export type LogEvent =
   | { k: 'floorGaveWay' }
   | { k: 'floorAboutToGive'; rounds: number }
   | { k: 'reinforcements'; count: number }
+  /** The site is about to do something. Announced a round ahead. */
+  | { k: 'siteComing'; kind: SiteEventKind }
+  | { k: 'siteFired'; kind: SiteEventKind }
+  /** Two heroes on one target in one round: the second hit lands harder. */
+  | { k: 'focused'; target: Text }
   | { k: 'heldGround' }
   | { k: 'lostGround' }
   | { k: 'outOfTime' }
@@ -347,6 +362,24 @@ export type BattleState = {
   collapsing: Collapsing[]
 
   /**
+   * What the site itself will do, and when. Fires at the end of the named round.
+   *
+   * Fixed at generation from the seed, so it is part of the battlefield rather
+   * than a die roll mid-fight — and so the interface can say what is coming next
+   * without knowing anything the engine does not.
+   */
+  site: SiteEvent[]
+
+  /**
+   * Which heroes have struck which enemy this round.
+   *
+   * Cleared every round. It exists for one rule — the second hero to hit a
+   * target in a round hits harder — and it lives on the state rather than in a
+   * closure so that a rewound battle rewinds it too.
+   */
+  struck: Record<string, string[]>
+
+  /**
    * How close the two heroes have to be for the Bond, in tiles.
    *
    * Two, unless the expedition has widened it — the Echo-reader's Tether perk or
@@ -407,3 +440,24 @@ export type Installation = {
 }
 
 export type Collapsing = { pos: Coord; roundsLeft: number }
+
+/**
+ * Something the SITE does, on a clock of its own.
+ *
+ * The enemies show their intent a round ahead, and that visible pressure is what
+ * makes a turn worth thinking about. The ground had no such thing: it was
+ * scenery. A site event is the same idea applied to the place — announced one
+ * round before it happens, so it is a problem to plan around rather than a
+ * surprise to be annoyed by.
+ */
+export type SiteEventKind =
+  /** The rune-work under the floor gives the party Flux. */
+  | 'surge'
+  /** Ash falls across a stretch of floor: still walkable, twice as slow. */
+  | 'ashfall'
+  /** Something else comes through: one more enemy, at the far edge. */
+  | 'reinforcement'
+  /** A patch of ceiling lets go. The floor there is on its way out. */
+  | 'collapse'
+
+export type SiteEvent = { at: number; kind: SiteEventKind }

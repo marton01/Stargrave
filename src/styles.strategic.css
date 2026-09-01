@@ -2501,3 +2501,477 @@
   line-height: 1.6;
   color: var(--text-soft);
 }
+
+/* --------------------------------------------------- modes, rooms, the lobby */
+
+.mode-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  text-align: left;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1.45;
+  padding: 9px 11px;
+}
+
+.mode-card strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.mode-card.on {
+  border-color: var(--rune);
+  background: var(--bg-4);
+}
+
+.mode-card.on strong {
+  color: var(--rune);
+}
+
+.player-choices {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 11.5px;
+}
+
+.setting-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+.room-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.room-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.room-row strong {
+  font-family: var(--mono, monospace);
+  letter-spacing: 0.12em;
+}
+
+.lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.lobby-code {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lobby-code-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+.lobby-code-value {
+  font-family: var(--mono, monospace);
+  font-size: 30px;
+  letter-spacing: 0.18em;
+  color: var(--rune);
+}
+
+.lobby-key-value {
+  font-family: var(--mono, monospace);
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: var(--echo);
+  word-break: break-all;
+}
+
+.lobby-name {
+  margin-bottom: 10px;
+}
+
+.seat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.seat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 8px 11px;
+}
+
+.seat-mine {
+  border-color: var(--rune);
+}
+
+.seat-free {
+  opacity: 0.75;
+}
+
+.seat-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.seat-who {
+  font-size: 11.5px;
+  color: var(--echo);
+}
+
+.seat-role {
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.4;
+  max-width: 52em;
+}
+
+.lobby-warning {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--danger);
+}
+
+.net-badge {
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.net-live {
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.net-lost {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.party-choices {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 11.5px;
+}
+
+.seat-hero {
+  background: var(--bg-4);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 3px 6px;
+}
+
+.seat-hero:disabled {
+  color: var(--text-soft);
+  border-color: var(--line-soft);
+}
+
+/* ------------------------------------------------------------- the rune line
+ *
+ * Your own panel is the lit one; the others are dimmed but present, because
+ * knowing WHO to ask is half of the puzzle.
+ */
+
+.mission-task {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.task-line {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+}
+
+.task-slot {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  background: var(--bg-2, var(--bg-4));
+}
+
+.task-slot-lit {
+  border-style: solid;
+  border-color: var(--green);
+}
+
+.task-slot-number {
+  font-size: 9.5px;
+  color: var(--text-faint);
+}
+
+.task-slot-empty {
+  color: var(--line);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.task-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.task-panel {
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 10px 12px;
+  opacity: 0.72;
+}
+
+.task-panel-mine {
+  opacity: 1;
+  border-color: var(--rune);
+}
+
+.task-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+}
+
+.task-runes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.task-rune {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-4);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-family: inherit;
+  padding: 6px 8px;
+}
+
+.task-rune:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.task-rune-lit {
+  border-color: var(--green);
+  opacity: 1;
+}
+
+.task-rune-name {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.task-clues {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.task-clues li {
+  margin-bottom: 3px;
+}
+
+.task-hidden {
+  font-size: 11.5px;
+  font-style: italic;
+}
+
+.watch-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.watch-duty {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  text-align: left;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1.45;
+  padding: 8px 10px;
+}
+
+.watch-duty strong {
+  color: var(--text);
+  font-size: 12.5px;
+}
+
+.watch-duty.on {
+  border-color: var(--rune);
+  background: var(--bg-4);
+}
+
+.watch-duty.on strong {
+  color: var(--rune);
+}
+
+.watch-pending {
+  font-size: 11px;
+  color: var(--rune);
+  white-space: nowrap;
+}
+
+/* Why the last click did nothing. A nudge above everything, briefly. */
+.refused {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 60;
+  background: var(--bg-4);
+  border: 1px solid var(--rune);
+  border-radius: 4px;
+  color: var(--rune);
+  font-size: 12.5px;
+  padding: 8px 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+/* ------------------------------------------- the ship's own weeks
+ *
+ * An aboard situation is marked out from a place on the map: it is about the
+ * people you are travelling with, and one particular person answers for it.
+ */
+
+.encounter-aboard {
+  border-left: 2px solid var(--echo);
+  padding-left: 14px;
+}
+
+.encounter-aboard .encounter-label {
+  color: var(--echo);
+}
+
+.encounter-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+
+.crew-loyalty {
+  margin: 2px 0 0;
+  font-size: 11px;
+}
+
+.crew-loyalty.tone-good { color: var(--green); }
+.crew-loyalty.tone-plain { color: var(--text-faint); }
+.crew-loyalty.tone-warn { color: var(--rune); }
+.crew-loyalty.tone-bad { color: var(--danger); font-weight: 600; }
+
+.debt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.debt {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  background: var(--bg-3);
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid var(--echo-dim);
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.debt-when {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--echo);
+  white-space: nowrap;
+  min-width: 8em;
+}
+
+.debt-note {
+  color: var(--text-soft);
+  line-height: 1.45;
+}

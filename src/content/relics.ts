@@ -236,6 +236,36 @@ export const RELICS: Relic[] = [
     value: 30,
     bearer: 'runesmith',
   },
+  {
+    id: 'tuning-fork',
+    name: { hu: 'Hangolóvilla', en: 'Tuning fork' },
+    description: {
+      hu:
+        'Két ág, ami hetven év után is ugyanazt a hangot adja. A Kántor ehhez hangolja a ' +
+        'legénységet — és amíg szól, könnyebb bírni.',
+      en:
+        'Two prongs that still give the same note after seventy years. The Cantor tunes the crew ' +
+        'to it — and while it sounds, things are easier to bear.',
+    },
+    effect: { moraleTarget: 1, heroHp: 2 },
+    value: 20,
+    bearer: 'cantor',
+  },
+  {
+    id: 'measuring-chain',
+    name: { hu: 'Mérőlánc', en: 'Measuring chain' },
+    description: {
+      hu:
+        'Egy lánc, aminek minden szeme pontosan ugyanakkora, és ami mindig kifeszül a helyes ' +
+        'irányba. A Csillagmérő ebből dolgozik.',
+      en:
+        'A chain whose every link is exactly the same length, and which always pulls taut in the ' +
+        'right direction. The Surveyor works from it.',
+    },
+    effect: { sensorRange: 1, flux: 1 },
+    value: 22,
+    bearer: 'surveyor',
+  },
 ]
 
 const RELIC_INDEX = new Map(RELICS.map((r) => [r.id, r]))

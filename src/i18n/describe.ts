@@ -6,7 +6,7 @@
 
 import { STATUS_NAMES } from '../content/statuses'
 import { pick, ui } from './ui'
-import type { Lang, LogEvent, PendingPrompt } from '../engine/types'
+import type { Lang, LogEvent, PendingPrompt, SiteEventKind } from '../engine/types'
 
 export function describePrompt(prompt: PendingPrompt, lang: Lang): string {
   const t = ui(lang)
@@ -204,6 +204,21 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
         ? `Erősítés érkezett: ${event.count}.`
         : `Reinforcements arrived: ${event.count}.`
 
+    case 'siteComing':
+      return hu
+        ? `A helyszín mozdul: ${siteName(event.kind, lang)} — a következő kör végén.`
+        : `The site is moving: ${siteName(event.kind, lang)} — at the end of the next round.`
+
+    case 'siteFired':
+      return hu
+        ? `${siteName(event.kind, lang)}.`
+        : `${siteName(event.kind, lang)}.`
+
+    case 'focused':
+      return hu
+        ? `Összehangolva: ${pick(event.target, lang)} a második találatból többet kap.`
+        : `Focused: ${pick(event.target, lang)} takes more from the second hit.`
+
     case 'heldGround':
       return hu ? 'Megtartottátok a pontot.' : 'You held the ground.'
 
@@ -222,5 +237,20 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
       return hu
         ? 'A csapatot fel kellett húzni a hajóra. A küldetés meghiúsult.'
         : 'The party had to be pulled back to the ship. The mission failed.'
+  }
+}
+
+/** What the site is about to do, in one phrase. */
+export function siteName(kind: SiteEventKind, lang: Lang): string {
+  const hu = lang === 'hu'
+  switch (kind) {
+    case 'surge':
+      return hu ? 'rúnalöket (+2 Fluxus)' : 'a rune surge (+2 Flux)'
+    case 'ashfall':
+      return hu ? 'hamuhullás (a padló egy része lassít)' : 'ashfall (part of the floor slows you)'
+    case 'reinforcement':
+      return hu ? 'valami átjön a túloldalról' : 'something comes through'
+    case 'collapse':
+      return hu ? 'beszakad a padló egy része' : 'part of the floor gives way'
   }
 }

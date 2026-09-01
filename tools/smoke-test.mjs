@@ -67,6 +67,12 @@ function botRandom() {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 }
 
+/** One of a plain array, using the same seeded dice as `randomOf`. */
+function randomItem(items) {
+  if (items.length === 0) return null
+  return items[Math.floor(botRandom() * items.length)]
+}
+
 async function randomOf(locator) {
   const n = await locator.count()
   if (n === 0) return null
@@ -238,8 +244,10 @@ await shotOnce('01-archive')
 // Launch a short expedition on a FIXED seed, so a failure can be reproduced by
 // typing the same number into the launch screen. Override with SMOKE_SEED=... —
 // the default is one whose route passes an encounter, a battle, a puzzle and a
-// market, so one run covers every kind of screen.
-const seed = process.env.SMOKE_SEED ?? '31337'
+// market, so one run covers every kind of screen. When the map or the content
+// changes the covering route changes with it — scan a handful of seeds with
+// SMOKE_SEED and move this number rather than dropping a coverage check.
+const seed = process.env.SMOKE_SEED ?? '8675309'
 botSeed = Number(seed) | 0
 await page.locator('[data-action="setLength"][data-length="short"]').click()
 await page.locator('[data-action="seed"]').fill(seed)
@@ -262,6 +270,18 @@ let lastWeek = '0'
 // does NOT work — moving a hero one tile changes no text at all — so there we
 // simply cap how many actions one mission may take.
 const summaryKinds = new Set()
+// Every screen the run passed through. Worth printing: when the route changes,
+// the fastest question to answer is which screens it stopped visiting.
+const screensSeen = new Set()
+const route = []
+/** What the run still has not shown. Empty means the bot may go home. */
+const missingCoverage = () =>
+  [
+    !sawEncounter && 'an encounter',
+    !sawMission && 'a landing battle',
+    !sawPuzzle && 'a puzzle',
+    !sawMarket && 'a market',
+  ].filter(Boolean)
 let lastFingerprint = ''
 let stalled = 0
 let missionActions = 0
@@ -271,6 +291,7 @@ let battleStalled = 0
 while (steps < 4000) {
   steps += 1
   const current = await screen()
+  screensSeen.add(current)
   lastWeek = (await page.locator('.app').getAttribute('data-week')) ?? lastWeek
 
   // The change summary is modal: it covers everything until it is read, so it
@@ -474,12 +495,37 @@ while (steps < 4000) {
   if (current === 'starmap') {
     await shotOnce('03-starmap')
     if (await tryAction('engageNode')) continue
-    if (await tryAction('openHeart')) continue
-    const course = await randomOf(page.locator('[data-action="setCourse"]'))
+
+    // The Heart ENDS the run, so while a screen is still uncovered the bot would
+    // rather be out here. A PREFERENCE, never a refusal: at the Gate there are no
+    // onward links and the week cannot be ended once the timer is out, so a bot
+    // that flatly refused the Heart sat there with nothing legal left and
+    // reported a dead end in the game that was really a dead end in itself.
+    const exploring = missingCoverage().length > 0
+    if (!exploring && (await tryAction('openHeart'))) continue
+
+    // Read the labels and choose by hand rather than with a text filter: a
+    // filter that matches nothing fails silently, and looks exactly like "the
+    // Gate was the only way on".
+    const all = await page.locator('[data-action="setCourse"]').all()
+    const labelled = []
+    for (const button of all) {
+      labelled.push({ button, text: await button.innerText().catch(() => '') })
+    }
+    const outward = exploring
+      ? labelled.filter((c) => !/Csillagsír|Stargrave/.test(c.text))
+      : labelled
+    const course = randomItem(outward.map((c) => c.button)) ?? randomItem(all)
     if (course) {
+      // The route is the most useful line in the output when coverage changes:
+      // it says where the run actually went, not just what it saw there.
+      route.push((await course.innerText()).replace(/\s+/g, ' ').trim())
       await course.click()
       continue
     }
+
+    // Nowhere left to go: take the ending after all.
+    if (await tryAction('openHeart')) continue
   }
 
   if (await tryAction('endWeek')) continue
@@ -494,12 +540,7 @@ await browser.close()
 // With the seed fixed the route is fixed too, so missing coverage is a real
 // regression rather than bad luck: this expedition passes a battle AND a puzzle.
 if (!process.env.SMOKE_SEED) {
-  const missing = [
-    !sawEncounter && 'an encounter',
-    !sawMission && 'a landing battle',
-    !sawPuzzle && 'a puzzle',
-    !sawMarket && 'a market',
-  ].filter(Boolean)
+  const missing = missingCoverage()
   if (missing.length) {
     errors.push(`coverage: the default seed no longer reaches ${missing.join(', ')}`)
   }
@@ -515,6 +556,8 @@ console.log(`Saw landing:    ${sawMission}`)
 console.log(`Saw puzzle:     ${sawPuzzle}`)
 console.log(`Saw market:     ${sawMarket}`)
 console.log(`Ended:          ${finalScreen ?? 'not within the action cap'}`)
+console.log(`Route:          ${route.join(' -> ') || 'never left the first system'}`)
+console.log(`Screens:        ${[...screensSeen].sort().join(', ')}`)
 console.log(`Summaries:      ${[...summaryKinds].sort().join(', ') || 'none seen'}`)
 console.log(`Screenshots:    ${OUT}/`)
 console.log(`Errors:         ${errors.length}`)

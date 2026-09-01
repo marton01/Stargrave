@@ -320,6 +320,75 @@ export function describeExpeditionEvent(event: ExpeditionEvent, lang: Lang): str
         ? `Parancs elbukva: ${pick(event.label, lang)}. A legénység hallott róla.`
         : `Order failed: ${pick(event.label, lang)}. The crew has heard about it.`
 
+    // ------------------------------------------------ the ship's own weeks
+
+    case 'aboardEvent':
+      return hu
+        ? `Történt valami a hajón: ${pick(event.title, lang)}${
+            event.owner ? ` — ${heroName(event.owner, lang)} dolga.` : '.'
+          }`
+        : `Something happened aboard: ${pick(event.title, lang)}${
+            event.owner ? ` — ${heroName(event.owner, lang)}’s call.` : '.'
+          }`
+
+    case 'debtCame':
+      return hu
+        ? `Amit korábban eldöntöttünk, ma ideért: ${pick(event.note, lang)}`
+        : `What we decided earlier arrived today: ${pick(event.note, lang)}`
+
+    case 'loyaltyShift':
+      return hu
+        ? `${event.name}: ${pick(event.band, lang)}.`
+        : `${event.name}: ${pick(event.band, lang)}.`
+
+    case 'crewRestless':
+      return hu
+        ? `${event.name} nem beszél senkivel, és pakolni kezdett. ${event.weeks} hét, és lemarad valahol.`
+        : `${event.name} is not speaking to anybody and has started packing. ${event.weeks} weeks, and they get off somewhere.`
+
+    case 'crewSettled':
+      return hu
+        ? `${event.name} meggondolta magát. A zsák visszakerült a szekrénybe.`
+        : `${event.name} has thought better of it. The bag went back in the locker.`
+
+    case 'crewDefected':
+      return hu
+        ? `${event.name} lelépett, és elvitte: ${pick(event.took, lang)}.`
+        : `${event.name} is gone, and took: ${pick(event.took, lang)}.`
+
+    case 'proposalMade':
+      return hu
+        ? `A ${event.by}. szék kérdez: ${pick(event.what, lang)}. Valaki másnak rá kell bólintania.`
+        : `Seat ${event.by} is asking: ${pick(event.what, lang)}. Somebody else has to agree.`
+
+    case 'proposalCarried':
+      return hu
+        ? `Megegyeztetek: ${pick(event.what, lang)}.`
+        : `Agreed: ${pick(event.what, lang)}.`
+
+    case 'proposalDropped':
+      return hu ? 'A kérdés visszavonva.' : 'The question was withdrawn.'
+
+    case 'watchSet':
+      return hu
+        ? `${heroName(event.hero, lang)} kiadta a heti őrséget: ${pick(event.duty, lang)}.`
+        : `${heroName(event.hero, lang)} set their duty for the week: ${pick(event.duty, lang)}.`
+
+    case 'watchDone':
+      return hu
+        ? `${heroName(event.hero, lang)}: ${pick(event.duty, lang)} — kész.`
+        : `${heroName(event.hero, lang)}: ${pick(event.duty, lang)} — done.`
+
+    case 'taskSolved':
+      return hu
+        ? 'A zárósor kinyílt. Négy fej, négy fél leírás — és mégis megvolt.'
+        : 'The closing line opened. Four heads, four half-descriptions — and it still came out.'
+
+    case 'taskFailed':
+      return hu
+        ? 'A zárósor bezárult, és nem nyílik többet. A legénység hallotta, ahogy nem sikerül.'
+        : 'The closing line shut, and it will not open again. The crew heard it fail.'
+
     case 'heartRead':
       return hu
         ? 'Leültünk a Csillagsír pereme elé, hogy elolvassuk, mielőtt bármit döntünk.'

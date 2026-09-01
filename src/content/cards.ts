@@ -537,6 +537,526 @@ export const CARDS: Card[] = [
     },
   },
 
+
+  // ================================================================== CANTOR
+  //
+  // The support. Every other class solves a problem by removing an enemy; she
+  // solves it by keeping somebody standing. Which is why she only exists once
+  // there are three or four heroes on the board: with two, a healer is half the
+  // party and the fight becomes a stalemate.
+  //
+  // BALANCE: her attacks are deliberately mediocre — 2 at range 2 is the ceiling
+  // for a non-lost half. What she has instead is the only reliable healing on the
+  // grid, and the only card in the game that hands out Flux.
+
+  {
+    id: 'ct-steady-note',
+    name: { hu: 'Nyugtató hang', en: 'Steady Note' },
+    heroClass: 'cantor',
+    initiative: 40,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Gyógyíts 2-t magadon és a legközelebbi társadon',
+        en: 'Heal 2 on yourself and your nearest ally',
+      },
+      effects: [{ k: 'heal', power: 2, alsoPartner: true }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 3', en: 'Move 3' },
+      effects: [{ k: 'move', distance: 3 }],
+    },
+  },
+
+  {
+    id: 'ct-litany',
+    name: { hu: 'Litánia', en: 'Litany' },
+    heroClass: 'cantor',
+    initiative: 55,
+    symbols: ['insight'],
+    top: {
+      text: { hu: 'Támadás 2, hatótáv 2', en: 'Attack 2, range 2' },
+      effects: [{ k: 'attack', power: 2, range: 2 }],
+    },
+    bottom: {
+      text: {
+        hu: 'Vért 1 magadra és a legközelebbi társadra',
+        en: 'Shield 1 to yourself and your nearest ally',
+      },
+      effects: [{ k: 'shield', power: 1, alsoPartner: true }],
+    },
+  },
+
+  {
+    id: 'ct-hold-the-line',
+    name: { hu: 'Tartsd a sort', en: 'Hold the Line' },
+    heroClass: 'cantor',
+    initiative: 25,
+    symbols: ['force'],
+    top: {
+      text: {
+        hu: 'Vért 2 magadra és a legközelebbi társadra',
+        en: 'Shield 2 to yourself and your nearest ally',
+      },
+      effects: [{ k: 'shield', power: 2, alsoPartner: true }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
+  {
+    id: 'ct-open-throat',
+    name: { hu: 'Nyitott torok', en: 'Open Throat' },
+    heroClass: 'cantor',
+    initiative: 60,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Gyógyíts 3-at magadon és a legközelebbi társadon',
+        en: 'Heal 3 on yourself and your nearest ally',
+      },
+      flux: 1,
+      effects: [{ k: 'heal', power: 3, alsoPartner: true }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
+  {
+    id: 'ct-hymn-of-iron',
+    name: { hu: 'Vas-himnusz', en: 'Hymn of Iron' },
+    heroClass: 'cantor',
+    initiative: 35,
+    symbols: ['force'],
+    top: {
+      text: { hu: 'Támadás 3, hatótáv 1', en: 'Attack 3, range 1' },
+      effects: [{ k: 'attack', power: 3, range: 1 }],
+    },
+    bottom: {
+      text: { hu: 'Vért 2 magadra', en: 'Shield 2 to yourself' },
+      effects: [{ k: 'shield', power: 2 }],
+    },
+  },
+
+  {
+    id: 'ct-breath',
+    name: { hu: 'Lélegzet', en: 'Breath' },
+    heroClass: 'cantor',
+    initiative: 20,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Gyógyíts 1-et magadon és a legközelebbi társadon',
+        en: 'Heal 1 on yourself and your nearest ally',
+      },
+      effects: [{ k: 'heal', power: 1, alsoPartner: true }],
+    },
+    bottom: {
+      text: {
+        hu: 'Vegyél vissza egy lapot az eldobottak közül',
+        en: 'Take a card back from your discard pile',
+      },
+      effects: [{ k: 'recoverCard' }],
+    },
+  },
+
+  {
+    id: 'ct-choir-call',
+    name: { hu: 'Kórushívás', en: 'Choir Call' },
+    heroClass: 'cantor',
+    initiative: 50,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Területsebzés 1 magad körül, sugár 2. A találtak megvakulnak.',
+        en: 'Area attack 1 around yourself, radius 2. Everything hit is blinded.',
+      },
+      effects: [
+        { k: 'areaAroundSelf', power: 1, radius: 2, status: { kind: 'blind', rounds: 1 } },
+      ],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
+  {
+    id: 'ct-marching-song',
+    name: { hu: 'Menetdal', en: 'Marching Song' },
+    heroClass: 'cantor',
+    initiative: 70,
+    symbols: ['force'],
+    top: {
+      text: { hu: 'Támadás 2, hatótáv 2', en: 'Attack 2, range 2' },
+      effects: [{ k: 'attack', power: 2, range: 2 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 4', en: 'Move 4' },
+      effects: [{ k: 'move', distance: 4 }],
+    },
+  },
+
+  {
+    id: 'ct-flux-hymn',
+    name: { hu: 'Fluxus-ének', en: 'Flux Hymn' },
+    heroClass: 'cantor',
+    initiative: 45,
+    symbols: ['insight'],
+    top: {
+      text: { hu: 'A csapat 2 Fluxust kap', en: 'The party gains 2 Flux' },
+      effects: [{ k: 'flux', power: 2 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
+  {
+    id: 'ct-shield-of-voices',
+    name: { hu: 'Hangpajzs', en: 'Shield of Voices' },
+    heroClass: 'cantor',
+    initiative: 30,
+    symbols: ['force', 'insight'],
+    top: {
+      text: {
+        hu: 'Vért 3 magadra és a legközelebbi társadra',
+        en: 'Shield 3 to yourself and your nearest ally',
+      },
+      flux: 1,
+      effects: [{ k: 'shield', power: 3, alsoPartner: true }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
+  {
+    id: 'ct-rebuke',
+    name: { hu: 'Dorgálás', en: 'Rebuke' },
+    heroClass: 'cantor',
+    initiative: 65,
+    symbols: ['force'],
+    top: {
+      text: {
+        hu: 'Támadás 2, hatótáv 2. A cél legyengül.',
+        en: 'Attack 2, range 2. The target is weakened.',
+      },
+      effects: [
+        { k: 'attack', power: 2, range: 2, status: { kind: 'weakened', rounds: 2 } },
+      ],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 3', en: 'Move 3' },
+      effects: [{ k: 'move', distance: 3 }],
+    },
+  },
+
+  {
+    id: 'ct-name-the-fallen',
+    name: { hu: 'A nevek felolvasása', en: 'Naming the Fallen' },
+    heroClass: 'cantor',
+    initiative: 15,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Gyógyíts 4-et és adj Vért 2-t magadnak és a legközelebbi társadnak. A lap elvész.',
+        en: 'Heal 4 and Shield 2 to yourself and your nearest ally. The card is lost.',
+      },
+      lostOnUse: true,
+      effects: [
+        { k: 'heal', power: 4, alsoPartner: true },
+        { k: 'shield', power: 2, alsoPartner: true },
+      ],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 1', en: 'Move 1' },
+      effects: [{ k: 'move', distance: 1 }],
+    },
+  },
+
+  {
+    id: 'ct-last-verse',
+    name: { hu: 'Utolsó versszak', en: 'Last Verse' },
+    heroClass: 'cantor',
+    initiative: 80,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Gyógyíts 5-öt magadon és a legközelebbi társadon. A lap elvész.',
+        en: 'Heal 5 on yourself and your nearest ally. The card is lost.',
+      },
+      lostOnUse: true,
+      effects: [{ k: 'heal', power: 5, alsoPartner: true }],
+    },
+    bottom: {
+      text: {
+        hu: 'Területsebzés 2 magad körül, sugár 1',
+        en: 'Area attack 2 around yourself, radius 1',
+      },
+      effects: [{ k: 'areaAroundSelf', power: 2, radius: 1 }],
+    },
+  },
+
+  // ================================================================ SURVEYOR
+  //
+  // The artillery. Everything he does is at a distance, and everything is slow:
+  // his initiative numbers are the highest in the game, so he acts after the
+  // enemies have committed to something. He is the reason a party of four wants
+  // somebody standing in front.
+  //
+  // BALANCE: range 4-6 with almost no defence at all — 8 hit points and a single
+  // Shield half in the whole deck. Anything that reaches him kills him.
+
+  {
+    id: 'sv-quick-sight',
+    name: { hu: 'Gyors szemmérték', en: 'Quick Sight' },
+    heroClass: 'surveyor',
+    initiative: 15,
+    symbols: ['insight'],
+    top: {
+      text: { hu: 'Támadás 2, hatótáv 4', en: 'Attack 2, range 4' },
+      effects: [{ k: 'attack', power: 2, range: 4 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 4', en: 'Move 4' },
+      effects: [{ k: 'move', distance: 4 }],
+    },
+  },
+
+  {
+    id: 'sv-star-fix',
+    name: { hu: 'Csillagpont', en: 'Star Fix' },
+    heroClass: 'surveyor',
+    initiative: 20,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Egy ellenfél 5 mezőn belül Horgony alá kerül',
+        en: 'An enemy within 5 tiles is Anchored',
+      },
+      effects: [{ k: 'status', status: 'anchor', rounds: 2, range: 5 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2, majd Vért 1 magadra', en: 'Move 2, then Shield 1 to yourself' },
+      effects: [
+        { k: 'move', distance: 2 },
+        { k: 'shield', power: 1 },
+      ],
+    },
+  },
+
+  {
+    id: 'sv-fall-back',
+    name: { hu: 'Hátralépés', en: 'Fall Back' },
+    heroClass: 'surveyor',
+    initiative: 25,
+    symbols: ['force'],
+    top: {
+      text: {
+        hu: 'Támadás 2, hatótáv 3, hátralökés 1',
+        en: 'Attack 2, range 3, knockback 1',
+      },
+      effects: [{ k: 'attack', power: 2, range: 3, knockback: 1 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 4', en: 'Move 4' },
+      effects: [{ k: 'move', distance: 4 }],
+    },
+  },
+
+  {
+    id: 'sv-range-mark',
+    name: { hu: 'Bemérés', en: 'Ranging Mark' },
+    heroClass: 'surveyor',
+    initiative: 30,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Egy ellenfél 5 mezőn belül Rúnajel alá kerül',
+        en: 'An enemy within 5 tiles is Rune Marked',
+      },
+      effects: [{ k: 'status', status: 'runeMark', rounds: 3, range: 5 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 3', en: 'Move 3' },
+      effects: [{ k: 'move', distance: 3 }],
+    },
+  },
+
+  {
+    id: 'sv-spotter',
+    name: { hu: 'Megfigyelő', en: 'Spotter' },
+    heroClass: 'surveyor',
+    initiative: 35,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Egy ellenfél 5 mezőn belül megvakul',
+        en: 'An enemy within 5 tiles is blinded',
+      },
+      effects: [{ k: 'status', status: 'blind', rounds: 2, range: 5 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 3', en: 'Move 3' },
+      effects: [{ k: 'move', distance: 3 }],
+    },
+  },
+
+  {
+    id: 'sv-set-the-legs',
+    name: { hu: 'Állványozás', en: 'Setting the Legs' },
+    heroClass: 'surveyor',
+    initiative: 45,
+    symbols: ['force'],
+    top: {
+      text: { hu: 'Támadás 3, hatótáv 4', en: 'Attack 3, range 4' },
+      effects: [{ k: 'attack', power: 3, range: 4 }],
+    },
+    bottom: {
+      text: { hu: 'Vért 1 magadra', en: 'Shield 1 to yourself' },
+      effects: [{ k: 'shield', power: 1 }],
+    },
+  },
+
+  {
+    id: 'sv-plumb-line',
+    name: { hu: 'Függőón', en: 'Plumb Line' },
+    heroClass: 'surveyor',
+    initiative: 50,
+    symbols: ['force'],
+    top: {
+      text: {
+        hu: 'Támadás 3, hatótáv 3. A cél földre kerül.',
+        en: 'Attack 3, range 3. The target is knocked prone.',
+      },
+      effects: [{ k: 'attack', power: 3, range: 3, status: { kind: 'prone', rounds: 1 } }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 3', en: 'Move 3' },
+      effects: [{ k: 'move', distance: 3 }],
+    },
+  },
+
+  {
+    id: 'sv-triangulate',
+    name: { hu: 'Háromszögelés', en: 'Triangulation' },
+    heroClass: 'surveyor',
+    initiative: 55,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Támadás 2, hatótáv 5, két külön célpontra',
+        en: 'Attack 2, range 5, on two separate targets',
+      },
+      effects: [{ k: 'attack', power: 2, range: 5, targets: 2 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 1', en: 'Move 1' },
+      effects: [{ k: 'move', distance: 1 }],
+    },
+  },
+
+  {
+    id: 'sv-scatter-shot',
+    name: { hu: 'Szórás', en: 'Scatter Shot' },
+    heroClass: 'surveyor',
+    initiative: 60,
+    symbols: ['force'],
+    top: {
+      text: {
+        hu: 'Területsebzés 2 egy 4 mezőn belüli pontra, sugár 1',
+        en: 'Area attack 2 at a point within 4 tiles, radius 1',
+      },
+      effects: [{ k: 'areaAtPoint', power: 2, range: 4, radius: 1 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
+  {
+    id: 'sv-shell',
+    name: { hu: 'Gránát', en: 'Shell' },
+    heroClass: 'surveyor',
+    initiative: 70,
+    symbols: ['force'],
+    top: {
+      text: {
+        hu: 'Területsebzés 3 egy 5 mezőn belüli pontra, sugár 1',
+        en: 'Area attack 3 at a point within 5 tiles, radius 1',
+      },
+      flux: 1,
+      effects: [{ k: 'areaAtPoint', power: 3, range: 5, radius: 1 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
+  {
+    id: 'sv-long-shot',
+    name: { hu: 'Hosszú lövés', en: 'Long Shot' },
+    heroClass: 'surveyor',
+    initiative: 75,
+    symbols: ['force', 'insight'],
+    top: {
+      text: { hu: 'Támadás 4, hatótáv 5', en: 'Attack 4, range 5' },
+      flux: 1,
+      effects: [{ k: 'attack', power: 4, range: 5 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
+  {
+    id: 'sv-steady-hand',
+    name: { hu: 'Biztos kéz', en: 'Steady Hand' },
+    heroClass: 'surveyor',
+    initiative: 80,
+    symbols: ['force'],
+    top: {
+      text: { hu: 'Támadás 5, hatótáv 4. A lap elvész.', en: 'Attack 5, range 4. The card is lost.' },
+      lostOnUse: true,
+      effects: [{ k: 'attack', power: 5, range: 4 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 1', en: 'Move 1' },
+      effects: [{ k: 'move', distance: 1 }],
+    },
+  },
+
+  {
+    id: 'sv-final-measure',
+    name: { hu: 'Utolsó mérés', en: 'The Last Measure' },
+    heroClass: 'surveyor',
+    initiative: 10,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Területsebzés 3 egy 6 mezőn belüli pontra, sugár 2. A lap elvész.',
+        en: 'Area attack 3 at a point within 6 tiles, radius 2. The card is lost.',
+      },
+      flux: 1,
+      lostOnUse: true,
+      effects: [{ k: 'areaAtPoint', power: 3, range: 6, radius: 2 }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2', en: 'Move 2' },
+      effects: [{ k: 'move', distance: 2 }],
+    },
+  },
+
   // ==================================================== ADVANCEMENT CARDS
   //
   // Not in either starting deck. Each one is bought with the hero's own marks

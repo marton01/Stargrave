@@ -36,6 +36,8 @@ export type PerkEffect = {
   attunements?: number
   /** Attention shed every week. */
   attention?: number
+  /** Where morale is heading, every week. */
+  moraleTarget?: number
   /** A card added to this hero's deck for good. */
   card?: string
   /** Cards taken back from the lost pile after every landing. */
@@ -60,6 +62,8 @@ export type HeroPerk = {
 export const MARK_NAMES: Record<HeroClassId, Text> = {
   runesmith: { hu: 'kovácsjegy', en: 'forge mark' },
   echoreader: { hu: 'visszhangjegy', en: 'echo mark' },
+  cantor: { hu: 'hangjegy', en: 'note' },
+  surveyor: { hu: 'mérőjegy', en: 'survey mark' },
 }
 
 /** How the two of them earn marks, in one line each, for the interface. */
@@ -79,6 +83,22 @@ export const MARK_SOURCES: Record<HeroClassId, Text> = {
     en:
       'One for every landing won. Two more for every mechanism solved — understanding is on her ' +
       'account.',
+  },
+  cantor: {
+    hu:
+      'Minden megnyert partraszállásért 1. Minden olyanért, amiből mindenki a saját lábán jött ' +
+      'vissza, +2 — a legénység épsége az ő számlája.',
+    en:
+      'One for every landing won. Two more for every one that everybody walked away from on their ' +
+      'own feet — the party coming back whole is on her account.',
+  },
+  surveyor: {
+    hu:
+      'Minden megnyert partraszállásért 1. Minden héten, amikor az Érzékelők felfedtek valamit ' +
+      'előre, +1 — az előrelátás az ő számlája.',
+    en:
+      'One for every landing won. One more for every week the Sensors revealed something ahead — ' +
+      'seeing the road first is on his account.',
   },
 }
 
@@ -235,6 +255,131 @@ export const HERO_PERKS: HeroPerk[] = [
     description: {
       hu: 'Két ereklyét hallgat egyszerre. Két ráhangolt ereklye.',
       en: 'She listens to two at once. Two relics attuned.',
+    },
+    cost: 3,
+    requires: [],
+    effect: { attunements: 1 },
+  },
+
+  // ================================================================= CANTOR
+  {
+    id: 'cantor-deep-breath',
+    heroClass: 'cantor',
+    name: { hu: 'Mély levegő', en: 'Deep Breath' },
+    description: {
+      hu: 'Több hang fér bele. +3 maximális életerő.',
+      en: 'More voice fits in. +3 maximum hit points.',
+    },
+    cost: 2,
+    requires: [],
+    effect: { heroHp: 3 },
+  },
+  {
+    id: 'cantor-ward-song',
+    heroClass: 'cantor',
+    name: { hu: 'Óvó ének', en: 'Warding Song' },
+    description: {
+      hu: 'Amit énekel, az a hajón is tart. A találkozások 1-gyel kevesebb hajótestet visznek.',
+      en: 'What she sings holds on the ship too. Encounters cost 1 less hull.',
+    },
+    cost: 3,
+    requires: ['cantor-deep-breath'],
+    effect: { wards: 1 },
+  },
+  {
+    id: 'cantor-sanctuary',
+    heroClass: 'cantor',
+    name: { hu: 'Menedék', en: 'Sanctuary' },
+    description: {
+      hu: 'A Szentély hangja megváltozik: +1 a morál-célhoz, minden héten.',
+      en: 'The Sanctum sounds different: +1 to the morale target, every week.',
+    },
+    cost: 4,
+    requires: ['cantor-ward-song'],
+    effect: { moraleTarget: 1 },
+  },
+  {
+    id: 'cantor-teacher',
+    heroClass: 'cantor',
+    name: { hu: 'Tanítómester', en: 'Teacher' },
+    description: {
+      hu: 'Négy embert tud a szárnyai alá venni három helyett.',
+      en: 'She can take four people under her wing instead of three.',
+    },
+    cost: 3,
+    requires: [],
+    effect: { mentees: 1 },
+  },
+  {
+    id: 'cantor-relicbearer',
+    heroClass: 'cantor',
+    name: { hu: 'Ereklyeőrző', en: 'Relic keeper' },
+    description: {
+      hu: 'Két ereklyét hordhat egyszerre ráhangolva.',
+      en: 'Two relics attuned at once.',
+    },
+    cost: 3,
+    requires: [],
+    effect: { attunements: 1 },
+  },
+
+  // =============================================================== SURVEYOR
+  {
+    id: 'surveyor-longsight',
+    heroClass: 'surveyor',
+    name: { hu: 'Távmérés', en: 'Rangefinding' },
+    description: {
+      hu:
+        'Egy oszloppal többet fed fel a csillagtérképből hetente — amíg az Érzékelő állomás megy.',
+      en: 'One more column of star map a week — while the Sensors station is running.',
+    },
+    cost: 2,
+    requires: [],
+    effect: { sensorRange: 1 },
+  },
+  {
+    id: 'surveyor-braced',
+    heroClass: 'surveyor',
+    name: { hu: 'Kitámasztás', en: 'Braced' },
+    description: {
+      hu: 'Megtanul úgy állni, hogy ne dőljön föl. +2 maximális életerő.',
+      en: 'He learns to stand so that he does not go over. +2 maximum hit points.',
+    },
+    cost: 2,
+    requires: [],
+    effect: { heroHp: 2 },
+  },
+  {
+    id: 'surveyor-charges',
+    heroClass: 'surveyor',
+    name: { hu: 'Töltetek', en: 'Charges' },
+    description: {
+      hu: 'A partraszálló csapat +1 Fluxussal indul: az ő lövései abból mennek.',
+      en: 'The landing party starts with 1 more Flux: his shots come out of it.',
+    },
+    cost: 3,
+    requires: ['surveyor-braced'],
+    effect: { flux: 1 },
+  },
+  {
+    id: 'surveyor-quiet-optics',
+    heroClass: 'surveyor',
+    name: { hu: 'Csendes optika', en: 'Quiet Optics' },
+    description: {
+      hu: 'Nézni lehet feltűnés nélkül is. Hetente 1 figyelemmel kevesebb.',
+      en: 'Looking can be done without being noticed. One less attention a week.',
+    },
+    cost: 3,
+    requires: ['surveyor-longsight'],
+    effect: { attention: -1 },
+  },
+  {
+    id: 'surveyor-relicbearer',
+    heroClass: 'surveyor',
+    name: { hu: 'Ereklyemérő', en: 'Relic gauger' },
+    description: {
+      hu: 'Két ereklyét hordhat egyszerre ráhangolva.',
+      en: 'Two relics attuned at once.',
     },
     cost: 3,
     requires: [],

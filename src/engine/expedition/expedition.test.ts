@@ -85,6 +85,15 @@ function nextAction(s: ExpeditionState, rng: Rng): ExpeditionAction | null {
       return { k: 'missionFinish' }
     }
 
+    // A rune line. The bot can see the secret order, which is the one thing no
+    // player can — it is here to prove the activity runs to an end, not to
+    // prove it is solvable. That is what runeline.test.ts is for.
+    if (mission.k === 'task') {
+      const next = mission.task.order[mission.task.done.length]
+      if (next === undefined) return { k: 'missionFinish' }
+      return { k: 'taskPress', rune: next }
+    }
+
     // A battle. Same shape as the battle test's bot.
     const b = mission.battle
     if (b.phase === 'cardSelection') {
@@ -328,7 +337,7 @@ describe('archive and saving', () => {
 
   it('a save round-trips, and a broken one does not crash the game', () => {
     const { s } = run(11)
-    const state = { archive: bankExpedition(newArchive(), s), expedition: s }
+    const state = { archive: bankExpedition(newArchive(), s), expedition: s, room: null }
     const restored = parseSave(serialiseSave(state))
     expect(restored).not.toBeNull()
     expect(restored!.expedition?.week).toBe(s.week)

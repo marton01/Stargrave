@@ -2,6 +2,7 @@
 // A separate file so that the effect resolver and the round logic do not have
 // to import each other.
 
+import { distance } from './grid'
 import type { BattleState, Enemy, Hero, LogEvent, StatusKind, Unit } from './types'
 
 export function clone<T>(x: T): T {
@@ -38,9 +39,22 @@ export function unitById(s: BattleState, id: string): Unit | undefined {
   return s.units.find((u) => u.id === id)
 }
 
-/** The other hero — the "partner". May already be gone. */
+/**
+ * The ally a card means by "your partner": the nearest living other hero.
+ *
+ * With two on the board this is simply the other one, which is what it always
+ * was. With three or four it has to pick, and nearest is the only answer that
+ * needs no extra click and reads the same way in the fiction — you shield the
+ * one standing next to you. Ties break by the unit order, so it stays
+ * deterministic.
+ */
 export function partnerOf(s: BattleState, heroId: string): Hero | undefined {
-  return heroes(s).find((h) => h.id !== heroId && h.alive)
+  const self = heroes(s).find((h) => h.id === heroId)
+  const others = heroes(s).filter((h) => h.id !== heroId && h.alive)
+  if (!self) return others[0]
+  return others
+    .slice()
+    .sort((a, b) => distance(self.pos, a.pos) - distance(self.pos, b.pos))[0]
 }
 
 export function log(s: BattleState, event: LogEvent): void {

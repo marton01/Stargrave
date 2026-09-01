@@ -14,7 +14,7 @@ import type { Lang, Text } from '../engine/types'
 const HU = {
   // ------------------------------------------------------------------ shell
   appTitle: 'Csillagsír',
-  appSubtitle: 'kooperatív expedíció két főre',
+  appSubtitle: 'kooperatív expedíció 1-4 főre',
   language: 'Nyelv',
   helpTitle: 'Súgó és játékszabályok (F1)',
   soundTitle: 'Hang be- és kikapcsolása',
@@ -45,6 +45,7 @@ const HU = {
   wipeItemExpedition: 'a futó expedíció, azonnal — nem kerül be az Archívumba',
   wipeItemArchive: 'az Archívum: pontok, feloldások, végkifejletek, a hosszú emlékezet',
   wipeItemSave: 'a böngészőben tárolt mentés',
+  wipeItemRooms: 'minden szoba, amit ez a böngésző ismer — és a játékoskulcsod is',
   wipeHint: 'Nincs visszavonás. Ha meg akarod tartani, előbb exportáld a mentést az Archívum képernyőjén.',
   wipeConfirm: 'Törlés és új játék',
   bondActive: '⇄ Kötés: +1 sebzés',
@@ -54,7 +55,7 @@ const HU = {
   projectionHint:
     'Ennyivel változik a hét végén, ha az energia-elosztás és a legénység-beosztás így marad.',
   bondHint:
-    'A két hős 2 mezőn belül van egymástól, ezért mindkettő támadása +1-et sebez. Ezért sebez egy „Támadás 3" néha 4-et.',
+    'Van társ 2 mezőn belül, ezért mindkettőtök támadása +1-et sebez. Ezért sebez egy „Támadás 3" néha 4-et.',
   endingsHeading: 'Végkifejletek',
   endingsProgress: (seen: number, total: number) =>
     `${seen} / ${total} megvan. A cél nem a túlélés, hanem hogy mind az ötöt lássátok — és utána az, ami belőlük következik.`,
@@ -295,10 +296,10 @@ const HU = {
   missionLaunch: 'Indulás',
   missionFinish: 'Jelentés a hajóra',
   objectiveEliminate: 'Minden ellenséget le kell győzni.',
-  objectiveReachExit: 'MINDKÉT hősnek el kell jutnia a kimenekítési pontra (rá vagy mellé).',
+  objectiveReachExit: 'MINDEN hősnek el kell jutnia a kimenekítési pontra (rá vagy mellé).',
   atExitCount: (there: number, total: number) => `${there}/${total} a kijáratnál`,
   objectiveCollect: (n: number) =>
-    `${n} ereklyét kell begyűjteni, majd MINDKÉT hősnek ki a kimenekítési ponton.`,
+    `${n} ereklyét kell begyűjteni, majd MINDENKINEK ki a kimenekítési ponton.`,
   objectiveSurvive: (n: number) => `${n} körig ki kell tartani. Az erősítés folyamatosan jön.`,
   objectiveHold: (n: number) => `A jelölt pontot kell megtartani a ${n}. kör végén.`,
   objectiveLabel: 'Cél',
@@ -502,7 +503,7 @@ const HU = {
     'Ugyanaz a szám három helyen: az ellenfél mezőjén (jobbra fent), az ellenfél neve mellett az oldalsávban, és a saját lapjaid BAL FELSŐ sarkában. Ez a kezdeményezés: aki kisebb, az lép előbb. A körödben a két kiválasztott lap közül az adja a tiédet, amelyiket kezdeményezésnek jelölöd — ezért nem mindegy, melyiket.',
   badgeBond: 'Kötés (a hős kártyáján, zöld)',
   badgeBondText:
-    'Ha a két hős 2 mezőn belül van egymástól, MINDKETTŐ támadása +1-et sebez. Ezért sebez egy „Támadás 3" négyet. Amikor célpontot választasz, a rács a célpont közepére kiírja, mennyit visz el a találat — abban a számban már minden benne van: Kötés, Rúnajel, Vért, ledöntés.',
+    'Ha van társad 2 mezőn belül, MINDKETTŐTÖK támadása +1-et sebez — hárman-négyen is, mindenkire külön. Ezen felül: ha ugyanabban a körben már megsebezte valaki ugyanazt az ellenfelet, a te találatod további +1-et visz (Összehangolás). Amikor célpontot választasz, a rács a célpont közepére kiírja, mennyit visz el a találat — abban a számban már minden benne van: Kötés, Összehangolás, Rúnajel, Vért, ledöntés.',
   badgeShield: 'Vért (balra fent, kék)',
   badgeShieldText: 'Ennyivel csökken a következő találat sebzése, aztán a Vért 1-gyel fogy.',
   badgeStatusDots: 'Állapotpontok (balra lent)',
@@ -611,6 +612,113 @@ const HU = {
   domainHint:
     'A hajó két félre van osztva: a Rúnakovács a gépészetért, a Visszhang-olvasó a kutatásért ' +
     'felel. Ami közös, arról tényleg együtt kell döntenetek.',
+
+  // ------------------------------------------------------- modes and rooms
+  modeSolo: 'Egyedül',
+  modeSoloText:
+    'Egy ember viszi az egész csapatot. Minden pult a tiéd, semmi nincs zárolva.',
+  modeLocal: 'Egy gépen, többen',
+  modeLocalText:
+    'Ketten-négyen egy billentyűzet előtt. Aki épp az egérnél ül, bármit megnyomhat — a pultok csak azt mutatják, kinek mi a dolga.',
+  modeOnline: 'Online, külön gépeken',
+  modeOnlineText:
+    'Ketten-négyen, mindenki a saját gépén. Szobakódot kaptok, azzal léptek be. A saját hősödet csak te mozgathatod; a hajó közös.',
+  playersHeading: 'Hányan játszotok',
+  partyHeading: 'Ki kivel',
+  partyHint: 'Bárki bármelyiket viheti. Ha olyat választasz, ami már foglalt, cseréltek.',
+  playersCount: (n: number) => `${n} játékos`,
+  playersHint: (n: number): string =>
+    n <= 2
+      ? 'Rúnakovács és Visszhang-olvasó.'
+      : n === 3
+        ? 'Rúnakovács, Visszhang-olvasó és Kántor.'
+        : 'Mind a négy: Rúnakovács, Visszhang-olvasó, Kántor, Csillagmérő.',
+  launchRoom: 'Szoba nyitása',
+  joinHeading: 'Csatlakozás egy szobához',
+  joinIntro:
+    'Ha valaki már nyitott szobát, írd be a kódját. A kód magában hordozza a magot, a hosszt és a létszámot — ezért mindenki bitre ugyanazt a galaxist kapja, mielőtt bárki bármit átküldene.',
+  roomCode: 'Szobakód',
+  joinRoom: 'Belépek',
+  joinBadCode: 'Ez nem érvényes kód — nézd meg még egyszer.',
+  roomsKnown: 'Szobák, amiket ez a böngésző ismer',
+  roomRowMeta: (players: number, week: number): string =>
+    week > 0 ? `${players} fő · ${week}. hét` : `${players} fő · még el sem indult`,
+  roomRejoin: 'Vissza ide',
+
+  // --------------------------------------------------------------- the lobby
+  lobbyHeading: 'A szoba',
+  lobbyIntro:
+    'Mondd be a kódot a többieknek. Amíg nem ül mindenki a helyén, az expedíció nem indul el.',
+  seatsHeading: 'Székek',
+  seatsFree: (n: number): string => (n === 0 ? 'mindenki a helyén' : `${n} szabad hely`),
+  seatEmpty: 'szabad',
+  seatUnnamed: 'névtelen',
+  seatYou: 'te',
+  seatSit: 'Ide ülök',
+  seatStand: 'Felállok',
+  seatFree: 'Felszabadítom',
+  seatTaken: 'foglalt',
+  seatNoneYours: 'Még nem ülsz sehol. Válassz egy széket — a hősödet csak onnan tudod mozgatni.',
+  yourName: 'A neved',
+  yourNamePlaceholder: 'ahogy a többiek látnak',
+  playerKeyHeading: 'A játékoskulcsod',
+  playerKeyIntro:
+    'Ez tesz vissza a saját székedbe, bármelyik gépről. A böngésző megjegyzi, de ha kitörlöd az adatokat, csak ez marad — írd fel valahova. (Ha elveszne: a házigazda fel tudja szabadítani a székedet, és újra beülhetsz.)',
+  playerKeyShow: 'Megmutat',
+  playerKeyHide: 'Elrejt',
+  copy: 'Másolás',
+  copied: 'Kimásolva',
+  lobbyBegin: 'Indulás a Kapun',
+  lobbyWaiting: 'Várunk a többiekre…',
+  lobbyGuestWait: 'A házigazda indítja el, ha mindenki a helyén van.',
+  lobbyLeave: 'Kilépés a szobából',
+  netOff: 'nincs kapcsolat',
+  netOpening: 'kapcsolódás…',
+  netHosting: (peers: number) => `te vagy a házigazda · ${peers} csatlakozott`,
+  netJoined: 'csatlakozva',
+  netLost: 'megszakadt a kapcsolat',
+  notYourHero: 'Ez nem a te hősöd — az ő gépén kell lépni vele.',
+  notYourTurn: (who: string) => `Most ${who} lép — az ő gépén kell megnyomni.`,
+  // ------------------------------------------------------ the split task
+  proposalHeading: 'Kérdés az asztalnak',
+  proposalAsked: (who: string, what: string) =>
+    `${who} ezt kérdezi: ${what}. Ehhez még valakinek rá kell bólintania — utána nincs visszaút.`,
+  proposalAgree: 'Rábólintok',
+  proposalRefuse: 'Ne most',
+  proposalWithdraw: 'Visszavonom',
+  watchHeading: 'A heti őrséged',
+  watchIntro:
+    'Minden héten egy döntés, ami csak a tiéd. A hét végén lefut, aztán újra kérdez. Aki nem ad ki őrséget, az egyszerűen nem csinál semmit — nincs büntetés, csak kimaradsz belőle.',
+  watchSetLabel: 'kiadva',
+  watchUnset: 'még nincs kiadva',
+  watchPending: (n: number): string =>
+    n === 0 ? 'Mindenki kiadta a heti őrségét.' : `${n} pulton még nincs kiadva a heti őrség.`,
+  siteNow: (what: string) => `A helyszín: ${what} — a kör végén`,
+  siteIn: (what: string, rounds: number) => `A helyszín: ${what} — ${rounds} kör múlva`,
+  focusHint:
+    'Ha ugyanabban a körben már megsebezte valaki ezt az ellenfelet, a te találatod +1-et sebez. A rácson kiírt szám ezt már tartalmazza.',
+  taskHeading: 'Zárósor',
+  taskSeat: (slot: number) => `${slot}. szék`,
+  taskYours: 'a tiéd',
+  taskTheirs: 'az övé',
+  taskNotYours: (who: string) => `Ezt ${who} tudja megnyomni — szólj neki.`,
+  taskNoClues: 'Neked most nem jutott leírás — te a rúnáidat nyomod, amikor mondják.',
+  taskHidden: (n: number): string =>
+    n === 1 ? '1 leírás, amit csak ő lát' : `${n} leírás, amit csak ő lát`,
+  taskStrikes: (used: number, max: number) => `Hibák: ${used} / ${max}`,
+  taskSolved: 'A zárósor kinyílt.',
+  taskFailed: 'A zárósor bezárult. Nem nyílik többet.',
+  // --------------------------------------------------- the ship's own weeks
+  aboardHeading: 'A hajón',
+  aboardOwner: (who: string) => `${who} dolga eldönteni`,
+  aboardAnybody: 'Bárki eldöntheti',
+  aboardSubject: (name: string) => `róla van szó: ${name}`,
+  crewLoyalty: (band: string, value: number) => `${band} (hűség ${value}/10)`,
+  debtsHeading: 'Ami még jön',
+  debtsMeta: (n: number): string => (n === 1 ? '1 dolog' : `${n} dolog`),
+  debtsIntro:
+    'Amit korábban eldöntöttetek, és még nem ért ide. Ezek maguktól megtörténnek — nem kell velük semmit tenni, csak tudni róluk.',
+  debtIn: (weeks: number): string => (weeks <= 0 ? 'ezen a héten' : `${weeks} hét múlva`),
 } as const
 
 /**
@@ -626,7 +734,7 @@ type Catalog = { [K in keyof typeof HU]: Widen<(typeof HU)[K]> }
 const EN: Catalog = {
   // ------------------------------------------------------------------ shell
   appTitle: 'Stargrave',
-  appSubtitle: 'a cooperative expedition for two',
+  appSubtitle: 'a co-operative expedition for one to four',
   language: 'Language',
   helpTitle: 'Help and rules (F1)',
   soundTitle: 'Turn sound on or off',
@@ -657,6 +765,7 @@ const EN: Catalog = {
   wipeItemExpedition: 'the running expedition, at once — it does not reach the Archive',
   wipeItemArchive: 'the Archive: points, unlocks, endings, the long memory',
   wipeItemSave: 'the save stored in this browser',
+  wipeItemRooms: 'every room this browser knows — and your player key with them',
   wipeHint: 'There is no undo. If you want to keep it, export the save from the Archive screen first.',
   wipeConfirm: 'Delete and start over',
   bondActive: '⇄ Bond: +1 damage',
@@ -666,7 +775,7 @@ const EN: Catalog = {
   projectionHint:
     'How much this changes at the end of the week, if the power allocation and the postings stay as they are.',
   bondHint:
-    'The two heroes are within 2 tiles, so both of them hit for one more. That is why an "Attack 3" sometimes takes off 4.',
+    'An ally is within 2 tiles, so both of you hit for one more. That is why an "Attack 3" sometimes takes off 4.',
   endingsHeading: 'Endings',
   endingsProgress: (seen: number, total: number) =>
     `${seen} of ${total} found. The goal is not to survive but to see all five — and then what follows from them.`,
@@ -905,10 +1014,10 @@ const EN: Catalog = {
   missionLaunch: 'Go',
   missionFinish: 'Report to the ship',
   objectiveEliminate: 'Every enemy has to be defeated.',
-  objectiveReachExit: 'BOTH heroes have to reach the extraction point (on it or beside it).',
+  objectiveReachExit: 'EVERY hero has to reach the extraction point (on it or beside it).',
   atExitCount: (there: number, total: number) => `${there}/${total} at the exit`,
   objectiveCollect: (n: number) =>
-    `Collect ${n} relics, then BOTH heroes out through the extraction point.`,
+    `Collect ${n} relics, then EVERYBODY out through the extraction point.`,
   objectiveSurvive: (n: number) => `Hold out for ${n} rounds. Reinforcements keep coming.`,
   objectiveHold: (n: number) => `Hold the marked point at the end of round ${n}.`,
   objectiveLabel: 'Objective',
@@ -1115,7 +1224,7 @@ const EN: Catalog = {
     'The same number in three places: on the enemy tile (top right), beside the enemy name in the sidebar, and in the TOP LEFT corner of your own cards. It is initiative: the lower number acts first. Yours comes from whichever of your two chosen cards you mark as the initiative card — which is why the choice matters.',
   badgeBond: 'Bond (on the hero card, green)',
   badgeBondText:
-    'While the two heroes are within 2 tiles, BOTH of them hit for one more. That is why an "Attack 3" takes off four. When you pick a target, the grid prints on it what the hit will actually take — that number already includes the Bond, Rune Mark, Shield and being prone.',
+    'While an ally is within 2 tiles, BOTH of you hit for one more — with three or four heroes it applies to each of you separately. On top of that: if somebody has already wounded the same enemy this round, your hit takes off one more again (Focus). When you pick a target, the grid prints on it what the hit will actually take — that number already includes the Bond, Focus, Rune Mark, Shield and being prone.',
   badgeShield: 'Shield (top left, blue)',
   badgeShieldText: 'The next hit is reduced by this much, then Shield drops by 1.',
   badgeStatusDots: 'Status dots (bottom left)',
@@ -1226,6 +1335,112 @@ const EN: Catalog = {
   domainHint:
     'The ship is split in two: the Runesmith answers for engineering, the Echo-reader for ' +
     'research. What is marked shared really does have to be decided together.',
+
+  // ------------------------------------------------------- modes and rooms
+  modeSolo: 'On your own',
+  modeSoloText: 'One person running the whole party. Every console is yours; nothing is locked.',
+  modeLocal: 'One machine, several of you',
+  modeLocalText:
+    'Two to four people at one keyboard. Whoever has the mouse can press anything — the consoles only show whose job is whose.',
+  modeOnline: 'Online, on your own machines',
+  modeOnlineText:
+    'Two to four people, each at their own machine. You get a room code to join with. Only you can move your own hero; the ship is shared.',
+  playersHeading: 'How many of you',
+  partyHeading: 'Who plays whom',
+  partyHint: 'Anybody can take any of them. Pick one that is taken and the two of you trade.',
+  playersCount: (n: number) => `${n} players`,
+  playersHint: (n: number): string =>
+    n <= 2
+      ? 'Runesmith and Echo-reader.'
+      : n === 3
+        ? 'Runesmith, Echo-reader and Cantor.'
+        : 'All four: Runesmith, Echo-reader, Cantor, Surveyor.',
+  launchRoom: 'Open a room',
+  joinHeading: 'Join a room',
+  joinIntro:
+    'If somebody has already opened a room, type in its code. The code carries the seed, the length and the party size — which is why everybody builds a bitwise identical galaxy before a single byte crosses the network.',
+  roomCode: 'Room code',
+  joinRoom: 'Join',
+  joinBadCode: 'That is not a valid code — have another look.',
+  roomsKnown: 'Rooms this browser knows',
+  roomRowMeta: (players: number, week: number): string =>
+    week > 0 ? `${players} players · week ${week}` : `${players} players · not started yet`,
+  roomRejoin: 'Back to it',
+
+  // --------------------------------------------------------------- the lobby
+  lobbyHeading: 'The room',
+  lobbyIntro:
+    'Read the code out to the others. The expedition does not set out until everybody is in a chair.',
+  seatsHeading: 'Seats',
+  seatsFree: (n: number): string => (n === 0 ? 'everybody is seated' : `${n} free`),
+  seatEmpty: 'free',
+  seatUnnamed: 'unnamed',
+  seatYou: 'you',
+  seatSit: 'Sit here',
+  seatStand: 'Stand up',
+  seatFree: 'Free it',
+  seatTaken: 'taken',
+  seatNoneYours: 'You are not sitting anywhere yet. Take a chair — it is the only way to move your hero.',
+  yourName: 'Your name',
+  yourNamePlaceholder: 'what the others see',
+  playerKeyHeading: 'Your player key',
+  playerKeyIntro:
+    'This is what puts you back in your own chair, from any machine. The browser remembers it, but if you clear your data this is all there is — write it down somewhere. (If it is lost: the host can free your seat and you sit down again.)',
+  playerKeyShow: 'Show',
+  playerKeyHide: 'Hide',
+  copy: 'Copy',
+  copied: 'Copied',
+  lobbyBegin: 'Through the Gate',
+  lobbyWaiting: 'Waiting for the others…',
+  lobbyGuestWait: 'The host starts it once everybody is seated.',
+  lobbyLeave: 'Leave the room',
+  netOff: 'not connected',
+  netOpening: 'connecting…',
+  netHosting: (peers: number) => `you are hosting · ${peers} connected`,
+  netJoined: 'connected',
+  netLost: 'the connection dropped',
+  notYourHero: 'Not your hero — that move belongs on their machine.',
+  notYourTurn: (who: string) => `It is ${who}’s move — it has to be pressed on their machine.`,
+  // ------------------------------------------------------ the split task
+  proposalHeading: 'A question for the table',
+  proposalAsked: (who: string, what: string) =>
+    `${who} is asking for ${what}. Somebody else has to agree — and then there is no going back.`,
+  proposalAgree: 'I agree',
+  proposalRefuse: 'Not now',
+  proposalWithdraw: 'Withdraw',
+  watchHeading: 'Your duty this week',
+  watchIntro:
+    'One decision a week that is nobody else’s. It runs at the end of the week and then asks again. A seat that sets nothing simply does nothing — no penalty, you just miss out.',
+  watchSetLabel: 'set',
+  watchUnset: 'not set yet',
+  watchPending: (n: number): string =>
+    n === 0 ? 'Everybody has set their duty for the week.' : `${n} consoles have not set a duty yet.`,
+  siteNow: (what: string) => `The site: ${what} — at the end of this round`,
+  siteIn: (what: string, rounds: number) => `The site: ${what} — in ${rounds} rounds`,
+  focusHint:
+    'If somebody else has already wounded this enemy in the same round, your hit takes off one more. The number printed on the grid already includes it.',
+  taskHeading: 'Closing line',
+  taskSeat: (slot: number) => `seat ${slot}`,
+  taskYours: 'yours',
+  taskTheirs: 'theirs',
+  taskNotYours: (who: string) => `${who} presses this one — tell them.`,
+  taskNoClues: 'No part of the description came to you — you press your runes when you are told.',
+  taskHidden: (n: number): string =>
+    n === 1 ? '1 line only they can see' : `${n} lines only they can see`,
+  taskStrikes: (used: number, max: number) => `Mistakes: ${used} of ${max}`,
+  taskSolved: 'The closing line opened.',
+  taskFailed: 'The closing line shut. It will not open again.',
+  // --------------------------------------------------- the ship's own weeks
+  aboardHeading: 'Aboard',
+  aboardOwner: (who: string) => `${who}’s call`,
+  aboardAnybody: 'Anybody can answer',
+  aboardSubject: (name: string) => `about ${name}`,
+  crewLoyalty: (band: string, value: number) => `${band} (loyalty ${value}/10)`,
+  debtsHeading: 'What is still coming',
+  debtsMeta: (n: number): string => (n === 1 ? '1 thing' : `${n} things`),
+  debtsIntro:
+    'What you decided earlier and has not arrived yet. These happen by themselves — nothing to do about them, but worth knowing.',
+  debtIn: (weeks: number): string => (weeks <= 0 ? 'this week' : `in ${weeks} weeks`),
 }
 
 const CATALOGS: Record<Lang, Catalog> = { hu: HU, en: EN }
