@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArchiveView } from './ui/strategic/ArchiveView'
 import { bankExpedition, newArchive, purchaseUnlock } from './engine/expedition/archive'
-import { canAdvanceWeek, expeditionStep, livingCrew } from './engine/expedition/expedition'
+import { canAdvanceWeek, expeditionStep, livingCrew, party } from './engine/expedition/expedition'
 import type { ExpeditionAction } from './engine/expedition/expedition'
 import {
   clearSave,
@@ -291,6 +291,19 @@ function Game() {
     if (room.mode !== 'online') return room.seats.map((seat) => seat.slot)
     return room.seats.filter((seat) => seat.claimedBy === tag).map((seat) => seat.slot)
   }, [game.room, tag])
+
+  /**
+   * The heroes this browser actually runs.
+   *
+   * Only one thing reads it: whose private console readings are shown. At one
+   * keyboard the room is not online and every seat is ours, so everything is
+   * open — see `engine/expedition/insight.ts`.
+   */
+  const myHeroes = useMemo(() => {
+    if (!game.expedition) return []
+    const seated = party(game.expedition)
+    return mySeats.map((slot) => seated[slot - 1]).filter((hero): hero is HeroClassId => !!hero)
+  }, [game.expedition, mySeats])
 
   /**
    * What a click does — and what it says when it does nothing.
@@ -861,7 +874,13 @@ function Game() {
         {screen === 'starmap' && <StarMapView state={expedition} dispatch={dispatch} />}
         {screen === 'research' && <ResearchView state={expedition} dispatch={dispatch} />}
         {screen === 'crew' && <ShipView state={expedition} dispatch={dispatch} />}
-        {screen === 'consoles' && <ConsoleView state={expedition} dispatch={dispatch} />}
+        {screen === 'consoles' && (
+          <ConsoleView
+            state={expedition}
+            dispatch={dispatch}
+            mine={game.room?.mode === 'online' ? myHeroes : []}
+          />
+        )}
         {screen === 'gate' && <GateView state={expedition} dispatch={dispatch} />}
         {screen === 'market' && <MarketView state={expedition} dispatch={dispatch} />}
         {screen === 'encounter' && <EncounterView state={expedition} dispatch={dispatch} />}

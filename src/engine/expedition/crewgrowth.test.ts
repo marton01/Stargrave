@@ -16,6 +16,7 @@
 import { describe, expect, it } from 'vitest'
 import { newArchive } from './archive'
 import {
+  crewStrengthAt,
   expeditionStep,
   labOutput,
   menteesOf,
@@ -196,3 +197,61 @@ function battleFor(s: ExpeditionState) {
     enemyScale: 1,
   })
 }
+
+describe('the crew are people to each other', () => {
+  it('pairs some of them up, both ways round', () => {
+    const s = startExpedition(4242, 'medium', newArchive())
+    const bonded = s.crew.filter((c) => c.bonds.length > 0)
+    expect(bonded.length, 'nobody knows anybody').toBeGreaterThan(0)
+    // Symmetric, always. A one-sided grudge would be truer to life and unreadable
+    // on a screen: the list has to say "these two" from either end.
+    for (const member of s.crew) {
+      for (const bond of member.bonds) {
+        const other = s.crew.find((c) => c.id === bond.with)!
+        expect(other.bonds.some((b) => b.with === member.id && b.kind === bond.kind)).toBe(true)
+      }
+    }
+  })
+
+  it('is worth something only while they are posted together', () => {
+    const s = startExpedition(4242, 'medium', newArchive())
+    const pair = s.crew.find((c) => c.bonds.some((b) => b.kind === 'trust'))
+    if (!pair) return
+    const other = s.crew.find((c) => c.id === pair.bonds.find((b) => b.kind === 'trust')!.with)!
+
+    pair.station = 'lab'
+    other.station = null
+    const apart = crewStrengthAt(pair, 'lab', s.crew)
+    other.station = 'lab'
+    const together = crewStrengthAt(pair, 'lab', s.crew)
+    expect(together).toBe(apart + 1)
+  })
+
+  it('charges the ship a point of morale for a week of two people rubbing', () => {
+    const calm = startExpedition(4242, 'medium', newArchive(), {
+      ...defaultDials(),
+      directives: 1,
+      attention: 1,
+      aboard: 1,
+    })
+    // Put a friction pair on the same console and leave them there for a week.
+    const grim = structuredClone(calm)
+    const sore = grim.crew.find((c) => c.bonds.some((b) => b.kind === 'friction'))
+    if (!sore) return
+    const other = grim.crew.find(
+      (c) => c.id === sore.bonds.find((b) => b.kind === 'friction')!.with,
+    )!
+    sore.station = 'lab'
+    other.station = 'lab'
+    // And apart, in the other ship.
+    const apartSore = calm.crew.find((c) => c.id === sore.id)!
+    const apartOther = calm.crew.find((c) => c.id === other.id)!
+    apartSore.station = 'lab'
+    apartOther.station = 'medbay'
+
+    const after = expeditionStep(grim, { k: 'advanceWeek' })
+    const control = expeditionStep(calm, { k: 'advanceWeek' })
+    expect(after.resources.morale).toBeLessThan(control.resources.morale)
+    expect(after.log.some((entry) => entry.event.k === 'crewFriction')).toBe(true)
+  })
+})

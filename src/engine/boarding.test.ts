@@ -12,7 +12,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { activeUnit, startMission, step } from './battle'
-import { livingEnemies } from './state'
+import { isHero, livingEnemies } from './state'
 import type { BattleState } from './types'
 import { newArchive } from './expedition/archive'
 import { expeditionStep, startExpedition } from './expedition/expedition'
@@ -31,8 +31,8 @@ function playARound(start: BattleState): BattleState {
   const round = s.round
   for (let guard = 0; guard < 400 && s.round === round && s.phase !== 'over'; guard++) {
     if (s.phase === 'cardSelection') {
-      const hero = s.units.find((u) => u.side === 'hero' && u.id === s.selectingHero)
-      if (!hero || hero.side !== 'hero') break
+      const hero = s.units.find((u) => isHero(u) && u.id === s.selectingHero)
+      if (!isHero(hero)) break
       if (hero.hand.length < 2) {
         s = step(s, { k: 'rest', heroId: hero.id, loseCard: hero.discard[0]! })
         s = step(s, { k: 'confirmSelection', heroId: hero.id })
@@ -56,7 +56,7 @@ function playARound(start: BattleState): BattleState {
     const turn = s.heroTurn
     if (turn && !turn.topCard) {
       const hero = s.units.find((u) => u.id === turn.heroId)
-      if (hero && hero.side === 'hero') {
+      if (isHero(hero)) {
         s = step(s, { k: 'assignTopCard', cardId: hero.selected[0]! })
         continue
       }
@@ -92,7 +92,7 @@ describe('modules on the board', () => {
     const s = boardingBattle(['reinforcedHull', 'fuelSynthesiser'])
     expect(s.installations).toHaveLength(2)
     for (const installation of s.installations) {
-      expect(s.units.some((u) => u.side === 'hero' && u.pos.x === installation.pos.x && u.pos.y === installation.pos.y)).toBe(false)
+      expect(s.units.some((u) => isHero(u) && u.pos.x === installation.pos.x && u.pos.y === installation.pos.y)).toBe(false)
     }
   })
 

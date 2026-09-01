@@ -8,6 +8,8 @@ import { RESEARCH_PROJECTS, availableProjects, researchProject } from '../../con
 import type { ResearchBranch, ResearchProject } from '../../content/research'
 import { MODULES, RESOURCES } from '../../content/ship'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
+import { ENDING_TITLES } from '../../engine/expedition/archive'
+import { endingProspects, understandingTierOf } from '../../engine/expedition/expedition'
 import { useLang } from '../../i18n/LangContext'
 import type { ExpeditionState } from '../../engine/expedition/types'
 
@@ -35,6 +37,37 @@ export function ResearchView({
         </span>
       </header>
       <p className="panel-intro">{t.researchIntro}</p>
+
+      {/* The heart, written out.
+       *
+       * Understanding now costs attention at every source, and a price with no
+       * visible reward reads as "do not do this". So what it buys sits next to
+       * what it costs: the endings, open and closed, with what each closed one
+       * is still waiting on. It is also the honest answer to "can we not just
+       * stay quiet" — you can, and the two open ones at the top are what is
+       * left if you do. */}
+      <section className="panel prospects">
+        <header className="panel-head">
+          <h3>{t.prospectsHeading}</h3>
+          <span className="panel-meta">
+            {t.understandingTierLine(understandingTierOf(state))} · {t.attentionCostLine}
+          </span>
+        </header>
+        <p className="panel-intro">{t.prospectsIntro}</p>
+        <ul className="prospect-list">
+          {endingProspects(state).map((prospect) => (
+            <li
+              key={prospect.id}
+              className={`prospect ${prospect.open ? 'prospect-open' : 'prospect-shut'}`}
+            >
+              <span className="prospect-name">{s(ENDING_TITLES[prospect.id])}</span>
+              <span className="prospect-need">
+                {prospect.open ? t.prospectOpen : prospect.needs ? s(prospect.needs) : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <div className="research-active">
         {active ? (

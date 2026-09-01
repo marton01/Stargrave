@@ -33,6 +33,14 @@ export type DirectiveKind =
   | 'morale'
   /** Have at least this much of a resource banked when the deadline comes. */
   | 'stock'
+  /** Have N crew trained or better. */
+  | 'crewRank'
+  /** Have N crew steady or better when the deadline comes. */
+  | 'steady'
+  /** Have N systems charted on the star map. */
+  | 'charted'
+  /** Have set foot in N different systems. */
+  | 'surveyed'
 
 export type DirectiveDef = {
   kind: DirectiveKind
@@ -63,6 +71,14 @@ export type DirectiveContext = {
   relics: number
   understanding: number
   puzzleKinds: number
+  /** Living crew, and how many of them are trained or better / steady or better. */
+  crew: number
+  trained: number
+  steady: number
+  /** Systems on the map, and how many are charted / have been stood in. */
+  systems: number
+  charted: number
+  visited: number
 }
 
 export const DIRECTIVE_DEFS: DirectiveDef[] = [
@@ -185,6 +201,84 @@ export const DIRECTIVE_DEFS: DirectiveDef[] = [
     },
     target: () => 24,
     weeks: () => 6,
+  },
+
+  // ---------------------------------------------------------------------
+  // The Rite-caller's and the Astromancer's own orders.
+  //
+  // For a while there were none, and it showed: the two seats that arrive with
+  // the third and fourth player had cards, perks and duties of their own, but
+  // nothing home ever asked THEM for. An order is the one piece of content that
+  // says out loud "this is your column, this is your week" — and half the table
+  // was reading somebody else's list.
+  //
+  // They ask for what those two are actually for. The Rite-caller is asked about
+  // the people: who has been taught, who is still with you. The Astromancer is
+  // asked about the road: what has been charted, and where you have actually
+  // stood.
+  {
+    kind: 'crewRank',
+    owner: 'cantor',
+    name: { hu: 'Kiképzés', en: 'Training' },
+    ask: (n) => ({
+      hu: `Legyen ${n} képzett (vagy jobb) legénységi tag.`,
+      en: `Have ${n} crew at trained rank or better.`,
+    }),
+    reason: {
+      hu: 'Aki visszaér, az taníthat. Odahaza már a következő legénységet állítják össze.',
+      en: 'Whoever comes back can teach. They are already assembling the next crew at home.',
+    },
+    target: (depth) => (depth < 0.5 ? 2 : 3),
+    weeks: () => 9,
+    when: (c) => c.trained < c.crew,
+  },
+  {
+    kind: 'steady',
+    owner: 'cantor',
+    name: { hu: 'Együtt', en: 'Together' },
+    ask: (n) => ({
+      hu: `A határidőkor legyen ${n} ember, aki legalább „rendben van”.`,
+      en: `Have ${n} of the crew at least steady when the deadline comes.`,
+    }),
+    reason: {
+      hu: 'Nem a létszám érdekli őket. Az, hogy hányan beszélnek még egymással.',
+      en: 'It is not the head count they want. It is how many of them are still speaking.',
+    },
+    target: () => 4,
+    weeks: () => 6,
+    when: (c) => c.steady < c.crew,
+  },
+  {
+    kind: 'charted',
+    owner: 'surveyor',
+    name: { hu: 'Térképezés', en: 'Charting' },
+    ask: (n) => ({
+      hu: `Legyen ${n} ismert rendszer a csillagtérképen.`,
+      en: `Have ${n} systems charted on the star map.`,
+    }),
+    reason: {
+      hu: 'Egy térkép akkor is átmegy a Kapun, ha a hajó nem. Ez a legolcsóbb dolog, amit hazaküldhettek.',
+      en: 'A chart goes through the Gate even if the ship does not. It is the cheapest thing you can send home.',
+    },
+    target: (depth) => (depth < 0.5 ? 3 : 4),
+    weeks: () => 7,
+    when: (c) => c.charted < c.systems,
+  },
+  {
+    kind: 'surveyed',
+    owner: 'surveyor',
+    name: { hu: 'Bejárás', en: 'Survey' },
+    ask: (n) => ({
+      hu: `Álljatok meg ${n} különböző rendszerben.`,
+      en: `Stand in ${n} different systems.`,
+    }),
+    reason: {
+      hu: 'A távcső hazudik. Amit lentről néztetek meg, az egy sor a jelentésben, amit nem vitatnak.',
+      en: 'The lens lies. What you looked at from the ground is the one line of the report nobody argues with.',
+    },
+    target: (depth) => (depth < 0.5 ? 2 : 3),
+    weeks: () => 8,
+    when: (c) => c.visited < c.systems,
   },
 ]
 

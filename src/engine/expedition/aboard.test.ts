@@ -20,6 +20,8 @@ import { describe, expect, it } from 'vitest'
 import { newArchive } from './archive'
 import {
   aboardChance,
+  councilDue,
+  councilSupport,
   expeditionStep,
   loyaltyTarget,
   pendingIsAboard,
@@ -27,6 +29,7 @@ import {
   startExpedition,
 } from './expedition'
 import { ABOARD_EVENTS } from '../../content/aboard'
+import { COUNCIL_MOTIONS } from '../../content/council'
 import { findEncounter } from '../../content/encounters'
 import { defaultDials } from '../../content/difficulty'
 import { HERO_ORDER } from './expedition'
@@ -320,5 +323,70 @@ describe('every aboard event is a real situation', () => {
     s.pendingEncounter = { id: 'aboard-hold-fight', chosen: null, payment: [], resolvedText: null }
     expect(pendingIsAboard(s)).toBe(true)
     expect(pendingOwner(s)).toBe('cantor')
+  })
+})
+
+describe('the crew ask for something', () => {
+  it('does not come up on a ship where nobody has anything to say', () => {
+    const s = ship(3)
+    for (const member of s.crew) member.loyalty = 9
+    expect(councilDue(s)).toBe(false)
+  })
+
+  it('comes up once the crew have dropped out of steady', () => {
+    const s = ship(3)
+    for (const member of s.crew) member.loyalty = 4
+    s.week = 12
+    expect(councilSupport(s).for).toBe(s.crew.filter((c) => c.alive).length)
+    expect(councilDue(s)).toBe(true)
+  })
+
+  it('asks in the voice of the crew, and the week waits for an answer', () => {
+    let s = ship(3)
+    for (const member of s.crew) member.loyalty = 3
+    s.week = 12
+    s = expeditionStep(s, { k: 'advanceWeek' })
+    expect(s.log.some((entry) => entry.event.k === 'councilCalled')).toBe(true)
+    expect(s.pendingEncounter, 'the motion was never actually put').not.toBeNull()
+
+    const week = s.week
+    expect(expeditionStep(s, { k: 'advanceWeek' }).week).toBe(week)
+  })
+
+  it('lets the table say no, and makes saying no cost something', () => {
+    let s = ship(3)
+    for (const member of s.crew) member.loyalty = 3
+    s.week = 12
+    s = expeditionStep(s, { k: 'advanceWeek' })
+    if (!s.pendingEncounter) return
+    const motion = COUNCIL_MOTIONS.find((m) => m.id === s.pendingEncounter!.id)
+    if (!motion) return
+
+    const before = s.crew.map((c) => c.loyalty)
+    // The refusal is always the last answer on a motion.
+    const refuse = motion.choices.length - 1
+    let after = expeditionStep(s, { k: 'encounterChoose', index: refuse })
+    after = expeditionStep(after, { k: 'encounterConfirm' })
+    after = expeditionStep(after, { k: 'encounterClose' })
+
+    const now = after.crew.map((c) => c.loyalty)
+    expect(now.some((v, i) => v < before[i]!), 'refusing cost nothing at all').toBe(true)
+  })
+
+  it('never puts the same motion twice in one expedition', () => {
+    let s = ship(3)
+    for (const member of s.crew) member.loyalty = 3
+    const seen: string[] = []
+    for (let i = 0; i < 40 && !s.outcome; i++) {
+      s = expeditionStep(s, { k: 'advanceWeek' })
+      const id = s.pendingEncounter?.id
+      if (id && COUNCIL_MOTIONS.some((m) => m.id === id)) seen.push(id)
+      if (s.pendingEncounter) {
+        s = expeditionStep(s, { k: 'encounterChoose', index: 0 })
+        s = expeditionStep(s, { k: 'encounterConfirm' })
+        s = expeditionStep(s, { k: 'encounterClose' })
+      }
+    }
+    expect(new Set(seen).size).toBe(seen.length)
   })
 })

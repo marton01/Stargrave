@@ -23,6 +23,7 @@ import {
 import {
   CREW_TRAITS,
   RANK_NAMES,
+  BOND_NAMES,
   SPECIALITY_NAMES,
   crewRank,
   loyaltyBand,
@@ -30,6 +31,7 @@ import {
 import { HERO_CLASSES } from '../../content/heroes'
 import { portrait } from '../assets'
 import { Portrait } from '../Portrait'
+import { FIGURE_WARM_AT, figureDef } from '../../content/figures'
 import { understandingTier } from '../../content/research'
 import {
   describeStationCrew,
@@ -204,6 +206,35 @@ export function ShipView({
         </div>
       </section>
 
+      {/* Where the run stands with the people who come back. A decision about a
+          person has to be visible afterwards, or it was not a decision about a
+          person — it was a payout. */}
+      {Object.keys(state.figures).length > 0 && (
+        <section className="panel">
+          <header className="panel-head">
+            <h2>{t.figuresHeading}</h2>
+            <span className="panel-meta">{t.figuresMeta}</span>
+          </header>
+          <div className="figure-list">
+            {Object.entries(state.figures).map(([id, record]) => {
+              const def = figureDef(id)
+              if (!def) return null
+              const warm = record.standing >= FIGURE_WARM_AT
+              return (
+                <div key={id} className={`figure figure-${warm ? 'warm' : 'cold'}`}>
+                  <strong>{s(def.name)}</strong>
+                  <span className="figure-who">{s(def.who)}</span>
+                  <span className="figure-standing">
+                    {warm ? t.figureWarm : t.figureCold} ({record.standing >= 0 ? '+' : ''}
+                    {record.standing})
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
       {state.debts.length > 0 && (
         <section className="panel">
           <header className="panel-head">
@@ -246,6 +277,24 @@ export function ShipView({
                   {t.crewLoyalty(s(loyaltyBand(member).name), member.loyalty)}
                 </p>
               )}
+              {/* Who they get on with, and who they do not. Written out with the
+                  other person's name, because that is the only form of it a
+                  player can act on when they are deciding the postings. */}
+              {member.alive &&
+                member.bonds.map((bond) => {
+                  const other = state.crew.find((c) => c.id === bond.with)
+                  if (!other || !other.alive) return null
+                  const together = other.station !== null && other.station === member.station
+                  return (
+                    <p
+                      key={bond.with}
+                      className={`crew-bond crew-bond-${bond.kind} ${together ? 'crew-bond-live' : ''}`}
+                    >
+                      {other.name} — {s(BOND_NAMES[bond.kind])}
+                      {together ? ` · ${t.bondTogether}` : ''}
+                    </p>
+                  )
+                })}
               <div className="crew-traits">
                 <span className={`trait trait-rank rank-${crewRank(member)}`}>
                   {s(RANK_NAMES[crewRank(member)])}

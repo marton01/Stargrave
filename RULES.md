@@ -529,6 +529,98 @@ That sixth one is the end of the game. After it the Archive is **finished** — 
 finished. Until then you can run as many expeditions as you like; after it too, though you
 will not need to.
 
+## People: the crew, the mentees, and who you meet
+
+You are not the only ones on this ship. This section is about what follows from
+that.
+
+### Who gets on with whom
+
+Every crew member can have one or two **pairings**: somebody they work well with,
+and somebody they cannot stand. The crew list says who, by name.
+
+- **On the same station:** somebody they get on with is +1 strength to *both* of
+  them; somebody they do not is −1.
+- **Friction has a price:** two people who cannot stand each other, working side
+  by side all week, is **−1 morale** a week.
+
+That turns the postings from a table to fill in into a puzzle — and the puzzle
+rearranges itself every time somebody dies and every time somebody arrives.
+
+### Taking your mentee down
+
+A crew member somebody **mentors** who has reached **trained** rank can be taken
+on the next landing. The *Bring them* button is on that hero's own console: it is
+their call, and they carry what comes of it.
+
+Down there they are a **follower**:
+
+- No cards and no Flux. They take a **standing order** and carry it out.
+- They always act **after their mentor**, half a step behind — what they do is
+  what they saw done.
+- Three things can be said to them: **Guard** (come to you, and while they stand
+  beside you they give you Shield 1 each round), **Strike** (go at the nearest
+  enemy), **Hold** (do not move, but hit whatever comes into reach).
+- One per hero. Their hit points come from their rank (3 / 5 / 7), always below
+  the frailest of the four.
+
+**And if they fall down there, they are dead.** They come off the crew list, the
+ship takes −3 morale, and they are named in the ending's epilogue. It is the only
+thing in this game that takes a *name* away because of a decision you made a few
+minutes earlier.
+
+### The crew's council
+
+Once every six weeks, if enough of the crew are not all right, they **ask to be
+heard**. The log says how many are behind it — that number is read off their
+loyalty, not rolled.
+
+You either **grant** the motion (it costs something real, and everybody's loyalty
+rises) or **refuse** it (nothing now, and loyalty falls). There is no correct
+answer. Saying no is often right — it just leads somewhere.
+
+### People who come back
+
+Some of the people you meet on the road **do not disappear**. Vas Ordrec, the
+scavenger captain; Ilse Marnov, the runaway Archive clerk; the Choir's envoy.
+
+- How you treat them becomes your **standing**, and it sits on the ship screen.
+- A few weeks later they **catch up with you** — dated, in the log and on the
+  what-is-coming list.
+- Which scene they arrive with is decided **when they arrive**, from the standing
+  you have earned by then. Four weeks of behaving differently opens a different
+  door.
+
+There are three of them, and each can be met up to three times.
+
+### What only you can see
+
+Every hero's console has a panel **nobody else at the table can read** — online,
+the others see only that something is there and who to ask about it.
+
+| Hero | What they read |
+|---|---|
+| Runeweaver | how much hull a bad encounter takes at this shield setting, and how many are left |
+| Pastcaller | how tight the ship is this week, how close the Herald is, what falls due within two weeks |
+| Rite-caller | **how many weeks somebody has left** before they walk, and exactly where each of them stands |
+| Astromancer | what the shortest and longest legs from here cost, whether the fuel covers it, how many systems are still dark |
+
+It is not a secret — **it is your job to say it.** This exists because four
+people at one screen are not yet four players: when everybody sees everything,
+the best strategist at the table works out all four seats and the others become a
+pair of hands. What makes it a conversation is that you hold different *facts*.
+
+### The steps of the Darkening
+
+Every level of the Darkening now arrives **named**, once, in the log: *The long
+shadow*, *The colder side*, *The silence behind the Gate*. The numbers behind it
+are the same — but there is something to read out.
+
+### The epilogue
+
+When it is over, the final screen goes through **by name** everybody who was ever
+aboard: who came home, who did not, and what became of them. The lost are first.
+
 ## Consoles: what is yours
 
 Almost everything on this ship is shared: **one reactor, one hold, one route**.
@@ -562,7 +654,29 @@ Wardlines, the Rampart card, Relic bearer, The quiet forge); the Echo-reader buy
 sight, memory and understanding (Longsight, Archivist, Remembrance, Tether, The
 Still Note card, Relic reader).
 
-Two of them add a **new card** to your deck for good — and only to yours.
+Four of them add a **new card** to your deck for good — and only to yours (the
+Runesmith's Rampart, the Echo-reader's Still Note, the Cantor's Choir Line, the
+Surveyor's Ranging Shot).
+
+**And they are not only about the fighting.** Every hero has at least two perks
+that pay on a week when nothing happens — that is how the ship gets better
+without a shop. What a module buys with credits belongs to everybody; this is
+bought with one person's marks, and you will know whose it was:
+
+| Perk | Whose | What it gives |
+|---|---|---|
+| Scrapwright | Runesmith | +3 credits a week |
+| Ship runes | Runesmith | +1 hull a week |
+| Marginalia | Echo-reader | +2 information a week |
+| Borrowed hour | Echo-reader | every jump of **3 weeks or more** is one week shorter |
+| Galley watch | Cantor | +2 food a week |
+| Oathkeeper | Cantor | **every crew member's loyalty heads 1 higher** |
+| Thrift plot | Surveyor | +2 fuel a week |
+| Instrument drill | Surveyor | his mentees earn +1 experience a week |
+| Field forge | Runesmith | **every hero starts a landing with 1 Shield** |
+
+The shorter jump deliberately bites only on the long legs: the distances on the
+map are the game, and turning every jump into a one-week hop is paying nothing.
 
 ### Relics: only what you wear does anything
 
@@ -706,6 +820,95 @@ the ship screen under what is coming, with a line saying where it came from.
 This is what turns one player's decision into the crew's fate: whoever talks their
 way out of a corner on somebody else's account today, you all pay for it in three
 weeks.
+
+## The heart: understanding, and being heard
+
+This section is about the thing that ties all the others together. One sentence:
+
+> **We want to know what became of them — and every step closer makes us easier
+> to hear.**
+
+### Understanding is the stake
+
+Nine of the ten endings are gated on understanding. Only two are reachable
+whatever happens: *Flight* and *Blind ruin*. Everything else asks you to know
+what happened here.
+
+| Tier | Understanding | What it opens |
+|---|---|---|
+| 0 | 0–2 | Flight, Blind ruin |
+| 1 | 3–7 | Witness, and some of the conditional endings |
+| 2 | 8–13 | Intervention, Custodian |
+| 3 | 14+ | Communion, The Answer |
+
+The Research screen carries the list: what is open, and **what each shut one is
+waiting on**. That is not incidental information — it is the point of the game,
+written as a number.
+
+### Attention is the price
+
+**Every 2 understanding is +1 attention.** Wherever it comes from: research, a
+mechanism solved, a rune line, an encounter, or the rim of the Stargrave itself.
+The Herald wakes at **8 attention**.
+
+So reaching tier 3 (14 understanding) carries **7 attention** on its own — very
+nearly the Herald's threshold from the learning alone, with the landings, the
+jumps and everything else still on top.
+
+This is **not a punishment; it is the question the game asks.** You cannot win by
+staying quiet: low understanding leaves two endings. The question is never
+*should we be loud* — it is **how loud, how long, and when do we stop.**
+
+### What quietens it
+
+- **A week sitting still in a system you have already settled:** −1 attention.
+- **The Lantern of still air** and relics like it; **Quiet forge** and perks like
+  it.
+- **Dampening from the ship** during a landing (below): −1 attention.
+- **Silencing the Herald** — that takes the system off the table for good.
+- And the **Attention** difficulty dial switches it off; the price goes with it.
+
+### Splitting up: whoever stays aboard
+
+**Not everybody has to go down.** At least two always land; the rest may stay —
+and whoever stays **runs the ship during the fight**: one support action a round,
+out of the hold.
+
+| Support | What it does | Cost |
+|---|---|---|
+| **Dampen** | −1 attention | 4 information |
+| **Reroute** | +3 Flux to the party | 3 fuel |
+| **Sensor sweep** | Rune Mark on the enemy closest to the party | 3 information |
+| **Medbay standing by** | +3 hit points to the hero worst off | 4 fuel |
+
+It is the only point in the game where **two groups are doing different things in
+the same minute**. The trade is real: one fewer hero on the grid, and a ship that
+acts. And Dampen is precisely what cannot be done from down there — somebody has
+to be up here for it.
+
+### Your word
+
+Any hero may **give their word** on their console, with a deadline. One at a time
+for the whole table. The game writes it down and holds them to it.
+
+| Pledge | What you take on |
+|---|---|
+| **Quiet** | attention does not rise for 4 weeks |
+| **Reading** | +4 understanding by the deadline |
+| **The hull** | at least 16 hull by the deadline |
+| **The stores** | at least 20 food by the deadline |
+| **Everybody comes back** | nobody is lost for 5 weeks |
+| **The ground** | 2 landings won before the deadline |
+
+- **Kept:** the marks are **yours** (1–3, by difficulty), plus morale, and
+  everybody's loyalty rises by one.
+- **Broken:** −2 morale, and everybody's loyalty falls by one.
+- A promise *not* to do something (Quiet, Everybody comes back) **fails the moment
+  it is broken**, not at the deadline.
+
+Quiet is the heart's own pledge: because understanding is loud, "four weeks and
+we learn nothing" is a real, painful, checkable promise about the thing the whole
+game is about.
 
 ## Attention and the Herald
 

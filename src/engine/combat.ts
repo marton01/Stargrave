@@ -4,7 +4,7 @@
 // combos, Shield and status effects all meet in a single place, so none of them
 // can be quietly forgotten.
 
-import { applyStatus, hasStatus, heroes, log } from './state'
+import { applyStatus, hasStatus, heroes, isHero, log } from './state'
 import { distance, onMap, sameTile, unitAt, walkable } from './grid'
 import type { BattleState, Unit } from './types'
 
@@ -34,13 +34,13 @@ export type DamageOptions = {
  * an enemy hitting its own ally is not teamwork.
  */
 export function focusedOn(s: BattleState, attacker: Unit | null, target: Unit): boolean {
-  if (!attacker || attacker.side !== 'hero' || target.side !== 'enemy') return false
+  if (!isHero(attacker) || target.side !== 'enemy') return false
   const already = s.struck?.[target.id] ?? []
   return already.some((id) => id !== attacker.id)
 }
 
 export function bondActive(s: BattleState, unit: Unit | null): boolean {
-  if (!unit || unit.side !== 'hero') return false
+  if (!isHero(unit)) return false
   // Any living ally close enough, not one nominated partner: with three or four
   // on the board the Bond is about not fighting alone, and asking which one it
   // was would be a rule nobody could see on the grid.
@@ -195,7 +195,7 @@ export function heal(s: BattleState, target: Unit, power: number): void {
  */
 export function afterMove(s: BattleState, u: Unit): void {
   checkTrap(s, u)
-  if (!u.alive || u.side !== 'hero') return
+  if (!u.alive || !isHero(u)) return
 
   const index = s.relics.findIndex((r) => sameTile(r, u.pos))
   if (index >= 0) {

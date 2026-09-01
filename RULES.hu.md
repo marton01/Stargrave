@@ -285,7 +285,7 @@ egy partraszállásra kaptok egy adagot, és az addig tart, ameddig tart.
 
 **Csata közben** két helyről szerezhetsz még:
 
-- **Fluxus-csapolás** (Visszhang-olvasó lap): Támadás 1 hatótáv 3, **és +2 Fluxus a közös
+- **Fluxus-csapolás** (Múltidéző lap): Támadás 1 hatótáv 3, **és +2 Fluxus a közös
   készletbe**. Ez az egyetlen lap, ami termel.
 - **Rúnajel**: ha egy megjelölt ellenfél a hősök keze által esik el, **+1 Fluxus**.
 
@@ -293,27 +293,27 @@ egy partraszállásra kaptok egy adagot, és az addig tart, ameddig tart.
 
 | Lap | Mit ad | Ár |
 |---|---|---|
-| **Kohó dühe** (Rúnakovács) | Támadás 4, hatótáv 1 | 1 |
-| **Földrengés** (Rúnakovács) | Támadás 2 **minden** szomszédos ellenségre, és Ledöntés | 2 |
-| **Rontásgyűrű** (Visszhang-olvasó) | Támadás 2 **minden** ellenségre 2 hatótávon belül | 1 |
-| **Hamuköd** (Visszhang-olvasó) | Elvakítás minden ellenségre 2 hatótávon belül — **a támadásaik nem sebeznek** | 1 |
-| **Visszhang** (Visszhang-olvasó) | Játszd újra egy elhasznált lapod felső felét | 2 |
+| **Kohó dühe** (Rúnaszövő) | Támadás 4, hatótáv 1 | 1 |
+| **Földrengés** (Rúnaszövő) | Támadás 2 **minden** szomszédos ellenségre, és Ledöntés | 2 |
+| **Rontásgyűrű** (Múltidéző) | Támadás 2 **minden** ellenségre 2 hatótávon belül | 1 |
+| **Hamuköd** (Múltidéző) | Elvakítás minden ellenségre 2 hatótávon belül — **a támadásaik nem sebeznek** | 1 |
+| **Visszhang** (Múltidéző) | Játszd újra egy elhasznált lapod felső felét | 2 |
 
 A felületen az ár a lapon látszik (`◈2`), és ha a készletben nincs annyi, **az a lapfél
 nem kattintható** — a játék nem engedi kijátszani, amit nem tudsz kifizetni.
 
 **Miért közös?** Mert így a Fluxus nem erőforrás, hanem **beszélgetés**. Két Fluxusnál a
-Rúnakovács Földrengése (2) és a Visszhang-olvasó Visszhangja (2) közül **csak az egyik**
+Rúnaszövő Földrengése (2) és a Múltidéző Visszhangja (2) közül **csak az egyik**
 játszható ki — és azt meg kell beszélni. Ez a játék legsűrűbb kooperatív pillanata.
 
 **Egy példa.** A hajón 2 energiát adtál a Rúnamagra, a Fegyverzet működik: a csapat
-**3 Fluxussal** száll le. A második körben négy Hamvadó váz körülveszi a Rúnakovácsot.
+**3 Fluxussal** száll le. A második körben négy Hamvadó váz körülveszi a Rúnaszövőt.
 
 - *Földrengés* (2 Fluxus): mind a négy sebződik és le is dől — marad **1 Fluxus**.
 - Vagy *Rontásgyűrű* (1) a másik hőssel + *Kohó dühe* (1) a Rúnaőrzőre — marad **1**.
 - Vagy semmi drágát: a maradék 3 megmarad a Rúnaőrzőre, aki a következő körben lép.
 
-Ha közben a Visszhang-olvasó eljátssza a *Fluxus-csapolást*, a készlet visszamegy 3-ra,
+Ha közben a Múltidéző eljátssza a *Fluxus-csapolást*, a készlet visszamegy 3-ra,
 és mindkettő belejátszható. Ezért ér a csapolás többet, mint amennyit a sebzése mutat.
 
 **Amit érdemes tudni:**
@@ -354,7 +354,7 @@ darabját ti választottátok.
 
 Ez az, amitől a játék kooperatív. A **Kötés** a legfontosabb: ha 2 mezőn belül vagytok
 egymástól, **mindkettőtök támadása +1-et sebez**. A **Rúnajel** és a **Horgony** az
-igazi együttműködés: a Visszhang-olvasó messziről megjelöl valakit, a Rúnakovács
+igazi együttműködés: a Múltidéző messziről megjelöl valakit, a Rúnaszövő
 ugyanabban a körben +2-vel csap le rá — ehhez viszont a **kezdeményezést** kell
 összehangolni.
 
@@ -525,6 +525,96 @@ Csillagsírban.
 Az a hatodik a játék vége. Utána az Archívum **készen** áll — nem elveszve, hanem
 befejezve. Addig annyi expedícióra mehetsz, amennyire akarsz; utána is, de már nem kell.
 
+## Emberek: a legénység, a tanítványok és akikkel találkoztok
+
+A hajón nem csak ti vagytok. Ez a fejezet arról szól, ami ebből következik.
+
+### Ki kivel van jóban
+
+Minden legénységi tagnak lehet egy-két **párja**: van, akivel jól dolgozik együtt,
+és van, akit nem bír. A legénységi listán oda van írva, kivel — névvel.
+
+- **Egy állomáson, együtt:** aki jóban van, az +1 erőt ad *mindkettőjüknek*; aki
+  nem, az −1-et.
+- **A súrlódásnak ára is van:** ha két ilyen ember egész héten egymás mellett
+  dolgozik, az **−1 morál** hetente.
+
+Ettől a beosztás nem táblázat-kitöltés, hanem kirakós — és a kirakós minden
+halálesetnél és minden új embernél átrendeződik.
+
+### A tanítvány a partraszálláson
+
+Akit valamelyik hős **mentorál**, és **képzett** rangot ért el, azt le lehet vinni
+a következő partraszállásra. A *Lehozom* gomb a hős saját pultján van: az ő
+döntése, és a következményét is ő viszi.
+
+Odalent **kísérő** lesz belőle:
+
+- Nincs lapja és nincs Fluxusa. Egy **állandó parancsot** kap, és azt hajtja végre.
+- Mindig a **mentora után** lép, fél lépéssel — amit csinál, azt tőle látta.
+- Hármat lehet mondani neki: **Fedez** (odamegy hozzád, és amíg melletted áll,
+  minden körben Vért 1-et ad neked), **Támad** (a legközelebbi ellenségre megy),
+  **Tartja a helyét** (nem mozdul, de amit elér, azt megüti).
+- Hősönként egy. Az életereje a rangjából jön (3 / 5 / 7), és mindig kevesebb,
+  mint a leggyengébb hősé.
+
+**És ha odalent elesik, akkor meghalt.** Lekerül a legénységi listáról, a hajó
+−3 morált kap, és a végkifejlet epilógusában név szerint ott lesz. Ez az egyetlen
+dolog a játékban, ami egy *nevet* vesz el egy döntés miatt, amit pár perce
+hoztatok.
+
+### A legénységi tanács
+
+Hathetente egyszer, ha a legénység elég nagy része nincs jól, **szót kérnek**. A
+napló megmondja, hányan állnak mögötte — ez a szám a hűségükből olvasódik ki, nem
+kockából.
+
+Egy kérést vagy **megadtok** (kerül valamibe, és mindenki hűsége nő), vagy
+**visszautasítotok** (most nem kerül semmibe, de a hűség esik). Nincs helyes
+válasz. A nemet mondás gyakran jó döntés — csak vezet valahova.
+
+### Akik visszatérnek
+
+Néhány alak, akivel az úton találkoztok, **nem tűnik el**. Vas Ordrec, a roncsoló
+kapitány; Ilse Marnov, a kiugrott archívumi írnok; a Kórus követe.
+
+- Ahogy bántok velük, abból **állás** lesz, és ott áll a hajó képernyőjén.
+- Néhány hét múlva **utolérnek titeket** — ez dátummal szerepel a naplóban és az
+  „ami jön” listán.
+- Hogy melyik jelenettel jönnek, az **akkor dől el, amikor megérkeznek**, az
+  addigra kiérdemelt állásból. Négy hét másképp viselkedés más ajtót nyit.
+
+Hárman vannak, és egyenként legfeljebb háromszor futtok össze velük.
+
+### Amit csak te látsz
+
+Minden hős pultjának van egy panelje, amit **az asztalnál rajtad kívül senki nem
+lát** — online játékban a többiek csak annyit látnak, hogy *van* ott valami, és
+hogy kitől kell megkérdezni.
+
+| Hős | Amit ő olvas |
+|---|---|
+| Rúnaszövő | mennyi hajótestet visz el egy rossz találkozás a mostani pajzson, és hány fér még bele |
+| Múltidéző | mennyire feszül a hajó erre a hétre, mennyire van közel a Hírnök, mi jár le két héten belül |
+| Rítushívó | **kinek hány hete van hátra**, mielőtt lelép, és ki hol tart pontosan |
+| Asztromanta | mit ér innen a legrövidebb és a leghosszabb ugrás, elég-e rá az üzemanyag, hány rendszer van még sötétben |
+
+Ez nem titok — **a te dolgod, hogy elmondd.** Azért van így, mert négy ember egy
+képernyő előtt még nem négy játékos: ha mindenki mindent lát, az asztal legjobb
+stratégája kiszámolja mind a négy széket, a többiek meg kattintanak. Attól lesz
+valódi beszélgetés, hogy más-más *tények* vannak nálatok.
+
+### A Sötétedés lépései
+
+A Sötétedés minden szintje **névvel** érkezik, egyszer, a naplóba: *A hosszú
+árnyék*, *A hidegebb oldal*, *A csend a Kapu mögött*. A számok mögötte
+ugyanazok — de van mit felolvasni.
+
+### Az epilógus
+
+Amikor vége, a záróképernyő **név szerint** végigmegy mindenkin, aki valaha a
+fedélzeten volt: ki jött haza, ki nem, és mi lett velük. A halottak elöl.
+
 ## Pultok: ami a tiéd
 
 A hajón szinte minden közös: **egy reaktor, egy raktér, egy útvonal**. Ez a játék
@@ -539,7 +629,7 @@ elkölteni a jegyeit, és nem lehet elvinni a tanítványát.
 
 Mindkét hős a **saját** fejlesztési pontját gyűjti, és nem ugyanazért:
 
-| | Rúnakovács — *kovácsjegy* | Visszhang-olvasó — *visszhangjegy* |
+| | Rúnaszövő — *kovácsjegy* | Múltidéző — *visszhangjegy* |
 |---|---|---|
 | Megnyert partraszállás | +1 | +1 |
 | Hajóra törés, amiben **egy modul sem** pusztult el | **+2** | — |
@@ -552,12 +642,34 @@ A hajó épsége az ő számlája; a megértés az övé. Ez nem díszítés: at
 dologért fizet a játék, **más irányba is fogsz nyomni** a közös döntésekben.
 
 A jegyekből a pult saját listájáról lehet vásárolni. A két lista szándékosan nem
-egymás tükörképe: a Rúnakovács szívósságot, terepet és hajószerkezetet vesz
+egymás tükörképe: a Rúnaszövő szívósságot, terepet és hajószerkezetet vesz
 (Vasderék, Zsilipvonalak, Sáncvonal-lap, Ereklyehordozó, Csendes kohó), a
-Visszhang-olvasó látást, emlékezetet és megértést (Messzelátás, Levéltáros,
+Múltidéző látást, emlékezetet és megértést (Messzelátás, Levéltáros,
 Emlékezés, Fonál, Álló hang-lap, Ereklyeolvasó).
 
-Két fejlesztés **új lapot** ad a paklidba, véglegesen — és csak a tiédbe.
+Négy fejlesztés **új lapot** ad a paklidba, véglegesen — és csak a tiédbe (a
+Rúnaszövő Sáncvonala, a Múltidéző Álló hangja, a Rítushívó Kórusvonala, az
+Asztromanta Belövése).
+
+**És nem csak a csatáról szólnak.** Minden hősnek van legalább két olyan
+fejlesztése, ami akkor is fizet, amikor egész héten nem történik semmi — a hajó
+így lesz jobb bolt nélkül. Amit egy modul kreditből vesz és mindenkié, azt ez egy
+ember jegyeiből veszi, és tudni fogjátok, kitől van:
+
+| Fejlesztés | Kié | Mit ad |
+|---|---|---|
+| Roncsmester | Rúnaszövő | hetente +3 kredit |
+| Hajórúnák | Rúnaszövő | hetente +1 hajótest |
+| Széljegyzetek | Múltidéző | hetente +2 információ |
+| Kölcsönvett óra | Múltidéző | minden **legalább 3 hetes** ugrás egy héttel rövidebb |
+| Konyhaügyelet | Rítushívó | hetente +2 élelem |
+| Fogadalomtartó | Rítushívó | **mindenki hűsége 1-gyel feljebb tart** |
+| Takarékos pálya | Asztromanta | hetente +2 üzemanyag |
+| Műszeres kiképzés | Asztromanta | a tanítványai hetente +1 tapasztalatot szereznek |
+| Tábori kohó | Rúnaszövő | **minden hős 1 Vérttel kezdi a partraszállást** |
+
+A rövidebb ugrás szándékosan csak a hosszú utakra hat: a térkép távolságai maguk
+a játék, és aki minden ugrást egyhetessé tud tenni, az nem fizetett érte semmit.
 
 ### Ereklyék: csak az hat, amit hordasz
 
@@ -572,8 +684,8 @@ kérdés nem az, hogy találtatok-e ereklyét, hanem hogy **ki mit hord ezen a h
 - Több hely: *Ereklyehordozó* / *Ereklyeolvasó* fejlesztés, vagy az **Ereklyeágy**
   modul (kutatás) — az mindkettőnek ad egy pluszt.
 - Van, amit **csak az egyikőtök** hordhat: az Üllőtöredék, a Hallgató lemez és Az
-  első rúna a Rúnakovácsé; a Kórus-szilánk és A nevek jegyzéke a
-  Visszhang-olvasóé.
+  első rúna a Rúnaszövőé; a Kórus-szilánk és A nevek jegyzéke a
+  Múltidézőé.
 - Van, aminek **ára** van: Az őrző szeme messzebbre lát, de hetente +1 figyelmet
   gyűjt; az Isten-gép csapolás Fluxust ad, de a legénység nem szeret vele egy
   fedélzeten lenni. Ez mindig ki van írva.
@@ -605,9 +717,9 @@ A rangok a Pultokon és a legénységi listán is látszanak.
 
 ### A hajó két fele
 
-A hajó rendszerei és állomásai fel vannak osztva: a **Gépészet** a Rúnakovácsé
+A hajó rendszerei és állomásai fel vannak osztva: a **Gépészet** a Rúnaszövőé
 (Pajzs, Kohó, Rúnamag; Kohó és Fegyverzet állomás), a **Kutatás** a
-Visszhang-olvasóé (Labor, Érzékelők; Labor, Archívum, Érzékelő, Szentély
+Múltidézőé (Labor, Érzékelők; Labor, Archívum, Érzékelő, Szentély
 állomás). Ami **Közös** — Életfenntartás, Hajtómű, Híd, Gyógyító —, arról tényleg
 együtt kell dönteni.
 
@@ -677,7 +789,7 @@ Két dolog fontos benne:
 - **Sosem két hét egymás után.** A csendes hét is a ritmus része. Egy hajó, ami minden
   héten kérdez egyet, nem hely, hanem egy lista, amit le kell darálni.
 - **Van, akinek a dolga.** Minden esemény megnevezi, **melyik hős felel érte** — a
-  raktári verekedés a Kántoré, a rúnaszivárgás a Rúnakovácsé. Az ő gépén az ő gombjai
+  raktári verekedés a Rítushívóé, a rúnaszivárgás a Rúnaszövőé. Az ő gépén az ő gombjai
   élnek, a többiek látják a helyzetet és beszélnek, de nem kattintanak. Ez ugyanaz a
   felület, mint a térképes találkozásoké: ott áll, mit ad és mit kér egy válasz, és
   **a hét nem tud eltelni, amíg nincs válasz.**
@@ -695,6 +807,93 @@ az „ami jön” listán, egy sorral, hogy miből jön.
 
 Ez az, amitől egy egyéni döntés a csapat sorsává válik: aki most kivágja magát egy
 helyzetből a másik számlájára, azt három hét múlva együtt fizetitek.
+
+## A játék szíve: megérteni és hallhatóvá válni
+
+Ez a fejezet arról szól, ami az összes többit összeköti. Egy mondat:
+
+> **Meg akarjuk érteni, mi lett velük — és minden lépés, amivel közelebb jutunk,
+> hallhatóbbá tesz minket.**
+
+### A megértés a tét
+
+A tíz végkifejletből **kilenc a megértéstől függ.** Csak kettő érhető el mindig:
+a *Menekülés* és a *Vak pusztítás*. A többihez tudni kell, mi történt itt.
+
+| Szint | Megértés | Mit nyit |
+|---|---|---|
+| 0 | 0–2 | Menekülés, Vak pusztítás |
+| 1. | 3–7 | Tanú, és a feltételes végkifejletek egy része |
+| 2. | 8–13 | Beavatkozás, Gondnok |
+| 3. | 14+ | Egyesülés, A válasz |
+
+A Kutatás képernyőn ott van a lista: mi van nyitva, és **mi hiányzik** azokhoz,
+amik nincsenek. Ez nem mellékes információ — ez a játék célja, számmal.
+
+### A figyelem az ára
+
+**Minden 2 megértés +1 figyelem.** Mindegy, honnan jön: kutatásból, megfejtett
+szerkezetből, rúnasorból, találkozásból vagy a Csillagsír pereméről. A Hírnök
+**8 figyelemnél** ébred.
+
+Vagyis a 3. szint eléréséhez (14 megértés) magában **7 figyelem** tartozik — a
+Hírnök küszöbe majdnem megvan tőle egyedül, és a partraszállások, az ugrások meg
+minden más még ezen felül van.
+
+Ez **nem büntetés, hanem a játék kérdése.** Nem lehet nyerni azzal, hogy
+csendben maradtok: alacsony megértéssel két végkifejlet marad. A kérdés soha nem
+az, hogy *legyünk-e hangosak* — hanem hogy **mennyire, meddig, és mikor állunk
+meg.**
+
+### Amivel csendesíteni lehet
+
+- **Egy hét egy már lezárt rendszerben:** −1 figyelem.
+- **Állócsend-lámpás** és a hasonló ereklyék, **Csendes kohó** és a hasonló
+  fejlesztések.
+- **Csendesítés a hajóról** partraszállás közben (lásd lent): −1 figyelem.
+- **A Hírnök elhallgattatása** — ez végleg leveszi a rendszert.
+- És a nehézségi tárcsán a **Figyelem** kikapcsolható; akkor az ára is eltűnik.
+
+### Kettéválás: aki fent marad
+
+**Nem muszáj mindenkinek lemennie** a partraszállásra. Legalább ketten mindig
+lemennek, a többiek maradhatnak — és aki marad, az **a csata alatt a hajót
+viszi**: körönként egy támogatás, a raktár terhére.
+
+| Támogatás | Mit tesz | Ára |
+|---|---|---|
+| **Csendesítés** | −1 figyelem | 4 információ |
+| **Energiaátkötés** | +3 Fluxus a csapatnak | 3 üzemanyag |
+| **Érzékelő-söprés** | Rúnajel a csapathoz legközelebbi ellenségre | 3 információ |
+| **Gyógyító készenlét** | a legrosszabbul álló hős +3 életerő | 4 üzemanyag |
+
+Ez az egyetlen pont a játékban, ahol **két csapat ugyanabban a percben csinál
+mást.** A csere valódi: eggyel kevesebb hős a rácson, cserébe a hajó cselekszik.
+És a Csendesítés pont az, amit odalent nem lehet megcsinálni — valakinek fent
+kell lennie hozzá.
+
+### A szavad
+
+Bármelyik hős **kimondhat egy ígéretet** a pultján, határidővel. Egyszerre egy
+van az egész asztalra. A játék felírja és számon kéri.
+
+| Ígéret | Amit vállalsz |
+|---|---|
+| **Csend** | 4 héten át nem nő a figyelem |
+| **Megfejtés** | a határidőre meglesz +4 megértés |
+| **A hajótest** | a határidőre legalább 16 hajótest |
+| **A raktár** | a határidőre legalább 20 élelem |
+| **Mindenki visszajön** | 5 hétig nem veszítünk el senkit |
+| **A talaj** | 2 megnyert partraszállás a határidőig |
+
+- **Ha megtartod:** a jegy a **tiéd** (1–3, nehézség szerint), +morál, és mindenki
+  hűsége +1.
+- **Ha nem:** −2 morál, és mindenki hűsége −1.
+- Amit *nem* csinálni ígértél (Csend, Mindenki visszajön), az **abban a
+  pillanatban bukik**, amikor megtörik — nem a határidőn.
+
+A Csend a szív saját ígérete: mivel a megértés zajos, a „négy hétig nem tanulunk”
+valódi, fájó, ellenőrizhető vállalás arról, amiről az egész játék szól.
 
 ## A figyelem és a Hírnök
 
@@ -787,10 +986,10 @@ száll partra**.
 
 ### Kik szállnak partra
 
-- **1-2 játékos:** Rúnakovács és Visszhang-olvasó.
-- **3 játékos:** + **Kántor** — a hangadó. Támogató: gyógyítás, vért, Fluxus a
+- **1-2 játékos:** Rúnaszövő és Múltidéző.
+- **3 játékos:** + **Rítushívó** — a hangadó. Támogató: gyógyítás, vért, Fluxus a
   csapatnak. Ő az egyetlen, aki a rácson vissza tud adni életerőt.
-- **4 játékos:** + **Csillagmérő** — a tüzérség. Nagy hatótáv, bemérés,
+- **4 játékos:** + **Asztromanta** — a tüzérség. Nagy hatótáv, bemérés,
   területsebzés, de a legmagasabb kezdeményezés-számok (lassú) és nyolc életerő.
   Aki eléri, az meg is öli.
 
@@ -802,8 +1001,8 @@ közel van** — ha van melletted társ, mindkettőtök találata +1. Négyen sz
 
 A címképernyőn (egy gépen) és a lobbiban (online) **mindenki kiválaszthatja, kivel
 akar játszani**. Ha olyat választasz, amit már visz valaki, **cseréltek** — így
-sosem lehet két Rúnakovács az asztalnál. Nem kötelező a létszám szerinti alap
-felállás: két játékos akár Kántorral és Csillagmérővel is nekivághat (gyógyító és
+sosem lehet két Rúnaszövő az asztalnál. Nem kötelező a létszám szerinti alap
+felállás: két játékos akár Rítushívóval és Asztromantával is nekivághat (gyógyító és
 tüzérség, elöl senkivel — kemény, de a tiétek a döntés).
 
 ### A heti őrség
@@ -815,13 +1014,13 @@ A három sosem „kicsi, közepes, nagy": az egyik biztonságos, az egyik **fize
 valamit azért, hogy erős legyen**, az egyik pedig csendes. Ezért nem lehet egyszer
 kitalálni a jó választ — attól függ, mire megy a hét.
 
-- **Rúnakovács:** foltozás (+3 hajótest) · edzés (+2 Fluxus a következő
+- **Rúnaszövő:** foltozás (+3 hajótest) · edzés (+2 Fluxus a következő
   partraszállásra, 1 hajótestbe kerül) · tompítás (−2 figyelem)
-- **Visszhang-olvasó:** tanulmányozás (+4 információ) · hallgatózás (+1 megértés,
+- **Múltidéző:** tanulmányozás (+4 információ) · hallgatózás (+1 megértés,
   1 morálba kerül) · térképezés (egy oszloppal messzebb látsz, mint eddig)
-- **Kántor:** kötözés (minden hős +3 életerő) · éneklés (+2 morál) · tanítás
+- **Rítushívó:** kötözés (minden hős +3 életerő) · éneklés (+2 morál) · tanítás
   (a tanítványai +2 munkahét, 1 morálba kerül)
-- **Csillagmérő:** pásztázás (két oszlop) · útvonalszámítás (+3 üzemanyag) ·
+- **Asztromanta:** pásztázás (két oszlop) · útvonalszámítás (+3 üzemanyag) ·
   figyelés (+2 információ, −1 figyelem)
 
 Aki nem ad ki őrséget, az egyszerűen nem csinál semmit — **nincs büntetés**, csak

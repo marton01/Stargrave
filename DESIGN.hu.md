@@ -128,11 +128,11 @@ A legénységtagokat **állomásokra** helyezed. Egy állomás akkor működik, 
 | Állomás | Hatás | Hatáskör |
 |---|---|---|
 | **Híd** | navigáció, üzemanyag-hatékonyság | közös |
-| **Labor** | Információ-termelés, kutatás | Visszhang-olvasó |
-| **Archívum** | lapfejlesztés, idegen technológia elemzése | Visszhang-olvasó |
-| **Érzékelő** | előre látod, mi van a következő rendszerekben | Visszhang-olvasó |
-| **Kohó** | hajótest-javítás, rúnakovácsolás, gyártás | Rúnakovács |
-| **Fegyverzet** | pajzs- és védelmi felkészülés | Rúnakovács |
+| **Labor** | Információ-termelés, kutatás | Múltidéző |
+| **Archívum** | lapfejlesztés, idegen technológia elemzése | Múltidéző |
+| **Érzékelő** | előre látod, mi van a következő rendszerekben | Múltidéző |
+| **Kohó** | hajótest-javítás, rúnaszövés, gyártás | Rúnaszövő |
+| **Fegyverzet** | pajzs- és védelmi felkészülés | Rúnaszövő |
 | **Gyógyító** | életerő és sebek kezelése | közös |
 | **Szentély** | morál helyreállítása | közös |
 
@@ -144,10 +144,10 @@ Minden legénységtagnak van **szakterülete**: a megfelelő állomáson lényeg
 |---|---|---|---|
 | **Üzemanyag** | fizikai | ugrások a csillagtérképen | közös |
 | **Élelem** | fizikai | heti fogyás a legénységszám szerint | közös |
-| **Hajótest** | fizikai | a hajó integritása; nullán vége | Rúnakovács javítja |
+| **Hajótest** | fizikai | a hajó integritása; nullán vége | Rúnaszövő javítja |
 | **Legénység** | emberi | állomások betöltése, partraszállás | közös felvétel |
 | **Morál** | emberi | alacsonyan: hibák, lázongás, kilépők | közös |
-| **Információ** | absztrakt | kutatási projektek, megértés | Visszhang-olvasó |
+| **Információ** | absztrakt | kutatási projektek, megértés | Múltidéző |
 | **Kredit** | absztrakt | vásárlás, felvétel, kereskedés | közös |
 
 ### 4.5 Hatáskörök: mi közös, mi a tiéd
@@ -155,10 +155,10 @@ Minden legénységtagnak van **szakterülete**: a megfelelő állomáson lényeg
 Mindkét játékos **ugyanolyan súlyú** — ugyanannyi döntést hoz, egyik sem asszisztens. A
 megosztás **hatáskör szerint** történik, nem szerep szerint:
 
-**Rúnakovács — mérnöki hatáskör.** Kohó és Fegyverzet, hajótest-javítás, modulépítés,
-üzemanyag-szintézis, rúnakovácsolás. Az ő döntése, hogy a hajó *fizikailag* mit tud.
+**Rúnaszövő — mérnöki hatáskör.** Kohó és Fegyverzet, hajótest-javítás, modulépítés,
+üzemanyag-szintézis, rúnaszövés. Az ő döntése, hogy a hajó *fizikailag* mit tud.
 
-**Visszhang-olvasó — kutatási hatáskör.** Labor, Archívum, Érzékelő, kutatási projektek, idegen
+**Múltidéző — kutatási hatáskör.** Labor, Archívum, Érzékelő, kutatási projektek, idegen
 technológia elemzése, jelfejtés. Az ő döntése, hogy a hajó *mit ért meg* a világból.
 
 **Közös:** energia-elosztás, útvonal, küldetésvállalás, legénységfelvétel, morális dilemmák,
@@ -202,7 +202,7 @@ teszi az útvonalválasztást igazi döntéssé.
 
 ### 4.9 Kutatás — két ág, egy készlet
 
-Az **Információ** a Visszhang-olvasó valutája, és **két ágra** költhető:
+Az **Információ** a Múltidéző valutája, és **két ágra** költhető:
 
 **Technológia-ág** — azonnali képesség: hajómodulok, reaktor-fejlesztés, új rúnatípusok, új lapok
 az osztályaidhoz, hatékonyabb állomások.
@@ -339,8 +339,8 @@ monitor előtt kettesben működik.
 
 | Állapot | Ki teszi fel | Mit ad a párjának |
 |---|---|---|
-| **Horgony** | Rúnakovács | a megjelölt nem tud elmozdulni, és a területhatások +1 sebzést tesznek rá |
-| **Rúnajel** | Visszhang-olvasó | a megjelöltre a közelharci támadás +2, és ha megöli, Fluxus jár |
+| **Horgony** | Rúnaszövő | a megjelölt nem tud elmozdulni, és a területhatások +1 sebzést tesznek rá |
+| **Rúnajel** | Múltidéző | a megjelöltre a közelharci támadás +2, és ha megöli, Fluxus jár |
 | **Kötés** | passzív, ha 2 mezőn belül vagytok | mindkettőtöknek +1 sebzés |
 | **Előkészítés** | ledöntés, hátralökés, elvakítás | pozicionális előny a másiknak |
 
@@ -419,20 +419,20 @@ szintjével és az Archívum előrehaladásával nő. Generáláskor a megoldó 
 
 Mindkettő ugyanolyan súlyú. Csak a *készletük* teljesen más.
 
-### Rúnakovács — a terepformáló
+### Rúnaszövő — a terepformáló
 Közelharcos építő, aki **átrendezi a csatateret**: vért magára és a párjára, csapdák, rúnaoszlopok
 és falak emelése (blokkoló terep, ami látótávolságot is vág), hátralökés, ledöntés, **Horgony**.
 Erős egycélú sebzés, rövid hatótáv, lassú kezdeményezés. Felderítő küldetéseken ő nyit utat és
 stabilizál összeomló szerkezeteket.
 
-### Visszhang-olvasó — a mintaolvasó
+### Múltidéző — a mintaolvasó
 Távolsági rontómágus, aki **a saját elhasznált lapjaival játszik**: területhatású rontás és
 gyengítés, **Rúnajel**, és a **Visszhang** — Fluxusért újra kijátszhat egy hatást az elhasznált
-kupacából. Ő az, aki *jól bánik* a kifáradással, míg a Rúnakovács csak elszenvedi. Törékeny,
+kupacából. Ő az, aki *jól bánik* a kifáradással, míg a Rúnaszövő csak elszenvedi. Törékeny,
 gyors kezdeményezés. Feladvány-küldetéseken ő ad tippeket és részinformációt.
 
-A párosítás azért működik, mert a két hős **más erőforrással gazdálkodik**: a Rúnakovács térrel
-és páncéllal, a Visszhang-olvasó lapokkal és Fluxussal.
+A párosítás azért működik, mert a két hős **más erőforrással gazdálkodik**: a Rúnaszövő térrel
+és páncéllal, a Múltidéző lapokkal és Fluxussal.
 
 ---
 

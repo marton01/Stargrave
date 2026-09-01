@@ -8,6 +8,7 @@
 // able to take away a twenty-eight week expedition — that would be the one bug
 // in the whole game that could not be forgiven.
 
+import type { Unit } from '../types'
 import { newArchive, ARCHIVE_VERSION } from './archive'
 import { blankHeroRecords } from './expedition'
 import { normaliseDials } from '../../content/difficulty'
@@ -101,6 +102,8 @@ function migrate(expedition: ExpeditionState): ExpeditionState {
     // Somebody from before loyalty existed has been getting on with it: start
     // them where a new hire starts rather than at nought.
     loyalty: member.loyalty ?? 7,
+    // A crew saved before anybody got on or fell out with anybody.
+    bonds: member.bonds ?? [],
   }))
   return {
     ...expedition,
@@ -128,6 +131,12 @@ function migrate(expedition: ExpeditionState): ExpeditionState {
     proposal: expedition.proposal ?? null,
     subject: expedition.subject ?? null,
     debts: expedition.debts ?? [],
+    landingParty: expedition.landingParty ?? [],
+    lastCouncil: expedition.lastCouncil ?? 0,
+    figures: expedition.figures ?? {},
+    pledge: expedition.pledge ?? null,
+    ashore: expedition.ashore ?? [],
+    supportRound: expedition.supportRound ?? -1,
     crew,
     activeMission:
       expedition.activeMission?.k === 'battle'
@@ -142,6 +151,16 @@ function migrate(expedition: ExpeditionState): ExpeditionState {
               // A battle saved before the site took turns simply has none left.
               site: expedition.activeMission.battle.site ?? [],
               struck: expedition.activeMission.battle.struck ?? {},
+              // Units saved before the crew came down with the party have no
+              // `kind`. Everything on the hero side back then was a hero.
+              // The cast is the honest shape of a migration: what came off disk
+              // is whatever an older version wrote, and this line is where it
+              // becomes a Unit again.
+              units: (expedition.activeMission.battle.units ?? []).map((u: Unit) =>
+                u.side === 'hero' && (u as { kind?: string }).kind === undefined
+                  ? ({ ...u, kind: 'hero' } as Unit)
+                  : u,
+              ),
             },
           }
         : expedition.activeMission,

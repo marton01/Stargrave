@@ -15,6 +15,7 @@ import type { RuneLineTask } from '../task/runeline'
 import type { BattleState, HeroClassId, MissionKind, Objective, Text, TrialSymbol } from '../types'
 import type { CarriedHero } from '../battle'
 import type { DialId, Dials } from '../../content/difficulty'
+import type { PledgeKind } from '../../content/pledges'
 import type { DirectiveKind } from '../../content/directives'
 import type { RoomState } from '../session/room'
 
@@ -165,6 +166,19 @@ export type ExpeditionEvent =
   | { k: 'starving' }
   | { k: 'moraleCollapse' }
   | { k: 'crewLost'; name: string }
+  | { k: 'crewBond'; a: string; b: string; kind: 'trust' | 'friction' }
+  | { k: 'crewFriction'; a: string; b: string }
+  | { k: 'councilCalled'; title: Text; supporters: number; of: number }
+  | { k: 'figureStanding'; name: Text; amount: number; standing: number }
+  | { k: 'figureExpected'; name: Text; weeks: number }
+  | { k: 'darkeningNamed'; name: Text; text: Text }
+  | { k: 'pledgeMade'; label: Text; hero: HeroClassId; weeks: number }
+  | { k: 'pledgeKept'; label: Text; hero: HeroClassId }
+  | { k: 'pledgeBroken'; label: Text; hero: HeroClassId }
+  | { k: 'stayedAboard'; hero: HeroClassId }
+  | { k: 'shipSupport'; hero: HeroClassId; what: Text }
+  | { k: 'followerChosen'; name: string; hero: HeroClassId }
+  | { k: 'followerDied'; name: string; hero: HeroClassId }
   | { k: 'crewJoined'; name: string }
   | { k: 'stationRan'; station: StationId }
   | { k: 'researchStarted'; project: Text }
@@ -401,11 +415,33 @@ export type Debt = {
    * Only the departure chain uses it: the ship getting better has to be able to
    * cancel a scheduled leaving, which means being able to look it up.
    */
-  kind?: 'leaving'
+  kind?: 'leaving' | 'figure'
+  /**
+   * Somebody who is on their way back to you.
+   *
+   * The scene they arrive with is chosen when the debt LANDS, from the standing
+   * you have by then — so four weeks of treating them differently can change
+   * which door they come through.
+   */
+  figure?: string
   /** One line in the log when it lands, so it is never a mystery. */
   note: Text
   /** Applied through the same path as an encounter's effects. */
   effects: EncounterEffect[]
+}
+
+/** A promise with a date on it. */
+export type Pledge = {
+  kind: PledgeKind
+  /** Who said it. The marks for keeping it are theirs. */
+  by: HeroClassId
+  /** The number promised, in whatever the kind measures. */
+  target: number
+  /** The week it is judged. */
+  due: number
+  /** What the measured thing stood at when it was said. */
+  startedAt: number
+  state: 'open' | 'kept' | 'broken'
 }
 
 export type Tally = {
@@ -555,6 +591,44 @@ export type ExpeditionState = {
    * players to remember. Fired at the start of the week they name.
    */
   debts: Debt[]
+  /**
+   * Crew chosen to come down on the next landing, by id.
+   *
+   * Kept on the ship rather than decided at the hatch, because it is a decision
+   * about a person: you pick them on the crew screen, in the quiet, and then you
+   * live with it. Anybody in here who stops being eligible — untrained, no
+   * longer somebody's mentee, dead — is simply skipped when the landing builds.
+   */
+  landingParty: string[]
+  /** The week the crew last put something to the table. */
+  lastCouncil: number
+  /**
+   * Where the run stands with the people who come back.
+   *
+   * `standing` is how you have treated them; `stage` is which meeting comes
+   * next. See content/figures.ts — this is the only number in the game that is
+   * about a person rather than about a situation.
+   */
+  figures: Record<string, { standing: number; stage: number }>
+  /**
+   * What one of the players has promised the others — see content/pledges.ts.
+   *
+   * One at a time, for the whole table. A pledge is the co-operative half of
+   * "bargaining and promises": there is nobody to bluff, but there is somebody
+   * who said they would handle it.
+   */
+  pledge: Pledge | null
+  /**
+   * Heroes who stay on the ship for the next landing.
+   *
+   * Not everybody has to go down. Whoever stays runs the ship WHILE the fight is
+   * happening — one support action a round, paid out of the hold — which is the
+   * only place in this game where two groups of players are doing different
+   * things in the same minute. At least two always land.
+   */
+  ashore: HeroClassId[]
+  /** The battle round the ship's support was last spent on. */
+  supportRound: number
 
   /**
    * What this expedition has done that something later can notice.

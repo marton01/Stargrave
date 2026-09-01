@@ -12,6 +12,7 @@
 // would be unreachable and no test would notice.
 
 import { describe, expect, it } from 'vitest'
+import { isHero } from '../state'
 import {
   canAdvanceWeek,
   expeditionStep,
@@ -100,7 +101,7 @@ function nextAction(s: ExpeditionState, rng: Rng): ExpeditionAction | null {
       const heroId = b.selectingHero
       if (!heroId) return { k: 'missionFinish' }
       const hero = b.units.find((u) => u.id === heroId)
-      if (!hero || hero.side !== 'hero') return { k: 'missionFinish' }
+      if (!isHero(hero)) return { k: 'missionFinish' }
       if (hero.resting) return { k: 'battleAction', action: { k: 'confirmSelection', heroId } }
       if (mustRest(hero)) {
         if (!canRest(hero)) return { k: 'missionFinish' }
@@ -128,7 +129,7 @@ function nextAction(s: ExpeditionState, rng: Rng): ExpeditionAction | null {
     }
     if (!turn.topCard) {
       const hero = b.units.find((u) => u.id === turn.heroId)
-      if (!hero || hero.side !== 'hero') return { k: 'missionFinish' }
+      if (!isHero(hero)) return { k: 'missionFinish' }
       const cardId = rng.pick(hero.selected)
       if (!cardId) return { k: 'missionFinish' }
       return { k: 'battleAction', action: { k: 'assignTopCard', cardId } }

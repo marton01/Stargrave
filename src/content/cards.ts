@@ -1118,6 +1118,61 @@ export const CARDS: Card[] = [
       effects: [{ k: 'move', distance: 3 }, { k: 'recoverCard' }],
     },
   },
+
+  {
+    id: 'ct-choirline',
+    name: { hu: 'Kórusvonal', en: 'Choir line' },
+    heroClass: 'cantor',
+    advanced: true,
+    // Late: what she does here is worth waiting a round for, and she is not the
+    // one who should be opening a fight.
+    initiative: 62,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu: 'Gyógyítás 2 magadra és a párodra, majd Vért 2 mindenkire 2 mezőn belül.',
+        en: 'Heal 2 to yourself and your partner, then Shield 2 to everyone within 2 tiles.',
+      },
+      flux: 2,
+      effects: [
+        { k: 'heal', power: 2, alsoPartner: true },
+        { k: 'areaAroundSelf', power: 0, radius: 2, status: { kind: 'shield', rounds: 2 } },
+      ],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 2, Vért 1 magadra', en: 'Move 2, Shield 1 to yourself' },
+      effects: [{ k: 'move', distance: 2 }, { k: 'shield', power: 1 }],
+    },
+  },
+
+  {
+    id: 'sv-ranging-shot',
+    name: { hu: 'Belövés', en: 'Ranging shot' },
+    heroClass: 'surveyor',
+    advanced: true,
+    // The highest number in the game: he fires last, and he fires furthest.
+    initiative: 88,
+    symbols: ['insight'],
+    top: {
+      text: {
+        hu:
+          'Támadás 4, hatótáv 7. Ha a cél már Rúnajel alatt van, a sebzés 7 — különben ' +
+          'Rúnajel alá kerül.',
+        en:
+          'Attack 4, range 7. If the target is already Rune Marked the damage is 7 — otherwise ' +
+          'it becomes Rune Marked.',
+      },
+      flux: 1,
+      effects: [{ k: 'attack', power: 4, range: 7, status: { kind: 'runeMark', rounds: 2 } }],
+    },
+    bottom: {
+      text: { hu: 'Mozgás 1, majd Rúnajel egy ellenségre 5 mezőn belül', en: 'Move 1, then Rune Mark an enemy within 5' },
+      effects: [
+        { k: 'move', distance: 1 },
+        { k: 'status', status: 'runeMark', rounds: 2, range: 5 },
+      ],
+    },
+  },
 ]
 
 const CARD_INDEX = new Map(CARDS.map((c) => [c.id, c]))

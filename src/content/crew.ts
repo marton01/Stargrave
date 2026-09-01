@@ -134,6 +134,26 @@ export const CREW_TRAITS: Record<CrewTraitId, CrewTrait> = {
   },
 }
 
+/**
+ * What two people are to each other.
+ *
+ * `trust` is two people who have worked together before and get more done for
+ * it; `friction` is two people who cannot be in the same room without it
+ * costing something. Both are symmetric: the pair is stored on both of them so
+ * that neither list is a half-truth.
+ */
+export type CrewBondKind = 'trust' | 'friction'
+
+export type CrewBond = { with: string; kind: CrewBondKind }
+
+export const BOND_NAMES: Record<CrewBondKind, Text> = {
+  trust: { hu: 'jól dolgoznak együtt', en: 'work well together' },
+  friction: { hu: 'nem bírják egymást', en: 'cannot stand each other' },
+}
+
+/** What a pair on the same station is worth, each. */
+export const BOND_STRENGTH: Record<CrewBondKind, number> = { trust: 1, friction: -1 }
+
 export type CrewMember = {
   id: string
   /** Invented name — deliberately language neutral. */
@@ -142,6 +162,14 @@ export type CrewMember = {
   traits: CrewTraitId[]
   /** Which station they are standing on, if any. */
   station: string | null
+  /**
+   * Who this person works well with, and who they cannot work with at all.
+   *
+   * The crew screen used to be a table to fill in: every body was worth the same
+   * everywhere, so posting them was arithmetic. A pair turns it into a puzzle
+   * with a right answer that changes as people die and arrive.
+   */
+  bonds: CrewBond[]
   alive: boolean
   /** Weeks aboard. Purely for the crew list, but it makes losses land harder. */
   weeksAboard: number
@@ -263,7 +291,67 @@ export function generateCrewMember(rng: Rng, id: string, speciality?: CrewSpecia
     xp: 0,
     mentor: null,
     loyalty: 7,
+    bonds: [],
   }
+}
+
+/**
+ * Tie a crew together: who gets on, and who does not.
+ *
+ * Symmetric, and written on both people. A one-sided grudge would be more
+ * true to life and completely unreadable on a screen — the crew list has to be
+ * able to say "these two" from either end of it.
+ */
+export function bindCrew(rng: Rng, crew: CrewMember[]): void {
+  const pool = crew.filter((c) => c.alive)
+  if (pool.length < 3) return
+  const pairs = rng.shuffle(
+    pool.flatMap((a, i) => pool.slice(i + 1).map((b) => [a, b] as const)),
+  )
+  // Two of each on a full crew: enough that a posting is a puzzle, few enough
+  // that most people are simply people.
+  const wanted = Math.max(1, Math.floor(pool.length / 3))
+  let made = 0
+  for (const [a, b] of pairs) {
+    if (made >= wanted * 2) break
+    if (a.bonds.some((x) => x.with === b.id) || b.bonds.some((x) => x.with === a.id)) continue
+    const kind: CrewBondKind = made < wanted ? 'trust' : 'friction'
+    a.bonds.push({ with: b.id, kind })
+    b.bonds.push({ with: a.id, kind })
+    made += 1
+  }
+}
+
+/** What this person's pairings are worth at the station they are standing on. */
+export function bondBonus(member: CrewMember, crew: readonly CrewMember[]): number {
+  if (!member.station) return 0
+  let total = 0
+  for (const bond of member.bonds) {
+    const other = crew.find((c) => c.id === bond.with)
+    if (!other || !other.alive || other.station !== member.station) continue
+    total += BOND_STRENGTH[bond.kind]
+  }
+  return total
+}
+
+/** Every pair currently standing on the same station, for the interface. */
+export function activeBonds(
+  crew: readonly CrewMember[],
+): { a: CrewMember; b: CrewMember; kind: CrewBondKind }[] {
+  const seen = new Set<string>()
+  const out: { a: CrewMember; b: CrewMember; kind: CrewBondKind }[] = []
+  for (const member of crew) {
+    if (!member.alive || !member.station) continue
+    for (const bond of member.bonds) {
+      const other = crew.find((c) => c.id === bond.with)
+      if (!other || !other.alive || other.station !== member.station) continue
+      const key = [member.id, other.id].sort().join('|')
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push({ a: member, b: other, kind: bond.kind })
+    }
+  }
+  return out
 }
 
 /** The starting complement: one of each speciality plus a spare hand. */

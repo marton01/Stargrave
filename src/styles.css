@@ -25,6 +25,17 @@
   --danger-dim: #45201a;
   --green: #6f9c58;
 
+  /* One colour per hero class. The Runeweaver has the rune amber and the
+   * Pastcaller the echo cyan — those two were always the palette. The
+   * Rite-caller and the Astromancer arrived with the third and fourth seats and
+   * were both painted cyan, which made half a four-hero party the same colour on
+   * the board. Jade for the one who keeps people standing, violet for the one
+   * who works out of the sky. */
+  --rite: #7cc79b;
+  --rite-dim: #1d4433;
+  --astro: #9b87e2;
+  --astro-dim: #2e2650;
+
   /* Sizes worth having in one place, because they are the two things that
    * decide how big the game feels: how wide a card is (everything inside one
    * is sized to match) and how big a portrait is.
@@ -439,6 +450,74 @@ kbd {
 }
 .tone-echo {
   color: var(--echo);
+}
+/* Who gets on with whom. Quiet until the two of them are actually posted
+   together — that is the moment it is worth anything, good or bad. */
+.crew-bond {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  margin: 0.1rem 0 0;
+}
+
+.crew-bond-live.crew-bond-trust {
+  color: var(--green);
+}
+
+.crew-bond-live.crew-bond-friction {
+  color: var(--danger);
+}
+
+/* The crew, on the ground. A follower's card is narrower and quieter than a
+   hero's: they are on your side, they are not one of the four. */
+.unit-follower {
+  border-left: 2px solid var(--line);
+  padding-left: 0.5rem;
+}
+
+.follower-orders {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.chip {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--text-soft);
+  border-radius: 999px;
+  padding: 0.12rem 0.5rem;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.chip-on {
+  background: var(--bg-4);
+  border-color: var(--rune);
+  color: var(--text);
+}
+
+.order-follower {
+  opacity: 0.85;
+  font-size: 0.85em;
+}
+
+.mentee-buttons {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.tone-rite {
+  color: var(--rite);
+}
+.tone-astro {
+  color: var(--astro);
 }
 .tone-danger {
   color: var(--danger);
@@ -1358,9 +1437,65 @@ kbd {
   z-index: 0;
 }
 
+/* The owner's mark: what a card wears when no art file exists for it. Bottom
+   right, large, and faint enough that it never competes with a word — it is
+   there to be recognised out of the corner of the eye, not read. */
+.card-mark {
+  position: absolute;
+  right: -0.35rem;
+  bottom: -0.6rem;
+  width: 5.2rem;
+  height: 5.2rem;
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* And the same colour along the top edge, where it is visible even when the
+   cards are overlapping in a crowded hand. */
+.card[data-card-class='runesmith'] { border-top-color: var(--rune); }
+.card[data-card-class='echoreader'] { border-top-color: var(--echo); }
+.card[data-card-class='cantor'] { border-top-color: var(--rite); }
+.card[data-card-class='surveyor'] { border-top-color: var(--astro); }
+.card[data-card-class] {
+  border-top-width: 2px;
+}
+
 /* A positioned element paints above its static siblings, so the text has to be
    lifted explicitly or the art would cover the words. */
-.card > *:not(.card-art) {
+.card > *:not(.card-art):not(.card-mark) {
   position: relative;
   z-index: 1;
+}
+
+/* The ship, while the fight is happening. Beside the board, not under it: the
+   players who stayed aboard are playing at the same time, not waiting. */
+.ship-support {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem;
+  border-left: 2px solid var(--echo);
+  background: var(--bg-2);
+  align-self: flex-start;
+  max-width: 12rem;
+}
+
+.ship-support h3 {
+  margin: 0 0 0.2rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.support-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--text-soft);
 }

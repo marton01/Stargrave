@@ -27,6 +27,21 @@ import type { CrewMember, CrewTraitId } from '../../content/crew'
 import { BASE_MENTEES, heroPerk, perkAvailable, perksOf } from '../../content/advance'
 import type { PerkEffect } from '../../content/advance'
 import { RELICS, relic, relicFits } from '../../content/relics'
+import { canFollow, followerStats } from '../followers'
+import { activeBonds, bindCrew, bondBonus } from '../../content/crew'
+import { pledgeDef } from '../../content/pledges'
+import { MIN_LANDING_PARTY, supportDef } from '../../content/support'
+import { distance } from '../grid'
+import type { SupportKind } from '../../content/support'
+import type { PledgeDef, PledgeKind } from '../../content/pledges'
+import { FIGURE_WARM_AT, figureDef } from '../../content/figures'
+import { darkeningStep } from '../../content/darkening'
+import {
+  COUNCIL_INTERVAL,
+  COUNCIL_MOTIONS,
+  COUNCIL_QUORUM,
+  COUNCIL_SUPPORT_BELOW,
+} from '../../content/council'
 import type { RelicEffect } from '../../content/relics'
 import { DIRECTIVE_DEFS, directiveDef } from '../../content/directives'
 import type { DirectiveContext, DirectiveKind } from '../../content/directives'
@@ -61,7 +76,6 @@ import type {
   ArchiveState,
   Debt,
   Directive,
-  ProposedAction,
   EndingId,
   ExpeditionEvent,
   ExpeditionLength,
@@ -69,6 +83,8 @@ import type {
   HeroRecord,
   MapNode,
   MissionSpec,
+  Pledge,
+  ProposedAction,
   Reward,
   Screen,
 } from './types'
@@ -110,6 +126,14 @@ export type ExpeditionAction =
   | { k: 'second'; by: number }
   | { k: 'dropProposal' }
   | { k: 'missionFinish' }
+  /** Take this crew member down on the next landing, or leave them aboard. */
+  | { k: 'toggleFollower'; crewId: string }
+  /** Say it out loud, with a date on it. See content/pledges.ts. */
+  | { k: 'makePledge'; hero: HeroClassId; kind: PledgeKind }
+  /** Stay on the ship for the next landing, or go down after all. */
+  | { k: 'toggleAshore'; hero: HeroClassId }
+  /** Spend the ship's action for this round of the fight. */
+  | { k: 'shipSupport'; hero: HeroClassId; kind: SupportKind }
   /** Same battlefield, from the beginning. */
   | { k: 'restartBattle' }
   /** A different battlefield, same brief. */
@@ -186,6 +210,10 @@ type BonusField =
   | 'repair'
   | 'moraleTarget'
   | 'bondRange'
+  | 'loyaltyTarget'
+  | 'travelCut'
+  | 'crewXp'
+  | 'startShield'
 
 /** The relics actually being worn — the only ones that do anything. */
 export function attunedRelics(s: ExpeditionState): string[] {
@@ -246,6 +274,17 @@ export const HERO_ORDER: HeroClassId[] = ['runesmith', 'echoreader', 'cantor', '
  */
 export function party(s: ExpeditionState): HeroClassId[] {
   return s.heroes.map((h) => h.heroClass)
+}
+
+/**
+ * Which seat runs this hero, from one.
+ *
+ * The battle assigns slots by the order of the party, so this has to read from
+ * the same list or a follower would answer to the wrong player.
+ */
+export function seatOfHero(s: ExpeditionState, hero: HeroClassId): 1 | 2 | 3 | 4 {
+  const index = party(s).indexOf(hero)
+  return (Math.min(Math.max(index, 0) + 1, 4) as 1 | 2 | 3 | 4)
 }
 
 /** How many relics this hero may wear at once. */
@@ -359,7 +398,7 @@ export function stationActive(s: ExpeditionState, station: StationId): boolean {
  * rules promise.
  */
 export function stationStrength(s: ExpeditionState, station: StationId): number {
-  return crewAt(s, station).reduce((sum, c) => sum + crewStrengthAt(c, station), 0)
+  return crewAt(s, station).reduce((sum, c) => sum + crewStrengthAt(c, station, s.crew), 0)
 }
 
 /**
@@ -376,14 +415,24 @@ export function stationStrength(s: ExpeditionState, station: StationId): number 
  * numbers for no reason the interface ever showed. Every trait that touches a
  * station says "on their own station" now, and this is where that is true.
  */
-export function crewStrengthAt(c: CrewMember, station: StationId): number {
+export function crewStrengthAt(
+  c: CrewMember,
+  station: StationId,
+  /** The rest of the crew, when it is known: who is standing next to them. */
+  crew: readonly CrewMember[] = [],
+): number {
   const home = c.speciality === STATIONS[station].speciality
   const traits = home
     ? c.traits.reduce((n, t) => n + (CREW_TRAITS[t].station ?? 0), 0)
     : 0
+  // Who else is on this station. Two people who work well together get more
+  // done; two who cannot stand each other get less. This is what turns posting
+  // the crew from arithmetic into a puzzle — and the puzzle changes shape every
+  // time somebody dies or comes aboard.
+  const together = c.station === station ? bondBonus(c, crew) : 0
   // Time served counts anywhere: a rank is the only way a body that is not a
   // specialist ever becomes good at a station — see content/crew.ts.
-  return Math.max(1, (home ? 2 : 1) + traits + rankBonus(c))
+  return Math.max(1, (home ? 2 : 1) + traits + rankBonus(c) + together)
 }
 
 /**
@@ -526,12 +575,29 @@ export function weeklyFromModules(s: ExpeditionState, id: ResourceId): number {
     const weekly = relic(r).effect.weekly
     return sum + (weekly && weekly.id === id ? weekly.amount : 0)
   }, 0)
-  return fromModules + fromRelics
+  // And perks, for exactly the same reason: a hero who has learned to strip a
+  // wreck for parts is a module made of a person. One path, or one of the three
+  // quietly stops paying.
+  const fromPerks = party(s).reduce((sum, hero) => {
+    return (
+      sum +
+      s.heroRecords[hero].perks.reduce((inner, perkId) => {
+        const weekly = heroPerk(perkId).effect.weekly
+        return inner + (weekly && weekly.id === id ? weekly.amount : 0)
+      }, 0)
+    )
+  }, 0)
+  return fromModules + fromRelics + fromPerks
 }
 
 /** Weeks a journey of `base` weeks takes at the current engine power. */
 export function travelWeeks(s: ExpeditionState, base: number): number {
-  return Math.max(1, base - Math.max(0, s.power.engines - 1))
+  // Engines first, then what somebody aboard knows about the road. The knowledge
+  // only bites on a LONG jump: a hero who could turn every one-week hop into a
+  // one-week hop would be paying nothing, and a route with no long legs left is
+  // not a route any more — the map's distances are the game.
+  const known = base >= 3 ? shipBonus(s, 'travelCut') : 0
+  return Math.max(1, base - Math.max(0, s.power.engines - 1) - known)
 }
 
 /**
@@ -619,6 +685,80 @@ export function understandingTierOf(s: ExpeditionState) {
   return understandingTier(s.understanding)
 }
 
+/**
+ * Who may be taken down on a landing.
+ *
+ * Trained, alive, and somebody's mentee. All three matter: the rank is what four
+ * weeks at a station bought, and the mentor is who gives the orders down there.
+ */
+export function landingCandidates(s: ExpeditionState, hero?: HeroClassId): CrewMember[] {
+  return livingCrew(s).filter(
+    (member) => canFollow(member) && (hero === undefined || member.mentor === hero),
+  )
+}
+
+/** How many one hero may take at once. Their own mentees, and never a crowd. */
+export const FOLLOWERS_PER_HERO = 1
+
+/** The crew who will actually walk off the ship on the next landing. */
+export function landingFollowers(s: ExpeditionState): CrewMember[] {
+  const taken: CrewMember[] = []
+  for (const hero of party(s)) {
+    const mine = s.landingParty
+      .map((id) => s.crew.find((c) => c.id === id))
+      .filter((m): m is CrewMember => m !== undefined && canFollow(m) && m.mentor === hero)
+    taken.push(...mine.slice(0, FOLLOWERS_PER_HERO))
+  }
+  return taken
+}
+
+function toggleFollower(s: ExpeditionState, crewId: string): void {
+  const member = s.crew.find((c) => c.id === crewId)
+  if (!member) return
+  if (s.landingParty.includes(crewId)) {
+    s.landingParty = s.landingParty.filter((id) => id !== crewId)
+    return
+  }
+  if (!canFollow(member) || !member.mentor) return
+  // One each. A hero with two mentees on the board would be playing a second
+  // hand, and the crew would start out-fighting the party.
+  const already = s.landingParty
+    .map((id) => s.crew.find((c) => c.id === id))
+    .filter((m): m is CrewMember => m !== undefined && m.mentor === member.mentor)
+  if (already.length >= FOLLOWERS_PER_HERO) {
+    s.landingParty = s.landingParty.filter((id) => !already.some((m) => m.id === id))
+  }
+  s.landingParty.push(crewId)
+  log(s, { k: 'followerChosen', name: member.name, hero: member.mentor })
+}
+
+/**
+ * What the landing did to the people who came down with the party.
+ *
+ * A follower's death is the only thing in this game that takes a NAMED person
+ * away as the direct consequence of a choice made a few minutes earlier, and
+ * the whole weight of it depends on the ship's list actually changing. It also
+ * costs morale twice over: the crew lost somebody, and they lost them because
+ * one of the four decided to take them.
+ */
+function settleFollowers(s: ExpeditionState, lost: string[]): void {
+  for (const crewId of lost) {
+    const member = s.crew.find((c) => c.id === crewId)
+    if (!member || !member.alive) continue
+    const hero = member.mentor
+    member.alive = false
+    member.station = null
+    member.mentor = null
+    s.debts = s.debts.filter((debt) => debt.subject !== member.id)
+    log(s, { k: 'followerDied', name: member.name, hero: hero ?? 'runesmith' })
+    gain(s, 'morale', -3)
+  }
+  // Whoever came back is not automatically going down again: taking a person
+  // into a fight is a decision, and a decision that repeats itself unasked is
+  // not one. The list is cleared after every landing.
+  s.landingParty = []
+}
+
 function killCrew(s: ExpeditionState, count = 1): void {
   for (let i = 0; i < count; i++) {
     const alive = livingCrew(s)
@@ -636,6 +776,17 @@ function joinCrew(s: ExpeditionState, count = 1): void {
     const member = generateCrewMember(rngFor(s), `crew-w${s.week}-${i}-${s.rngStep}`)
     s.crew.push(member)
     log(s, { k: 'crewJoined', name: member.name })
+    // A new hand walks into a crew that already has a shape: one pairing, maybe,
+    // and only with somebody who is actually still aboard.
+    const rng = rngFor(s)
+    const others = livingCrew(s).filter((c) => c.id !== member.id)
+    const other = rng.next() < 0.5 ? rng.pick(others) : undefined
+    if (other) {
+      const kind = rng.next() < 0.6 ? 'trust' : 'friction'
+      member.bonds.push({ with: other.id, kind })
+      other.bonds.push({ with: member.id, kind })
+      log(s, { k: 'crewBond', a: member.name, b: other.name, kind })
+    }
   }
 }
 
@@ -675,6 +826,7 @@ const MARK_REASONS = {
   mentees: { hu: 'a tanítványok munkája', en: 'the work of your mentees' },
   unhurt: { hu: 'mindenki a saját lábán jött vissza', en: 'everybody walked back' },
   scouted: { hu: 'felderített út', en: 'the road scouted' },
+  pledge: { hu: 'megtartott ígéret', en: 'a promise kept' },
 } satisfies Record<string, Text>
 
 function buyPerk(s: ExpeditionState, hero: HeroClassId, perkId: string): void {
@@ -696,9 +848,22 @@ function buyPerk(s: ExpeditionState, hero: HeroClassId, perkId: string): void {
 // ---------------------------------------------------------------- relics
 
 /** Draw a relic this run has not seen yet. Deterministic, like everything else. */
-function drawRelic(s: ExpeditionState): string | null {
+/**
+ * Which relic the ruins turn up next.
+ *
+ * Exported for the test that guards the rule below — nothing in the interface
+ * calls it, and it must stay pure: it reads the state and returns an id.
+ */
+export function drawRelic(s: ExpeditionState): string | null {
   const held = new Set(s.relics)
-  const pool = RELICS.filter((r) => !held.has(r.id)).map((r) => r.id)
+  const seats = party(s)
+  // A relic bound to a hero who is not at this table can never be worn, and a
+  // find that does nothing is worse than no find at all: it reads as a reward.
+  // With one bound relic per class this was a curiosity; with nine of nineteen
+  // bound, a two-player run would have drawn dead half the time.
+  const pool = RELICS.filter(
+    (r) => !held.has(r.id) && (r.bearer === undefined || seats.includes(r.bearer)),
+  ).map((r) => r.id)
   if (pool.length === 0) return null
   return rngFor(s).pick(pool) ?? null
 }
@@ -788,6 +953,42 @@ function changeAttention(s: ExpeditionState, amount: number): void {
 }
 
 /** Something loud just happened. Scaled by the dial, and off at level one. */
+/**
+ * THE HEART OF THE GAME, in one function.
+ *
+ * The expedition exists to find out what happened to whoever built the
+ * Stargrave. Nine of the ten endings are gated on how much of it you understood
+ * — so understanding was already what the run was ABOUT, and it was the one
+ * thing that cost nothing. It accumulated quietly while the loud, dangerous part
+ * of the game was travelling fast and shooting things.
+ *
+ * That had the tension backwards. The Herald woke because you were quick, not
+ * because you were reading its grave. Now every point of understanding is heard:
+ *
+ *     We want to know what became of them — and every step closer makes us
+ *     easier to hear.
+ *
+ * It is self-balancing, which is why it can carry the whole game. Staying quiet
+ * is not a strategy: with low understanding only two endings are reachable at
+ * all. So the question is never "should we be loud" — it is **how loud, how
+ * long, and when do we stop**, and there is no fixed right answer to that.
+ *
+ * Every path that grants understanding goes through here. It has to: four
+ * separate `s.understanding +=` lines is how a price gets forgotten on three of
+ * them.
+ */
+function gainUnderstanding(s: ExpeditionState, amount: number): void {
+  if (amount === 0) return
+  s.understanding += amount
+  log(s, { k: 'understandingGained', amount, total: s.understanding })
+  if (amount < 0) return
+  // Two points of understanding is one step louder. Reaching the deepest tier
+  // (fourteen) therefore costs about seven attention on its own, against a
+  // Herald that wakes at eight — understanding the place is very nearly enough
+  // to be noticed by it, and everything else you do is on top.
+  raiseAttention(s, Math.ceil(amount / 2))
+}
+
 function raiseAttention(s: ExpeditionState, amount: number): void {
   const scale = dialValue(s.dials, 'attention')
   if (scale <= 0) return
@@ -877,7 +1078,7 @@ export function directiveLabel(d: Directive): Text {
 }
 
 /** Which kinds are judged only when the deadline arrives, not before. */
-const AT_DEADLINE: DirectiveKind[] = ['morale', 'stock']
+const AT_DEADLINE: DirectiveKind[] = ['morale', 'stock', 'steady']
 
 export function directiveAtDeadline(kind: DirectiveKind): boolean {
   return AT_DEADLINE.includes(kind)
@@ -902,6 +1103,14 @@ export function directiveProgress(s: ExpeditionState, d: Directive): number {
       return s.resources.morale
     case 'stock':
       return s.resources.food
+    case 'crewRank':
+      return livingCrew(s).filter((m) => crewRank(m) >= 2).length
+    case 'steady':
+      return livingCrew(s).filter((m) => m.loyalty >= 7).length
+    case 'charted':
+      return s.map.nodes.filter((n) => n.known).length
+    case 'surveyed':
+      return s.map.nodes.filter((n) => n.visited).length
   }
 }
 
@@ -929,6 +1138,12 @@ function directiveContext(s: ExpeditionState): DirectiveContext {
     relics: s.relics.length,
     understanding: s.understanding,
     puzzleKinds: s.puzzleKinds.length,
+    crew: livingCrew(s).length,
+    trained: livingCrew(s).filter((m) => crewRank(m) >= 2).length,
+    steady: livingCrew(s).filter((m) => m.loyalty >= 7).length,
+    systems: s.map.nodes.length,
+    charted: s.map.nodes.filter((n) => n.known).length,
+    visited: s.map.nodes.filter((n) => n.visited).length,
   }
 }
 
@@ -958,6 +1173,14 @@ function directiveReward(kind: DirectiveKind, target: number): Reward[] {
       return [...base, { k: 'resource', id: 'information', amount: 10 }]
     case 'clearSites':
       return [...base, { k: 'resource', id: 'credits', amount: 14 }]
+    case 'crewRank':
+      return [...base, { k: 'resource', id: 'morale', amount: 2 }]
+    case 'steady':
+      return [...base, { k: 'resource', id: 'morale', amount: 2 }, { k: 'archive', amount: 1 }]
+    case 'charted':
+      return [...base, { k: 'resource', id: 'information', amount: 8 }]
+    case 'surveyed':
+      return [...base, { k: 'resource', id: 'fuel', amount: 6 }]
   }
 }
 
@@ -977,7 +1200,16 @@ function issueDirectives(s: ExpeditionState): void {
   const seats = party(s)
   while (s.directives.filter((d) => d.state === 'open').length < wanted) {
     const live = s.directives.filter((d) => d.state === 'open').map((d) => d.kind)
-    const pool = DIRECTIVE_DEFS.filter((def) => !live.includes(def.kind))
+    const pool = DIRECTIVE_DEFS.filter(
+      (def) =>
+        !live.includes(def.kind) &&
+        // An order addressed to an empty chair is worse than no order: it sits on
+        // a console nobody is at, and it fails on its own. With only two of the
+        // four classes owning orders this could not happen; with all four owning
+        // them, a two-player run would otherwise be handed the Rite-caller's list.
+        (def.owner === 'either' || seats.includes(def.owner)) &&
+        (!def.when || def.when(context)),
+    )
     const def = rngFor(s).pick(pool)
     if (!def) return
 
@@ -995,6 +1227,16 @@ function issueDirectives(s: ExpeditionState): void {
     }
     if (def.kind === 'stock') {
       target = Math.min(resourceMax(s, 'food'), Math.max(target, s.resources.food + 6))
+    }
+    // The same rule for the four newest kinds, each with its own ceiling: you
+    // cannot be asked for more trained hands than there are hands.
+    if (def.kind === 'crewRank') target = Math.min(context.crew, Math.max(target, context.trained + 1))
+    if (def.kind === 'steady') target = Math.min(context.crew, Math.max(target, context.steady + 1))
+    if (def.kind === 'charted') {
+      target = Math.min(context.systems, Math.max(target, context.charted + 2))
+    }
+    if (def.kind === 'surveyed') {
+      target = Math.min(context.systems, Math.max(target, context.visited + 2))
     }
 
     const owner: HeroClassId =
@@ -1060,12 +1302,27 @@ function checkDirectives(s: ExpeditionState): void {
  * mentoring buys them — the mentor is paid separately, out of what they do once
  * they are any good.
  */
+/**
+ * What the postings cost the ship in the mess, not at the stations.
+ *
+ * Two people who cannot stand each other, told to work the same console all
+ * week, is a morale problem whatever the output figures say. It is one point,
+ * and it is the reason the pairing is a puzzle rather than a bonus: putting the
+ * two best hands on the Lab can be the wrong answer.
+ */
+function crewFrictionWeek(s: ExpeditionState): void {
+  for (const pair of activeBonds(s.crew).filter((p) => p.kind === 'friction')) {
+    gain(s, 'morale', -1)
+    log(s, { k: 'crewFriction', a: pair.a.name, b: pair.b.name })
+  }
+}
+
 function crewWorkWeek(s: ExpeditionState): void {
   for (const member of livingCrew(s)) {
     const station = member.station
     if (!station || !stationActive(s, station as StationId)) continue
     const before = crewRank(member)
-    member.xp += member.mentor ? 2 : 1
+    member.xp += (member.mentor ? 2 : 1) + (member.mentor ? shipBonus(s, 'crewXp') : 0)
     const after = crewRank(member)
     if (after === before) continue
     log(s, { k: 'crewPromoted', name: member.name, rank: after })
@@ -1148,6 +1405,8 @@ export function loyaltyTarget(s: ExpeditionState, member: CrewMember): number {
   }
   // Nobody is at ease this far out.
   target -= Math.floor(s.darkening / 2)
+  // And what the ship is wearing and what its heroes have learned.
+  target += shipBonus(s, 'loyaltyTarget')
 
   return Math.max(0, Math.min(10, target))
 }
@@ -1275,6 +1534,13 @@ function payDebts(s: ExpeditionState): void {
     if (debt.subject && !s.crew.some((c) => c.id === debt.subject && c.alive)) continue
     if (debt.subject) s.subject = debt.subject
     log(s, { k: 'debtCame', note: debt.note })
+    // Somebody who came back. Which door they come through is decided here, from
+    // the standing the run has earned by now — four weeks of behaving
+    // differently can change the scene that arrives.
+    if (debt.kind === 'figure' && debt.figure) {
+      openFigureScene(s, debt.figure)
+      continue
+    }
     applyEncounterEffects(s, debt.effects)
   }
 }
@@ -1322,6 +1588,254 @@ export function aboardChance(s: ExpeditionState): number {
   return Math.min(0.6, chance * scale)
 }
 
+/**
+ * How many of the crew are behind a motion right now.
+ *
+ * Read off the crew list rather than rolled: it is the same loyalty the players
+ * have been watching drift for weeks, which is what makes a council a
+ * consequence of how the ship has been run rather than an event that happens to
+ * them. A ship run well gets a small motion it can afford; a ship run badly gets
+ * the whole mess standing in the corridor.
+ */
+export function councilSupport(s: ExpeditionState): { for: number; of: number } {
+  const crew = livingCrew(s)
+  return {
+    for: crew.filter((c) => c.loyalty < COUNCIL_SUPPORT_BELOW).length,
+    of: crew.length,
+  }
+}
+
+/** Is the crew about to ask for something? */
+export function councilDue(s: ExpeditionState): boolean {
+  if (s.pendingEncounter || s.activeMission || s.outcome) return false
+  if (dialValue(s.dials, 'aboard') <= 0) return false
+  if (s.week - s.lastCouncil < COUNCIL_INTERVAL) return false
+  const tally = councilSupport(s)
+  return tally.of > 0 && tally.for / tally.of >= COUNCIL_QUORUM
+}
+
+/** Put the crew's motion to the table. */
+function runCouncil(s: ExpeditionState): void {
+  if (!councilDue(s)) return
+  const pool = COUNCIL_MOTIONS.filter(
+    (motion) =>
+      !s.usedEncounters.includes(motion.id) &&
+      (!motion.owner || party(s).includes(motion.owner)) &&
+      (!motion.requires || requirementMet(s, motion.requires)),
+  )
+  const motion = rngFor(s).pick(pool)
+  if (!motion) return
+
+  s.lastCouncil = s.week
+  const tally = councilSupport(s)
+  log(s, { k: 'councilCalled', title: motion.title, supporters: tally.for, of: tally.of })
+  openAboard(s, motion.id)
+}
+
+// ------------------------------------------- the ship, while the fight happens
+//
+// The one place two groups of players are doing different things in the same
+// minute. See content/support.ts.
+
+/** Who is going down on the next landing. */
+export function landingHeroes(s: ExpeditionState): HeroClassId[] {
+  return party(s).filter((hero) => !s.ashore.includes(hero))
+}
+
+function toggleAshore(s: ExpeditionState, hero: HeroClassId): void {
+  if (s.activeMission) return
+  if (!party(s).includes(hero)) return
+  if (s.ashore.includes(hero)) {
+    s.ashore = s.ashore.filter((h) => h !== hero)
+    return
+  }
+  // A landing needs a landing party. Somebody has to be on the ground.
+  if (landingHeroes(s).length <= MIN_LANDING_PARTY) return
+  s.ashore.push(hero)
+  log(s, { k: 'stayedAboard', hero })
+}
+
+/** Can the ship still act this round? */
+export function supportAvailable(s: ExpeditionState): boolean {
+  const mission = s.activeMission
+  if (!mission || mission.k !== 'battle') return false
+  if (s.ashore.length === 0) return false
+  return s.supportRound !== mission.battle.round
+}
+
+/**
+ * The ship acts.
+ *
+ * Paid out of the hold and felt on the grid — which is what makes staying behind
+ * a decision rather than a punishment. Once a round: it must not become a second
+ * hand of cards played by whoever is not busy.
+ */
+function shipSupport(s: ExpeditionState, hero: HeroClassId, kind: SupportKind): void {
+  const mission = s.activeMission
+  if (!mission || mission.k !== 'battle') return
+  if (!s.ashore.includes(hero)) return
+  if (!supportAvailable(s)) return
+
+  const def = supportDef(kind)
+  if (s.resources[def.cost.id] < def.cost.amount) return
+  gain(s, def.cost.id, -def.cost.amount)
+  s.supportRound = mission.battle.round
+
+  const battle = mission.battle
+  switch (kind) {
+    case 'dampen':
+      changeAttention(s, -1)
+      break
+    case 'power':
+      battle.flux += 3
+      break
+    case 'mark': {
+      const party = battle.units.filter((u) => u.side === 'hero' && u.alive)
+      const enemies = battle.units.filter((u) => u.side === 'enemy' && u.alive)
+      const nearest = enemies
+        .slice()
+        .sort(
+          (a, b) =>
+            Math.min(...party.map((h) => distance(h.pos, a.pos))) -
+            Math.min(...party.map((h) => distance(h.pos, b.pos))),
+        )[0]
+      if (nearest) nearest.statuses.runeMark = Math.max(nearest.statuses.runeMark ?? 0, 2)
+      break
+    }
+    case 'mend': {
+      const hurt = battle.units
+        .filter((u) => u.side === 'hero' && u.alive)
+        .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0]
+      if (hurt) hurt.hp = Math.min(hurt.maxHp, hurt.hp + 3)
+      break
+    }
+  }
+  log(s, { k: 'shipSupport', hero, what: def.name })
+}
+
+// ------------------------------------------------------------- what you said
+//
+// A pledge is one player standing up and saying "give me four weeks and I will
+// have this sorted", out loud, with a date on it. The game writes it down and
+// checks it. See content/pledges.ts for why that is worth a system.
+
+/** Where a pledge stands, in the units it promised. */
+export function pledgeProgress(s: ExpeditionState, pledge: Pledge): number {
+  switch (pledge.kind) {
+    case 'quiet':
+      // Counted downwards: the promise is that this never rises.
+      return s.attention <= pledge.startedAt ? 1 : 0
+    case 'learn':
+      return s.understanding
+    case 'hull':
+      return s.resources.hull
+    case 'stores':
+      return s.resources.food
+    case 'nobodyFalls':
+      return livingCrew(s).length >= pledge.startedAt ? 1 : 0
+    case 'landings':
+      return s.tally.landingsWon - pledge.startedAt
+  }
+}
+
+/** What the measured thing stands at when the words are said. */
+function pledgeStart(s: ExpeditionState, kind: PledgeKind): number {
+  switch (kind) {
+    case 'quiet':
+      return s.attention
+    case 'nobodyFalls':
+      return livingCrew(s).length
+    case 'landings':
+      return s.tally.landingsWon
+    default:
+      return 0
+  }
+}
+
+/** The number being promised, measured from where the run stands. */
+function pledgeTarget(s: ExpeditionState, def: PledgeDef): number {
+  switch (def.kind) {
+    case 'quiet':
+      return def.weeks
+    case 'learn':
+      return s.understanding + 4
+    case 'hull':
+      return Math.min(resourceMax(s, 'hull'), Math.max(s.resources.hull + 4, 16))
+    case 'stores':
+      return Math.min(resourceMax(s, 'food'), Math.max(s.resources.food + 6, 20))
+    case 'nobodyFalls':
+      return def.weeks
+    case 'landings':
+      return 2
+  }
+}
+
+export function pledgeLabel(pledge: Pledge): Text {
+  const def = pledgeDef(pledge.kind)
+  const ask = def.ask(pledge.target)
+  return { hu: `${def.name.hu}: ${ask.hu}`, en: `${def.name.en}: ${ask.en}` }
+}
+
+/**
+ * Is this pledge already lost?
+ *
+ * The two that are promises NOT to do something fail the moment they are broken
+ * rather than at the deadline. Waiting three more weeks to be told what everyone
+ * watched happen would be worse than useless.
+ */
+function pledgeAlreadyLost(s: ExpeditionState, pledge: Pledge): boolean {
+  return (
+    (pledge.kind === 'quiet' || pledge.kind === 'nobodyFalls') &&
+    pledgeProgress(s, pledge) === 0
+  )
+}
+
+function makePledge(s: ExpeditionState, hero: HeroClassId, kind: PledgeKind): void {
+  // One at a time, for the whole table. Four simultaneous promises is a to-do
+  // list; one is somebody's word.
+  if (s.pledge && s.pledge.state === 'open') return
+  if (!party(s).includes(hero)) return
+  const def = pledgeDef(kind)
+  const pledge: Pledge = {
+    kind,
+    by: hero,
+    target: pledgeTarget(s, def),
+    due: s.week + def.weeks,
+    startedAt: pledgeStart(s, kind),
+    state: 'open',
+  }
+  s.pledge = pledge
+  log(s, { k: 'pledgeMade', label: pledgeLabel(pledge), hero, weeks: def.weeks })
+}
+
+/** Settle the standing promise, if there is one and its week has come. */
+function checkPledge(s: ExpeditionState): void {
+  const pledge = s.pledge
+  if (!pledge || pledge.state !== 'open') return
+
+  const lost = pledgeAlreadyLost(s, pledge)
+  if (!lost && s.week < pledge.due) return
+
+  const met = !lost && pledgeProgress(s, pledge) >= (pledge.kind === 'quiet' || pledge.kind === 'nobodyFalls' ? 1 : pledge.target)
+  const def = pledgeDef(pledge.kind)
+
+  if (met) {
+    pledge.state = 'kept'
+    log(s, { k: 'pledgeKept', label: pledgeLabel(pledge), hero: pledge.by })
+    // The marks go to the person who said it. Being the one who says a thing and
+    // then does it is a role, and a quiet player can take it without having to
+    // out-argue anybody.
+    grantMarks(s, pledge.by, def.weight, MARK_REASONS.pledge)
+    gain(s, 'morale', def.weight)
+    for (const member of livingCrew(s)) member.loyalty = Math.min(10, member.loyalty + 1)
+  } else {
+    pledge.state = 'broken'
+    log(s, { k: 'pledgeBroken', label: pledgeLabel(pledge), hero: pledge.by })
+    gain(s, 'morale', -2)
+    for (const member of livingCrew(s)) member.loyalty = Math.max(0, member.loyalty - 1)
+  }
+}
+
 /** Roll for a situation on the ship, and open it if one comes up. */
 function rollAboard(s: ExpeditionState): void {
   if (s.pendingEncounter || s.activeMission || s.outcome) return
@@ -1365,6 +1879,24 @@ function openAboard(s: ExpeditionState, id: string): void {
   if (!s.usedEncounters.includes(id)) s.usedEncounters.push(id)
   s.screen = 'encounter'
   log(s, { k: 'aboardEvent', title: event.title, owner: event.owner ?? null })
+}
+
+/**
+ * Somebody comes back, and the scene is the one your standing has earned.
+ *
+ * The stage moves on whether the scene opens or not: a figure whose next meeting
+ * cannot be built has still been met, and must not queue up behind the ship.
+ */
+function openFigureScene(s: ExpeditionState, figureId: string): void {
+  const def = figureDef(figureId)
+  if (!def) return
+  const record = s.figures[figureId] ?? { standing: 0, stage: 0 }
+  const scene = def.scenes[record.stage]
+  record.stage += 1
+  s.figures[figureId] = record
+  if (!scene) return
+  const id = record.standing >= FIGURE_WARM_AT ? scene.warm : scene.cold
+  openAboard(s, id)
 }
 
 /** Is the situation on screen one that happened on the ship? */
@@ -1428,6 +1960,9 @@ export function startExpedition(
     generateCrewMember(rng, 'crew-4', 'navigator'),
     generateCrewMember(rng, 'crew-5'),
   ]
+  // Who gets on and who does not. Done here rather than per person, because a
+  // pairing is a fact about two people and has to be written on both of them.
+  bindCrew(rng, crew)
   // Sensible first postings: everybody where their speciality belongs.
   const defaults: [string, StationId][] = [
     ['crew-0', 'forge'],
@@ -1505,6 +2040,12 @@ export function startExpedition(
     usedEncounters: [],
     subject: null,
     debts: [],
+    landingParty: [],
+    lastCouncil: 0,
+    figures: {},
+    pledge: null,
+    ashore: [],
+    supportRound: -1,
     // The deeper encounters are an Archive unlock; carried as a flag so that
     // runtime choices can ask about it without reaching for the Archive.
     flags: [
@@ -1614,10 +2155,7 @@ function runWatches(s: ExpeditionState): void {
     if (e.information) gain(s, 'information', e.information)
     if (e.morale) gain(s, 'morale', e.morale)
     if (e.fuel) gain(s, 'fuel', e.fuel)
-    if (e.understanding) {
-      s.understanding += e.understanding
-      log(s, { k: 'understandingGained', amount: e.understanding, total: s.understanding })
-    }
+    if (e.understanding) gainUnderstanding(s, e.understanding)
     if (e.reveal) {
       // Beyond the FARTHEST thing already known, not a fixed distance from the
       // ship. "One more column ahead" has to mean one more than you can see —
@@ -1738,12 +2276,7 @@ function advanceResearch(s: ExpeditionState): void {
         }
         break
       case 'understanding':
-        s.understanding += effect.amount
-        log(s, {
-          k: 'understandingGained',
-          amount: effect.amount,
-          total: s.understanding,
-        })
+        gainUnderstanding(s, effect.amount)
         break
       case 'reactor':
         // Handled through modules; kept for future projects.
@@ -1770,6 +2303,14 @@ function updateDarkening(s: ExpeditionState): void {
     const rising = level > s.darkening
     s.darkening = level
     log(s, rising ? { k: 'darkeningRose', level } : { k: 'darkeningEased', level })
+    // And the step itself, named, once. The numbers behind it have not changed;
+    // this is the same pressure with a face on it, so that a table can say
+    // "remember when the second level hit".
+    const step = rising ? darkeningStep(level) : undefined
+    if (step && !s.flags.includes(`dark-${level}`)) {
+      s.flags.push(`dark-${level}`)
+      log(s, { k: 'darkeningNamed', name: step.name, text: step.text })
+    }
   }
   s.reactorOutput = reactorOutput(s)
   // Trim any allocation that no longer fits the shrunken reactor.
@@ -1852,6 +2393,7 @@ function advanceWeek(s: ExpeditionState): void {
   runStations(s)
   runWatches(s)
   crewWorkWeek(s)
+  crewFrictionWeek(s)
   driftLoyalty(s)
   checkRestlessness(s)
   advanceResearch(s)
@@ -1881,6 +2423,8 @@ function advanceWeek(s: ExpeditionState): void {
 
   // And last: whatever the ship itself wants to say this week. It goes through
   // `pendingEncounter`, so the next week cannot be ended until somebody answers.
+  checkPledge(s)
+  runCouncil(s)
   rollAboard(s)
 
   checkLoss(s)
@@ -1998,8 +2542,7 @@ function applyEncounterEffects(s: ExpeditionState, effects: readonly EncounterEf
         gain(s, effect.id, effect.amount)
         break
       case 'understanding':
-        s.understanding += effect.amount
-        log(s, { k: 'understandingGained', amount: effect.amount, total: s.understanding })
+        gainUnderstanding(s, effect.amount)
         break
       case 'module':
         if (!s.modules.includes(effect.id)) {
@@ -2068,6 +2611,49 @@ function applyEncounterEffects(s: ExpeditionState, effects: readonly EncounterEf
       case 'defect':
         defect(s)
         break
+
+      case 'standing': {
+        const def = figureDef(effect.figure)
+        if (!def) break
+        const record = s.figures[effect.figure] ?? { standing: 0, stage: 0 }
+        record.standing += effect.amount
+        s.figures[effect.figure] = record
+        log(s, {
+          k: 'figureStanding',
+          name: def.name,
+          amount: effect.amount,
+          standing: record.standing,
+        })
+        break
+      }
+
+      case 'figureReturns': {
+        const def = figureDef(effect.figure)
+        if (!def) break
+        const record = s.figures[effect.figure] ?? { standing: 0, stage: 0 }
+        // Nothing left to say. Three meetings is a story; four is a serial.
+        if (record.stage >= def.scenes.length) {
+          s.figures[effect.figure] = record
+          break
+        }
+        s.figures[effect.figure] = record
+        // A dated debt like any other, so it announces itself in the log and
+        // sits on the ship screen before it lands. WHICH scene arrives is
+        // decided when it lands — see `payDebts`.
+        s.debts.push({
+          at: s.week + def.returnsIn,
+          subject: null,
+          kind: 'figure',
+          figure: def.id,
+          note: {
+            hu: `${def.name.hu} utolér titeket.`,
+            en: `${def.name.en} catches up with you.`,
+          },
+          effects: [],
+        })
+        log(s, { k: 'figureExpected', name: def.name, weeks: def.returnsIn })
+        break
+      }
 
       case 'aboard':
         openAboard(s, effect.id)
@@ -2260,6 +2846,21 @@ function buildBattle(s: ExpeditionState, spec: MissionSpec, seed: number) {
     // maximum hit points and the Bond's range are both theirs, not the class's.
     heroMaxHp: Object.fromEntries(party(s).map((hero) => [hero, heroMaxHp(s, hero)])),
     bondRange: bondRange(s),
+    startShield: shipBonus(s, 'startShield'),
+    // And whoever was chosen on the crew screen. Filtered again here rather than
+    // trusted: somebody can lose their rank, their mentor or their life between
+    // the choice and the hatch.
+    followers: landingFollowers(s).map((member) => {
+      const stats = followerStats(member)
+      return {
+        crewId: member.id,
+        name: { hu: member.name, en: member.name },
+        mentor: member.mentor!,
+        playerSlot: seatOfHero(s, member.mentor!),
+        order: 'guard' as const,
+        ...stats,
+      }
+    }),
     seed,
     difficulty: Math.max(
       1,
@@ -2269,7 +2870,9 @@ function buildBattle(s: ExpeditionState, spec: MissionSpec, seed: number) {
     missionKind: spec.kind,
     flux: missionFlux(s),
     roundLimit: spec.roundLimit,
-    heroes: s.heroes,
+    // Only the ones who went down. Whoever stayed is running the ship, and the
+    // party is smaller for it — that is the whole trade.
+    heroes: s.heroes.filter((h) => !s.ashore.includes(h.heroClass)),
     enemyScale: (spec.enemyScale ?? 1) * dialValue(s.dials, 'enemyCount'),
   })
 }
@@ -2451,8 +3054,7 @@ function applyRewards(
         gain(s, reward.id, reward.amount)
         break
       case 'understanding':
-        s.understanding += reward.amount
-        log(s, { k: 'understandingGained', amount: reward.amount, total: s.understanding })
+        gainUnderstanding(s, reward.amount)
         break
       case 'module':
         if (!s.modules.includes(reward.id)) {
@@ -2553,7 +3155,12 @@ function finishMission(s: ExpeditionState): void {
 
   if (mission.k === 'battle') {
     const result = missionResult(mission.battle)
-    s.heroes = result.heroes
+    // Merged, not replaced: the heroes who stayed aboard are not in the result
+    // at all, and assigning it wholesale would delete them from the expedition.
+    s.heroes = s.heroes.map((h) => result.heroes.find((r) => r.heroClass === h.heroClass) ?? h)
+    // The price of taking somebody with you, paid before anything else is
+    // settled — win or lose, and whatever else the landing was worth.
+    settleFollowers(s, result.followersLost)
     // Whatever they tore apart is gone, win or lose: the briefing promised that,
     // and it is the reason a boarding action is worth defending rather than just
     // surviving.
@@ -2789,6 +3396,78 @@ function performProposal(s: ExpeditionState, action: ProposedAction): void {
  * Turning back for the Gate is not here: that is not something you choose at the
  * Stargrave. See `canGoHome`.
  */
+/**
+ * What the run could still end as, and what each one is waiting for.
+ *
+ * The other half of the heart. Every point of understanding now costs attention,
+ * and a price with no visible reward is not a decision — it reads as "do not do
+ * this". So the thing understanding BUYS has to be on the screen next to what it
+ * costs: these are the endings, open and closed, with the one line each closed
+ * one is still waiting on.
+ *
+ * It is also the honest answer to "can we not just stay quiet?" — you can, and
+ * these two are what is left if you do.
+ */
+export function endingProspects(s: ExpeditionState): {
+  id: EndingId
+  open: boolean
+  needs: Text | null
+}[] {
+  const open = new Set(availableEndings(s))
+  const tier = understandingTier(s.understanding)
+  const toTier = (want: 1 | 2 | 3): Text => {
+    const at = want === 1 ? 3 : want === 2 ? 8 : 14
+    const short = Math.max(0, at - s.understanding)
+    return {
+      hu: `még ${short} megértés`,
+      en: `${short} more understanding`,
+    }
+  }
+
+  const needs: Record<EndingId, Text | null> = {
+    flee: null,
+    blindRuin: null,
+    witness: tier >= 1 ? null : toTier(1),
+    intervene: tier >= 2 ? null : toTier(2),
+    communion: tier >= 3 ? null : toTier(3),
+    custodian:
+      tier < 2
+        ? toTier(2)
+        : {
+            hu: `öt élő ember és 8 morál (most ${livingCrew(s).length} és ${s.resources.morale})`,
+            en: `five alive and 8 morale (now ${livingCrew(s).length} and ${s.resources.morale})`,
+          },
+    silence:
+      tier < 1
+        ? toTier(1)
+        : { hu: 'a Hírnököt el kell hallgattatni', en: 'the Herald has to be silenced' },
+    inheritance:
+      tier < 1
+        ? toTier(1)
+        : {
+            hu: `három ereklye a hajón (most ${s.relics.length})`,
+            en: `three relics aboard (now ${s.relics.length})`,
+          },
+    theAnswer:
+      tier < 3
+        ? toTier(3)
+        : { hu: 'az Archívum utolsó kérdése', en: 'the Archive’s last question' },
+    // Not a Stargrave ending at all: it is what happens if you turn round and
+    // go back through the Gate. It belongs on this list precisely because it is
+    // always there — the run can always be ended, just not well.
+    homecoming: {
+      hu: 'forduljatok vissza a Kapuhoz — bármikor lehet',
+      en: 'turn back to the Gate — always possible',
+    },
+  }
+
+  return (Object.keys(needs) as EndingId[]).map((id) => ({
+    id,
+    open: open.has(id),
+    needs: open.has(id) ? null : needs[id],
+  }))
+}
+
 export function availableEndings(s: ExpeditionState): EndingId[] {
   const tier = understandingTier(s.understanding)
   const out: EndingId[] = ['flee', 'blindRuin']
@@ -3088,6 +3767,22 @@ export function expeditionStep(
       mission.task = press(mission.task, action.rune)
       break
     }
+
+    case 'toggleAshore':
+      toggleAshore(s, action.hero)
+      break
+
+    case 'shipSupport':
+      shipSupport(s, action.hero, action.kind)
+      break
+
+    case 'makePledge':
+      makePledge(s, action.hero, action.kind)
+      break
+
+    case 'toggleFollower':
+      toggleFollower(s, action.crewId)
+      break
 
     case 'missionFinish':
       finishMission(s)

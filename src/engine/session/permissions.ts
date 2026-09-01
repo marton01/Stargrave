@@ -20,6 +20,7 @@
 // hero is you.
 
 import { controls } from './room'
+import { isFollower, isHero } from '../state'
 import { pendingOwner } from '../expedition/expedition'
 import type { RoomState } from './room'
 import type { ExpeditionAction } from '../expedition/expedition'
@@ -44,6 +45,17 @@ export function actionOwner(
     // The week's duty is the one decision that is always yours, every week.
     case 'setWatch':
       return action.hero
+    // A pledge is one person's word. Nobody else may put it in their mouth.
+    case 'makePledge':
+      return action.hero
+    // Going down, or staying to run the ship, is each hero's own call.
+    case 'toggleAshore':
+    case 'shipSupport':
+      return action.hero
+    // Taking a person into a fight is the decision of whoever teaches them.
+    case 'toggleFollower':
+      return state?.crew.find((c) => c.id === action.crewId)?.mentor ?? null
+
     case 'battleAction':
       return battleOwner(state, action.action)
     // A situation on the ship names whose call it is. Four people running a ship
@@ -83,6 +95,13 @@ function battleOwner(state: ExpeditionState | null, action: BattleAction): HeroC
   if (!mission || mission.k !== 'battle') return null
   const battle = mission.battle
 
+  // A standing order belongs to whoever taught them, whatever else is happening
+  // on the board. It is the one battle action that is not about whose turn it is.
+  if (action.k === 'orderFollower') {
+    const f = battle.units.find((u) => u.id === action.followerId)
+    return isFollower(f) ? f.mentor : null
+  }
+
   const named =
     'heroId' in action && typeof action.heroId === 'string' ? action.heroId : null
   const acting =
@@ -91,7 +110,9 @@ function battleOwner(state: ExpeditionState | null, action: BattleAction): HeroC
   if (!acting) return null
 
   const unit = battle.units.find((u) => u.id === acting)
-  return unit && unit.side === 'hero' ? unit.heroClass : null
+  // A follower never has a turn the interface asks about: they carry out their
+  // order on their own. Whose move it is is always one of the four.
+  return isHero(unit) ? unit.heroClass : null
 }
 
 /**

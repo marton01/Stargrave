@@ -6,7 +6,14 @@
 
 import { card } from '../content/cards'
 import { describeLogEvent } from '../i18n/describe'
-import { enemies, heroes } from '../engine/state'
+import { enemies, followers, heroes, isFollower, isHero, livingFollowers } from '../engine/state'
+import {
+  FOLLOWER_ORDERS,
+  FOLLOWER_ORDER_HINTS,
+  FOLLOWER_ORDER_NAMES,
+} from '../engine/followers'
+import { HERO_TONE } from './gridStyle'
+import type { FollowerOrder } from '../engine/types'
 import { intentOf } from '../content/enemies'
 import { STATUS_NAMES } from '../content/statuses'
 import { bondActive } from '../engine/combat'
@@ -46,7 +53,17 @@ function HpBar({ unit }: { unit: Unit }) {
   )
 }
 
-export function Sidebar({ state }: { state: BattleState }) {
+export function Sidebar({
+  state,
+  onOrderFollower,
+  mySeats,
+}: {
+  state: BattleState
+  /** Give a follower a standing order. Absent when nobody may. */
+  onOrderFollower?: (followerId: string, order: FollowerOrder) => void
+  /** Which seats this browser runs. Empty means hotseat: everybody. */
+  mySeats?: number[]
+}) {
   const { t, s, lang } = useLang()
   const activeId = state.phase === 'resolution' ? state.order[state.orderIndex] : undefined
 
@@ -59,12 +76,20 @@ export function Sidebar({ state }: { state: BattleState }) {
             {state.order.map((id, index) => {
               const u = state.units.find((x) => x.id === id)
               if (!u || !u.alive) return null
-              const initiative =
-                u.side === 'hero'
-                  ? u.resting || !u.initiativeCard
-                    ? 99
-                    : card(u.initiativeCard).initiative
-                  : u.intent
+              // A follower has no number of their own: they go half a step after
+              // the hero who taught them, so the list shows their mentor's.
+              const mentorUnit = isFollower(u)
+                ? state.units.find((x) => isHero(x) && x.heroClass === u.mentor && x.alive)
+                : undefined
+              const initiative = isHero(u)
+                ? u.resting || !u.initiativeCard
+                  ? 99
+                  : card(u.initiativeCard).initiative
+                : isFollower(u)
+                  ? isHero(mentorUnit) && mentorUnit.initiativeCard
+                    ? card(mentorUnit.initiativeCard).initiative
+                    : 98
+                  : u.side === 'enemy' && u.intent
                     ? intentOf(u.enemyType, u.intent).initiative
                     : 99
               return (
@@ -74,7 +99,11 @@ export function Sidebar({ state }: { state: BattleState }) {
                     'order-item',
                     id === activeId ? 'order-active' : '',
                     index < state.orderIndex ? 'order-done' : '',
-                    u.side === 'hero' ? 'order-hero' : 'order-enemy',
+                    isFollower(u)
+                      ? 'order-follower'
+                      : u.side === 'hero'
+                        ? 'order-hero'
+                        : 'order-enemy',
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -95,7 +124,7 @@ export function Sidebar({ state }: { state: BattleState }) {
             <div className="unit-head">
               <Portrait path={portrait.hero(h.heroClass)} />
               <span
-                className={`unit-name ${h.heroClass === 'runesmith' ? 'tone-rune' : 'tone-echo'}`}
+                className={`unit-name ${HERO_TONE[h.heroClass]}`}
               >
                 {s(h.name)}
               </span>
@@ -126,6 +155,49 @@ export function Sidebar({ state }: { state: BattleState }) {
           </div>
         ))}
       </section>
+
+      {livingFollowers(state).length > 0 && (
+        <section className="block">
+          <h3>{t.followersHeading}</h3>
+          {followers(state).map((f) => {
+            // Only the seat that teaches them gives the orders. Everybody sees
+            // the person and what they were told; one player decides.
+            const mine = !mySeats || mySeats.length === 0 || mySeats.includes(f.playerSlot)
+            return (
+              <div key={f.id} className={`unit-card unit-follower ${f.alive ? '' : 'unit-dead'}`}>
+                <div className="unit-head">
+                  <span className={`unit-name ${HERO_TONE[f.mentor]}`}>{s(f.name)}</span>
+                  <span className="unit-player">{t.playerLabel(f.playerSlot)}</span>
+                </div>
+                {f.alive ? (
+                  <>
+                    <HpBar unit={f} />
+                    <StatusBadges unit={f} />
+                    <div className="follower-orders">
+                      {FOLLOWER_ORDERS.map((order) => (
+                        <button
+                          key={order}
+                          type="button"
+                          className={`chip ${f.order === order ? 'chip-on' : ''}`}
+                          data-action="orderFollower"
+                          data-order={order}
+                          disabled={!mine || !onOrderFollower}
+                          title={s(FOLLOWER_ORDER_HINTS[order])}
+                          onClick={() => onOrderFollower?.(f.id, order)}
+                        >
+                          {s(FOLLOWER_ORDER_NAMES[order])}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="unit-state-text">{t.followerFallen}</div>
+                )}
+              </div>
+            )
+          })}
+        </section>
+      )}
 
       <section className="block">
         <h3>{t.enemy}</h3>

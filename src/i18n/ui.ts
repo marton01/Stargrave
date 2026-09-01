@@ -398,6 +398,46 @@ const HU = {
   newBattle: 'Új csata',
   initiative: 'Kezdeményezés',
   yourTeam: 'A csapat',
+  followersHeading: 'Akiket lehoztatok',
+  followerFallen: 'Elesett. A hajón sem lesz többé.',
+  takeFollowers: 'Kit visztek le?',
+  takeFollowersHint:
+    'Csak képzett tanítvány jöhet — és aki lent elesik, az a legénységi listáról is lekerül.',
+  followerNobody: 'Most nincs képzett tanítványod, akit lehozhatnál.',
+  bondTogether: 'most egy állomáson',
+  ashoreHeading: 'Lemész?',
+  ashoreMeta: (n: number): string => `${n} hős száll partra`,
+  ashoreIntro:
+    'Nem muszáj mindenkinek lemenni. Aki fent marad, az a csata alatt a hajót viszi: körönként egy támogatás, a raktár terhére. Lent viszont eggyel kevesebben lesztek.',
+  ashoreStaying: 'Fent maradok ✓',
+  ashoreGoing: 'Fent maradok',
+  ashoreLocked: 'Valakinek le kell mennie — legalább ketten mindig partra szállnak.',
+  supportHeading: 'A hajóról',
+  supportSpent: 'ebben a körben már volt',
+  pledgeHeading: 'A szavad',
+  pledgeMeta: 'egyszerre egy, az egész asztalra',
+  pledgeIntro:
+    'Mondj ki valamit hangosan, határidővel. A játék felírja, és számon is kéri — ha megtartod, a jegy a tiéd.',
+  pledgeBy: (name: string, weeks: number): string => `${name} szava · ${weeks} hét`,
+  prospectsHeading: 'Hogyan érhet véget',
+  prospectsIntro:
+    'Ezért gyűjtitek a megértést. Amelyik zárva van, ott oda van írva, mi hiányzik hozzá — és ha csendben maradtok, a felső kettő marad.',
+  prospectOpen: 'nyitva',
+  understandingTierLine: (tier: number): string => `${tier}. szint`,
+  attentionCostLine: 'minden 2 megértés +1 figyelem',
+  figuresHeading: 'Akikkel találkoztatok',
+  figuresMeta: 'ők emlékeznek rátok',
+  figureWarm: 'jóban vagytok',
+  figureCold: 'haragszik rátok',
+  readingYours: 'a te leolvasásod',
+  readingTheirs: 'az ő leolvasása',
+  readingIntro:
+    'Ezt rajtad kívül senki nem látja az asztalnál. Nem titok — a te dolgod, hogy elmondd.',
+  readingClosed: (name: string, count: number): string =>
+    `${count} dolgot lát, amit te nem. Kérdezd meg ${name}-t.`,
+  followerTake: 'Lehozom',
+  followerComing: 'Lejön ✓',
+  followerNeedsRank: 'Csak képzett tanítvány jöhet le. Adj neki még pár hetet egy állomáson.',
   enemy: 'Ellenség',
   noEnemiesLeft: 'Nincs több ellenség.',
   noIntentYet: 'Még nem mutatta fel a szándékát.',
@@ -495,9 +535,9 @@ const HU = {
   terrainWallText: 'Nem járható, és a látást is blokkolja. Nincs rajta rácsvonal.',
   terrainChasmText: 'Nem járható, de át lehet fölötte lőni és látni.',
   terrainPillarText:
-    'Nem járható, a látást is blokkolja. A Rúnakovács tud ilyet emelni — de olyan mezőre nem, ami kettévágná a pályát. Átlósan EL LEHET mellette menni: egy átlós lépés akkor tilos, ha mindkét szomszédos mező blokkolt, tehát egy magában álló oszlop nem zár el semmit.',
+    'Nem járható, a látást is blokkolja. A Rúnaszövő tud ilyet emelni — de olyan mezőre nem, ami kettévágná a pályát. Átlósan EL LEHET mellette menni: egy átlós lépés akkor tilos, ha mindkét szomszédos mező blokkolt, tehát egy magában álló oszlop nem zár el semmit.',
   terrainTrapText:
-    'A Rúnakovács állítja. Aki rálép, sebzést kap, és a csapda elhasználódik. Az ellenség nem látja előre.',
+    'A Rúnaszövő állítja. Aki rálép, sebzést kap, és a csapda elhasználódik. Az ellenség nem látja előre.',
   badgeInitiative: 'Kezdeményezés (jobbra fent, piros)',
   badgeInitiativeText:
     'Ugyanaz a szám három helyen: az ellenfél mezőjén (jobbra fent), az ellenfél neve mellett az oldalsávban, és a saját lapjaid BAL FELSŐ sarkában. Ez a kezdeményezés: aki kisebb, az lép előbb. A körödben a két kiválasztott lap közül az adja a tiédet, amelyiket kezdeményezésnek jelölöd — ezért nem mindegy, melyiket.',
@@ -610,7 +650,7 @@ const HU = {
   domainResearch: 'Kutatás',
   domainShared: 'Közös',
   domainHint:
-    'A hajó két félre van osztva: a Rúnakovács a gépészetért, a Visszhang-olvasó a kutatásért ' +
+    'A hajó két félre van osztva: a Rúnaszövő a gépészetért, a Múltidéző a kutatásért ' +
     'felel. Ami közös, arról tényleg együtt kell döntenetek.',
 
   // ------------------------------------------------------- modes and rooms
@@ -629,10 +669,10 @@ const HU = {
   playersCount: (n: number) => `${n} játékos`,
   playersHint: (n: number): string =>
     n <= 2
-      ? 'Rúnakovács és Visszhang-olvasó.'
+      ? 'Rúnaszövő és Múltidéző.'
       : n === 3
-        ? 'Rúnakovács, Visszhang-olvasó és Kántor.'
-        : 'Mind a négy: Rúnakovács, Visszhang-olvasó, Kántor, Csillagmérő.',
+        ? 'Rúnaszövő, Múltidéző és Rítushívó.'
+        : 'Mind a négy: Rúnaszövő, Múltidéző, Rítushívó, Asztromanta.',
   launchRoom: 'Szoba nyitása',
   joinHeading: 'Csatlakozás egy szobához',
   joinIntro:
@@ -1116,6 +1156,46 @@ const EN: Catalog = {
   newBattle: 'New battle',
   initiative: 'Initiative',
   yourTeam: 'Your team',
+  followersHeading: 'Who came down',
+  followerFallen: 'Fallen. Not aboard the ship any more either.',
+  takeFollowers: 'Who comes down?',
+  takeFollowersHint:
+    'Only a trained mentee can come — and whoever falls down there comes off the crew list too.',
+  followerNobody: 'You have no trained mentee to bring.',
+  bondTogether: 'on the same station now',
+  ashoreHeading: 'Are you going down?',
+  ashoreMeta: (n: number): string => `${n} heroes land`,
+  ashoreIntro:
+    'Not everybody has to go down. Whoever stays runs the ship during the fight: one support action a round, out of the hold. Down there you will be one fewer.',
+  ashoreStaying: 'Staying aboard ✓',
+  ashoreGoing: 'Stay aboard',
+  ashoreLocked: 'Somebody has to land — at least two always go down.',
+  supportHeading: 'From the ship',
+  supportSpent: 'already spent this round',
+  pledgeHeading: 'Your word',
+  pledgeMeta: 'one at a time, for the whole table',
+  pledgeIntro:
+    'Say something out loud, with a deadline. The game writes it down and holds you to it — keep it and the marks are yours.',
+  pledgeBy: (name: string, weeks: number): string => `the ${name}’s word · ${weeks} weeks`,
+  prospectsHeading: 'How this can end',
+  prospectsIntro:
+    'This is what the understanding is for. Whatever is shut says what it is waiting on — and if you stay quiet, the top two are what is left.',
+  prospectOpen: 'open',
+  understandingTierLine: (tier: number): string => `tier ${tier}`,
+  attentionCostLine: 'every 2 understanding is +1 attention',
+  figuresHeading: 'People you have met',
+  figuresMeta: 'they remember you',
+  figureWarm: 'on good terms',
+  figureCold: 'holds it against you',
+  readingYours: 'your reading',
+  readingTheirs: 'their reading',
+  readingIntro:
+    'Nobody else at the table can see this. It is not a secret — it is your job to say it.',
+  readingClosed: (name: string, count: number): string =>
+    `They can see ${count} things you cannot. Ask the ${name}.`,
+  followerTake: 'Bring them',
+  followerComing: 'Coming ✓',
+  followerNeedsRank: 'Only a trained mentee can come down. Give them a few more weeks at a station.',
   enemy: 'Enemies',
   noEnemiesLeft: 'No enemies left.',
   noIntentYet: 'It has not revealed its intent yet.',

@@ -12,6 +12,7 @@ import { MODULES, RESOURCES } from '../content/ship'
 import { CREW_TRAITS } from '../content/crew'
 import { HERO_CLASSES } from '../content/heroes'
 import { relic } from '../content/relics'
+import { figureDef } from '../content/figures'
 import { pick } from './ui'
 import type { EncounterCost, EncounterEffect, ChoiceRequirement } from '../content/encounters'
 import type { Reward } from '../engine/expedition/types'
@@ -187,6 +188,31 @@ export function describeEffect(effect: EncounterEffect, lang: Lang): ChoiceLine 
       }
     case 'aboard':
       return { text: '', tone: 'plain' }
+
+    case 'standing': {
+      const who = figureDef(effect.figure)
+      const name = who ? pick(who.name, lang) : effect.figure
+      return {
+        text:
+          effect.amount >= 0
+            ? hu
+              ? `${name} ezt megjegyzi — jól`
+              : `${name} will remember this — well`
+            : hu
+              ? `${name} ezt megjegyzi — rosszul`
+              : `${name} will remember this — badly`,
+        tone: effect.amount >= 0 ? 'gain' : 'loss',
+      }
+    }
+
+    case 'figureReturns': {
+      const who = figureDef(effect.figure)
+      const name = who ? pick(who.name, lang) : effect.figure
+      return {
+        text: hu ? `${name} még találkozni fog veletek` : `${name} will meet you again`,
+        tone: 'plain',
+      }
+    }
     case 'startTask':
       return {
         text: hu ? 'Egy zárósor, közösen' : 'A closing line, together',

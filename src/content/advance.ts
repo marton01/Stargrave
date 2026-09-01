@@ -16,6 +16,7 @@
 // The engine reads `effect`; nothing else knows these exist.
 
 import type { HeroClassId, Text } from '../engine/types'
+import type { ResourceId } from './ship'
 
 export type PerkEffect = {
   /** Extra maximum hit points, for this hero only. */
@@ -44,6 +45,21 @@ export type PerkEffect = {
   recoverLost?: number
   /** Crew this hero may take under their wing, above the base three. */
   mentees?: number
+  /**
+   * A flat weekly gain, exactly like a module's or a relic's.
+   *
+   * The same shape on purpose: the weekly turn sums all three through one code
+   * path, so none of them can quietly stop paying out.
+   */
+  weekly?: { id: ResourceId; amount: number }
+  /** Where every crew member's loyalty is heading. */
+  loyaltyTarget?: number
+  /** Weeks cut from a long jump. See `travelWeeks` for what counts as long. */
+  travelCut?: number
+  /** Extra experience a week for the crew this hero mentors. */
+  crewXp?: number
+  /** Shield every hero starts a landing with. */
+  startShield?: number
 }
 
 export type HeroPerk = {
@@ -384,6 +400,179 @@ export const HERO_PERKS: HeroPerk[] = [
     cost: 3,
     requires: [],
     effect: { attunements: 1 },
+  },
+
+  // ============================================== what carries over to the road
+  //
+  // Everything above this line is felt on the grid or on one station. These are
+  // the perks that pay while nothing is happening — on a jump, in the galley, at
+  // the crew list. Two reasons they exist:
+  //
+  // A hero used to stop being a hero the moment a landing ended. What you spent
+  // your marks on decided how the next fight went and nothing else, so between
+  // fights the four of you were interchangeable.
+  //
+  // And they are how the SHIP gets better without a shop. A module is bought with
+  // credits and belongs to everybody; these are bought with one person's marks
+  // and belong to them — the food on the table came from her, the fuel in the
+  // tank from him, and everybody knows it.
+  {
+    id: 'smith-scrapwright',
+    heroClass: 'runesmith',
+    name: { hu: 'Roncsmester', en: 'Scrapwright' },
+    description: {
+      hu:
+        'Amit egy partraszállás hátrahagy, azt szétszedi és elviszi. Hetente +3 kredit, ' +
+        'akkor is, ha egész héten nem történik semmi.',
+      en:
+        'What a landing leaves behind, he takes apart and carries off. +3 credits a week, ' +
+        'including the weeks when nothing happens.',
+    },
+    cost: 2,
+    requires: [],
+    effect: { weekly: { id: 'credits', amount: 3 } },
+  },
+  {
+    id: 'smith-ship-runes',
+    heroClass: 'runesmith',
+    name: { hu: 'Hajórúnák', en: 'Ship runes' },
+    description: {
+      hu:
+        'A hajótestbe is szövi, nemcsak a páncélba. Hetente +1 hajótest — magától, munka nélkül, ' +
+        'a Kohón felül.',
+      en:
+        'He weaves them into the hull as well as the plate. +1 hull a week, on its own, on top of ' +
+        'whatever the Forge does.',
+    },
+    cost: 3,
+    requires: [],
+    effect: { weekly: { id: 'hull', amount: 1 } },
+  },
+  {
+    id: 'smith-field-forge',
+    heroClass: 'runesmith',
+    name: { hu: 'Tábori kohó', en: 'Field forge' },
+    description: {
+      hu:
+        'Leszállás előtt végigmegy a páncélokon. Minden hős 1 Vérttel kezdi a partraszállást — ' +
+        'ő is, a többiek is.',
+      en:
+        'He goes over the plating before the drop. Every hero starts a landing with 1 Shield — ' +
+        'him and everybody else.',
+    },
+    cost: 4,
+    requires: ['smith-wardlines'],
+    effect: { startShield: 1 },
+  },
+  {
+    id: 'reader-borrowed-hour',
+    heroClass: 'echoreader',
+    name: { hu: 'Kölcsönvett óra', en: 'Borrowed hour' },
+    description: {
+      hu:
+        'Megnézi, ki járt itt előttetek, és utánamegy a nyomnak. Minden legalább 3 hetes ugrás ' +
+        'egy héttel rövidebb.',
+      en:
+        'She looks at who came this way before you and follows the line they left. Every jump of ' +
+        '3 weeks or more is one week shorter.',
+    },
+    cost: 4,
+    requires: ['reader-longsight'],
+    effect: { travelCut: 1 },
+  },
+  {
+    id: 'reader-margin-notes',
+    heroClass: 'echoreader',
+    name: { hu: 'Széljegyzetek', en: 'Marginalia' },
+    description: {
+      hu: 'Amit út közben leír, azt otthon el tudják olvasni. Hetente +2 információ.',
+      en: 'What she writes down on the way can be read at home. +2 information a week.',
+    },
+    cost: 2,
+    requires: [],
+    effect: { weekly: { id: 'information', amount: 2 } },
+  },
+  {
+    id: 'cantor-oathkeeper',
+    heroClass: 'cantor',
+    name: { hu: 'Fogadalomtartó', en: 'Oathkeeper' },
+    description: {
+      hu:
+        'Nem beszédet tart, hanem megjegyzi, ki mit mondott, és számon is kéri. A legénység ' +
+        'hűsége mindenkinél 1-gyel feljebb tart.',
+      en:
+        'She makes no speeches; she remembers what everybody said and holds them to it. Every ' +
+        'crew member’s loyalty heads 1 higher.',
+    },
+    cost: 4,
+    requires: ['cantor-deep-breath'],
+    effect: { loyaltyTarget: 1 },
+  },
+  {
+    id: 'cantor-galley',
+    heroClass: 'cantor',
+    name: { hu: 'Konyhaügyelet', en: 'Galley watch' },
+    description: {
+      hu:
+        'Ő méri ki az adagokat, és ő az, aki miatt marad. Hetente +2 élelem.',
+      en: 'She measures out the rations, and she is the reason there are any left. +2 food a week.',
+    },
+    cost: 2,
+    requires: [],
+    effect: { weekly: { id: 'food', amount: 2 } },
+  },
+  {
+    id: 'cantor-choirline',
+    heroClass: 'cantor',
+    name: { hu: 'Kórusvonal', en: 'Choir line' },
+    description: {
+      hu: 'Új lap a paklijába: Kórusvonal — vért mindenkinek egy vonal mentén.',
+      en: 'A new card in her deck: Choir line — shields down a line of allies.',
+    },
+    cost: 3,
+    requires: ['cantor-ward-song'],
+    effect: { card: 'ct-choirline' },
+  },
+  {
+    id: 'surveyor-thrift-plot',
+    heroClass: 'surveyor',
+    name: { hu: 'Takarékos pálya', en: 'Thrift plot' },
+    description: {
+      hu:
+        'Nem a rövidebb utat számolja ki, hanem az olcsóbbat. Hetente +2 üzemanyag.',
+      en: 'He does not plot the shorter course but the cheaper one. +2 fuel a week.',
+    },
+    cost: 2,
+    requires: [],
+    effect: { weekly: { id: 'fuel', amount: 2 } },
+  },
+  {
+    id: 'surveyor-instrument-drill',
+    heroClass: 'surveyor',
+    name: { hu: 'Műszeres kiképzés', en: 'Instrument drill' },
+    description: {
+      hu:
+        'Akit a szárnyai alá vett, azt leülteti a műszerek mellé. A tanítványai hetente ' +
+        '1-gyel több tapasztalatot szereznek.',
+      en:
+        'Whoever he has taken under his wing gets sat down at the instruments. His mentees earn ' +
+        '1 more experience a week.',
+    },
+    cost: 3,
+    requires: [],
+    effect: { crewXp: 1 },
+  },
+  {
+    id: 'surveyor-ranging-shot',
+    heroClass: 'surveyor',
+    name: { hu: 'Belövés', en: 'Ranging shot' },
+    description: {
+      hu: 'Új lap a paklijába: Belövés — messziről bemér, és a második találat már fáj.',
+      en: 'A new card in his deck: Ranging shot — mark from far off, and the second hit lands hard.',
+    },
+    cost: 3,
+    requires: ['surveyor-longsight'],
+    effect: { card: 'sv-ranging-shot' },
   },
 ]
 

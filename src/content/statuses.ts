@@ -24,7 +24,7 @@ export const STATUS_DESCRIPTIONS: Record<StatusKind, Text> = {
   anchor: {
     hu:
       'A megjelölt nem tud elmozdulni, és a területhatások +1-et sebeznek rá. ' +
-      'A Rúnakovács rakja fel.',
+      'A Rúnaszövő rakja fel.',
     en:
       'The marked unit cannot move, and area effects deal +1 damage to it. ' +
       'Applied by the Runesmith.',
@@ -32,7 +32,7 @@ export const STATUS_DESCRIPTIONS: Record<StatusKind, Text> = {
   runeMark: {
     hu:
       'A megjelöltre a hősök közelharci támadása +2-t sebez, és ha megjelölve hal meg, ' +
-      '+1 Fluxus jár. A Visszhang-olvasó rakja fel.',
+      '+1 Fluxus jár. A Múltidéző rakja fel.',
     en:
       "Heroes' melee attacks deal +2 to the marked unit, and if it dies while marked you " +
       'gain +1 Flux. Applied by the Echo-reader.',

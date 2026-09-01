@@ -3,7 +3,7 @@
 // to import each other.
 
 import { distance } from './grid'
-import type { BattleState, Enemy, Hero, LogEvent, StatusKind, Unit } from './types'
+import type { BattleState, Enemy, Follower, Hero, LogEvent, StatusKind, Unit } from './types'
 
 export function clone<T>(x: T): T {
   return structuredClone(x)
@@ -19,8 +19,33 @@ export function clone<T>(x: T): T {
  */
 export const SHIELD_MAX = 3
 
+/**
+ * Is this unit one of the four?
+ *
+ * `u.side === 'hero'` answers a different question — "is this on the party's
+ * side" — and since the crew started coming down with the party the two answers
+ * differ. Every place that reaches for a hand, a card or a hero class wants this
+ * one.
+ */
+export function isHero(u: Unit | null | undefined): u is Hero {
+  return u !== null && u !== undefined && u.side === 'hero' && u.kind === 'hero'
+}
+
+export function isFollower(u: Unit | null | undefined): u is Follower {
+  return u !== null && u !== undefined && u.side === 'hero' && u.kind === 'follower'
+}
+
 export function heroes(s: BattleState): Hero[] {
-  return s.units.filter((u): u is Hero => u.side === 'hero')
+  return s.units.filter((u): u is Hero => u.side === 'hero' && u.kind === 'hero')
+}
+
+/** The crew brought down with the party. On the hero side, but not heroes. */
+export function followers(s: BattleState): Follower[] {
+  return s.units.filter((u): u is Follower => u.side === 'hero' && u.kind === 'follower')
+}
+
+export function livingFollowers(s: BattleState): Follower[] {
+  return followers(s).filter((f) => f.alive)
 }
 
 export function livingHeroes(s: BattleState): Hero[] {

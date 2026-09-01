@@ -18,6 +18,7 @@ import { describe, expect, it } from 'vitest'
 import { newArchive } from './archive'
 import { directiveProgress, expeditionStep, startExpedition } from './expedition'
 import { DIRECTIVE_DEFS } from '../../content/directives'
+import { HERO_ORDER } from './expedition'
 import { defaultDials } from '../../content/difficulty'
 import type { ExpeditionState } from './types'
 
@@ -90,6 +91,40 @@ describe('what home asks for', () => {
     for (const def of DIRECTIVE_DEFS) {
       expect(def.weeks(0), def.kind).toBeGreaterThanOrEqual(4)
       expect(def.target(0), def.kind).toBeGreaterThanOrEqual(0)
+    }
+  })
+})
+
+describe('whose list it is', () => {
+  it('gives every hero orders of their own', () => {
+    // There was a stretch where only the Runeweaver and the Pastcaller owned any,
+    // and the two seats that arrive with the third and fourth player had cards,
+    // perks and duties but nothing home ever asked THEM for. An order is the one
+    // thing that says out loud "this is your column, this is your week".
+    for (const hero of HERO_ORDER) {
+      expect(
+        DIRECTIVE_DEFS.filter((def) => def.owner === hero).length,
+        `${hero} has no orders of their own`,
+      ).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('never addresses an order to a chair nobody is sitting in', () => {
+    // A two-player run has no Rite-caller. An order on her console would sit
+    // there and fail on its own, and there is no worse kind of pressure than one
+    // nobody can answer.
+    for (let seed = 1; seed <= 25; seed++) {
+      const s = startExpedition(seed * 7, 'medium', newArchive(), undefined, [
+        'runesmith',
+        'echoreader',
+      ])
+      s.dials.attention = 1
+      s.dials.aboard = 1
+      s.dials.directives = 5
+      const issued = expeditionStep(s, { k: 'advanceWeek' })
+      for (const d of issued.directives) {
+        expect(['runesmith', 'echoreader'], `${d.kind} went to ${d.owner}`).toContain(d.owner)
+      }
     }
   })
 })

@@ -19,7 +19,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { activeUnit, canRest, mustRest, startBattle, step, type Action } from './battle'
-import { enemies, livingEnemies, livingHeroes } from './state'
+import { enemies, isHero, livingEnemies, livingHeroes } from './state'
 import { card } from '../content/cards'
 import { createRng, type Rng } from './rng'
 import { distance, fromTileKey } from './grid'
@@ -173,7 +173,7 @@ function oneBattle(seed: number, difficulty: number) {
   }
 
   const exhausted =
-    livingHeroes(s).length === 0 && s.units.some((u) => u.side === 'hero' && u.exhausted)
+    livingHeroes(s).length === 0 && s.units.some((u) => isHero(u) && u.exhausted)
 
   return {
     round: s.round,
@@ -181,7 +181,7 @@ function oneBattle(seed: number, difficulty: number) {
     lostToExhaustion: s.outcome === 'defeat' && exhausted,
     enemiesKilled: enemyCount - livingEnemies(s).length,
     enemyCount,
-    cardsLost: s.units.reduce((n, u) => n + (u.side === 'hero' ? u.lost.length : 0), 0),
+    cardsLost: s.units.reduce((n, u) => n + (isHero(u) ? u.lost.length : 0), 0),
   }
 }
 

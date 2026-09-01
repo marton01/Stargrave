@@ -77,6 +77,16 @@ type UnitBase = {
 
 export type Hero = UnitBase & {
   side: 'hero'
+  /**
+   * What kind of thing on the party's side this is.
+   *
+   * `side` alone stopped being enough when the crew started coming down with the
+   * party: a follower is on the hero side for every question about targeting and
+   * on nobody's side for every question about cards. Narrowing on `side` gives
+   * `Hero | Follower`, which is exactly the prompt every one of those call sites
+   * needed.
+   */
+  kind: 'hero'
   heroClass: HeroClassId
   /** Which player controls this hero — shown large so hotseat stays clear. */
   /**
@@ -96,6 +106,43 @@ export type Hero = UnitBase & {
   exhausted: boolean
 }
 
+/**
+ * What a follower does when its turn comes.
+ *
+ * There are three because a follower must be a decision and not a pet. Each one
+ * is a different answer to "what is this person for, this round": keeping you
+ * alive, adding a body to the line, or staying out of the way.
+ */
+export type FollowerOrder =
+  /** Go to their mentor and put themselves in front of them. */
+  | 'guard'
+  /** Go at the nearest enemy. */
+  | 'strike'
+  /** Stand still; hit anything that comes adjacent. */
+  | 'hold'
+
+/**
+ * A crew member, brought down with the landing party.
+ *
+ * They have no cards and no hand: they do the one thing they were told, on the
+ * turn after the hero who taught them. That is the whole design — a mentee is
+ * the mentor's second body, not a second hero, and the price of having one is
+ * that a name can be crossed off the crew list rather than a number.
+ */
+export type Follower = UnitBase & {
+  side: 'hero'
+  kind: 'follower'
+  /** The crew member this is. A death here reaches the ship's list. */
+  crewId: string
+  /** Whose mentee. Their seat gives the orders. */
+  mentor: HeroClassId
+  playerSlot: 1 | 2 | 3 | 4
+  order: FollowerOrder
+  /** Damage on a hit, and how far they move in a turn. */
+  attack: number
+  speed: number
+}
+
 export type Enemy = UnitBase & {
   side: 'enemy'
   enemyType: string
@@ -105,7 +152,7 @@ export type Enemy = UnitBase & {
   intent: string | null
 }
 
-export type Unit = Hero | Enemy
+export type Unit = Hero | Follower | Enemy
 
 // ---------------------------------------------------------------- effects
 
@@ -248,6 +295,15 @@ export type LogEvent =
   | { k: 'enemyIntent'; unit: Text; intent: Text }
   | { k: 'rested'; unit: Text; lostCard: Text }
   | { k: 'restSkipsTurn'; unit: Text }
+  // The crew, on the ground. Every one of these names the person: a follower is
+  // somebody off the ship's list, and the log is where that has to be legible.
+  | { k: 'followerJoins'; unit: Text; mentor: Text }
+  | { k: 'followerGuards'; unit: Text; target: Text }
+  | { k: 'followerMoves'; unit: Text }
+  | { k: 'followerHolds'; unit: Text }
+  | { k: 'followerWaits'; unit: Text }
+  | { k: 'followerHeld'; unit: Text }
+  | { k: 'followerOrdered'; unit: Text; order: Text }
   | { k: 'exhausted'; unit: Text }
   | { k: 'relicPicked'; unit: Text; remaining: number }
   | { k: 'relicsComplete' }

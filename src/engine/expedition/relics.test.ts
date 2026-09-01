@@ -15,15 +15,18 @@ import {
   HERO_ORDER,
   attunedRelics,
   bondRange,
+  drawRelic,
   expeditionStep,
   forgeOutput,
   heroMaxHp,
   labOutput,
+  loyaltyTarget,
   missionFlux,
   moraleTarget,
   sensorOutput,
   shieldMitigation,
   startExpedition,
+  travelWeeks,
   weeklyAttention,
   weeklyFromModules,
 } from './expedition'
@@ -62,8 +65,54 @@ function probe(s: ExpeditionState): string {
     weeklyAttention(s),
     weeklyFromModules(s, 'food'),
     weeklyFromModules(s, 'information'),
+    // What the newest relics reach: the crew's loyalty and the length of a jump.
+    // A field nobody probes is a field a relic can lie about.
+    loyaltyTarget(s, s.crew[0]!),
+    travelWeeks(s, 4),
   ].join('|')
 }
+
+describe('whose find it is', () => {
+  it('gives every hero relics only they can wear', () => {
+    // The hold used to be somebody else's: five bound relics between the original
+    // pair and one each for the two who arrive with the third and fourth player.
+    for (const hero of HERO_ORDER) {
+      expect(
+        RELICS.filter((r) => r.bearer === hero).length,
+        `${hero} has nothing of their own in the hold`,
+      ).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('never finds one that nobody at this table could wear', () => {
+    // A find that cannot be worn reads as a reward and is a blank. With nine of
+    // the relics bound to a bearer, a two-player run would otherwise draw dead
+    // about half the time.
+    const s = startExpedition(2024, 'medium', newArchive(), undefined, [
+      'runesmith',
+      'echoreader',
+    ])
+    // Every relic the ruins could turn up for this table, drawn until the pool
+    // is empty. Not a sample: the whole reachable set.
+    const seen: string[] = []
+    for (let i = 0; i < 40; i++) {
+      const drawn = drawRelic({ ...s, relics: seen })
+      if (!drawn) break
+      seen.push(drawn)
+    }
+    expect(seen.length, 'nothing was found at all').toBeGreaterThan(3)
+    for (const id of seen) {
+      const bearer = relic(id).bearer
+      expect(
+        bearer === undefined || bearer === 'runesmith' || bearer === 'echoreader',
+        `${id} is bound to ${bearer}, who is not at this table`,
+      ).toBe(true)
+    }
+    // And the ones that are bound elsewhere really were left out.
+    expect(seen).not.toContain('tuning-fork')
+    expect(seen).not.toContain('measuring-chain')
+  })
+})
 
 describe('a relic only works when somebody is wearing it', () => {
   it('does nothing at all while it sits in the hold', () => {

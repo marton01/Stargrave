@@ -4,6 +4,9 @@
 // layer never has to care which kind it was.
 
 import { useState } from 'react'
+import { RESOURCES } from '../content/ship'
+import { SUPPORT_DEFS } from '../content/support'
+import { seatOfHero, supportAvailable } from '../engine/expedition/expedition'
 import { ActionBar } from './ActionBar'
 import { activeUnit, atExit } from '../engine/battle'
 import { predictDamage } from '../engine/combat'
@@ -419,7 +422,44 @@ export function MissionView({
             onUnit={(id) => dispatch({ k: 'battleAction', action: { k: 'choose', value: id } })}
           />
         </main>
-        <Sidebar state={battle} />
+        {/* The ship, while the fight is happening. Shows only when somebody
+            stayed aboard — the one place two groups of players are doing
+            different things in the same minute. */}
+        {state.ashore.length > 0 && (
+          <aside className="ship-support">
+            <h3>{t.supportHeading}</h3>
+            {SUPPORT_DEFS.map((def) => {
+              const mine = state.ashore.filter((h) => mySeats.includes(seatOfHero(state, h)))
+              const who = mine[0] ?? state.ashore[0]!
+              const spent = !supportAvailable(state)
+              const poor = state.resources[def.cost.id] < def.cost.amount
+              return (
+                <button
+                  key={def.kind}
+                  className="button button-small"
+                  data-action="shipSupport"
+                  data-support={def.kind}
+                  disabled={spent || poor}
+                  title={spent ? t.supportSpent : s(def.text)}
+                  onClick={() => dispatch({ k: 'shipSupport', hero: who, kind: def.kind })}
+                >
+                  {s(def.name)}{' '}
+                  <span className="muted">
+                    {def.cost.amount} {s(RESOURCES[def.cost.id].name)}
+                  </span>
+                </button>
+              )
+            })}
+          </aside>
+        )}
+
+        <Sidebar
+          state={battle}
+          mySeats={mySeats}
+          onOrderFollower={(followerId, order) =>
+            dispatch({ k: 'battleAction', action: { k: 'orderFollower', followerId, order } })
+          }
+        />
       </div>
 
       <footer className={`action-area ${handOpen || settled ? '' : 'action-area-folded'}`}>

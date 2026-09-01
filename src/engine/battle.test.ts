@@ -5,8 +5,16 @@
 // bug, because it only shows up on round twenty.
 
 import { describe, expect, it } from 'vitest'
-import { activeUnit, canRest, mustRest, startBattle, step, type Action } from './battle'
-import { livingHeroes, SHIELD_MAX } from './state'
+import {
+  activeUnit,
+  canRest,
+  mustRest,
+  startBattle,
+  startMission,
+  step,
+  type Action,
+} from './battle'
+import { SHIELD_MAX, isHero, livingHeroes } from './state'
 import { resolveEffects } from './effects'
 import { allCardsOfClass, card, cardsOfClass } from '../content/cards'
 import { createRng, type Rng } from './rng'
@@ -141,7 +149,7 @@ describe('battle engine', () => {
     for (let seed = 300; seed < 315; seed++) {
       const { s } = playThrough(seed)
       for (const h of s.units) {
-        if (h.side !== 'hero') continue
+        if (!isHero(h)) continue
         const all = [...h.hand, ...h.discard, ...h.lost]
         const unique = new Set(all)
         const expected = cardsOfClass(h.heroClass).length
@@ -169,7 +177,7 @@ describe('battle engine', () => {
     // smoke run reporting "target crashed".
     const s = structuredClone(startBattle(777, 1))
     const hero = s.units.find(
-      (u): u is Hero => u.side === 'hero' && u.heroClass === 'echoreader',
+      (u): u is Hero => isHero(u) && u.heroClass === 'echoreader',
     )!
     hero.discard = ['er-echo']
     s.phase = 'resolution'
@@ -242,6 +250,38 @@ describe('map generation', () => {
       for (const c of [...heroSpawns, ...enemySpawns]) {
         expect(walkable(map, c), `seed ${seed}: spawn tile is not walkable`).toBe(true)
       }
+    }
+  })
+})
+
+describe('what the ship sends down with them', () => {
+  it('stands every hero behind the Shield the forge gave them', () => {
+    // The Runeweaver's field forge is bought on the strategic layer with his own
+    // marks and spent here, in the first round of the next landing. A strategic
+    // promise that does not reach the grid is the oldest bug in this game.
+    const plain = startMission({
+      seed: 4242,
+      difficulty: 2,
+      objective: { k: 'eliminate' },
+      missionKind: 'combat',
+    })
+    const forged = startMission({
+      seed: 4242,
+      difficulty: 2,
+      objective: { k: 'eliminate' },
+      missionKind: 'combat',
+      startShield: 2,
+    })
+
+    for (const hero of plain.units.filter((u) => isHero(u))) {
+      expect(hero.statuses.shield ?? 0, hero.id).toBe(0)
+    }
+    for (const hero of forged.units.filter((u) => isHero(u))) {
+      expect(hero.statuses.shield, hero.id).toBe(2)
+    }
+    // And it is the heroes' own: nothing on the other side got plated.
+    for (const enemy of forged.units.filter((u) => u.side === 'enemy')) {
+      expect(enemy.statuses.shield ?? 0, enemy.id).toBe(0)
     }
   })
 })

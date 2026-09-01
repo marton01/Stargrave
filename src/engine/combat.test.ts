@@ -14,7 +14,7 @@ import { bondActive, predictDamage } from './combat'
 import { requirement } from './effects'
 import { startBattle, startMission, step } from './battle'
 import { distance, hasLineOfSight } from './grid'
-import { heroes, livingEnemies } from './state'
+import { heroes, isHero, livingEnemies } from './state'
 import type { BattleState, Hero } from './types'
 
 /** A battle with the two heroes placed exactly where we want them. */
@@ -152,7 +152,7 @@ describe('getting out', () => {
     // Both at the point — on it and beside it, because two units cannot share a tile.
     const beside = { x: Math.max(0, Math.min(9, exit.x + 1)), y: exit.y }
     after = step({ ...after, units: after.units.map((u) =>
-      u.side === 'hero' ? { ...u, pos: u.id === first!.id ? exit : beside } : u) }, { k: 'endTurn' })
+      isHero(u) ? { ...u, pos: u.id === first!.id ? exit : beside } : u) }, { k: 'endTurn' })
     expect(after.outcome, 'the party is out').toBe('victory')
   })
 

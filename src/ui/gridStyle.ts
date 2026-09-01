@@ -3,7 +3,7 @@
 // A separate file because the live legend in the help panel uses exactly these
 // values — that way the help can never drift from what the player actually sees.
 
-import type { TerrainKind } from '../engine/types'
+import type { HeroClassId, TerrainKind } from '../engine/types'
 import type { UiKey } from '../i18n/ui'
 
 export const TILE = 64
@@ -35,4 +35,41 @@ export const TERRAIN_TEXT: Record<TerrainKind, { name: UiKey; text: UiKey }> = {
   wall: { name: 'terrainWall', text: 'terrainWallText' },
   chasm: { name: 'terrainChasm', text: 'terrainChasmText' },
   pillar: { name: 'terrainPillar', text: 'terrainPillarText' },
+}
+
+/**
+ * One colour per hero class, and one per enemy type.
+ *
+ * These live here for the reason the whole file exists: the board, the help
+ * legend and the cards all read from this one place, so a hero cannot be amber
+ * on the grid and cyan in the legend.
+ *
+ * There used to be two hero colours for four classes — the Runeweaver amber and
+ * everybody else cyan — which made half of a four-hero party the same colour and
+ * undid the point of a player owning a hero. The enemies were one red for the
+ * same reason, and once a unit can be drawn as dark portrait art at forty
+ * pixels, the ring around it is doing the work the silhouette used to do: it has
+ * to say which enemy this is. All four enemy colours stay inside the danger
+ * red's family — they must read as "the other side" first.
+ */
+export const HERO_COLOR: Record<HeroClassId, string> = {
+  runesmith: 'var(--rune)',
+  echoreader: 'var(--echo)',
+  cantor: 'var(--rite)',
+  surveyor: 'var(--astro)',
+}
+
+export const ENEMY_COLOR: Record<string, string> = {
+  'ash-husk': '#c8563f',
+  'rune-sentinel': '#d08a3e',
+  'choir-wraith': '#b1568c',
+  'godmachine-shard': '#9a5a4a',
+}
+
+/** The text tone that matches each hero's colour. See `.tone-*` in styles.css. */
+export const HERO_TONE: Record<HeroClassId, string> = {
+  runesmith: 'tone-rune',
+  echoreader: 'tone-echo',
+  cantor: 'tone-rite',
+  surveyor: 'tone-astro',
 }

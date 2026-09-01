@@ -18,7 +18,7 @@ export type HeroClass = {
 export const HERO_CLASSES: Record<HeroClassId, HeroClass> = {
   runesmith: {
     id: 'runesmith',
-    name: { hu: 'Rúnakovács', en: 'Runesmith' },
+    name: { hu: 'Rúnaszövő', en: 'Runesmith' },
     description: {
       hu:
         'A terepformáló. Közelharcos építő: vért, csapdák, rúnaoszlopok, hátralökés. ' +
@@ -32,7 +32,7 @@ export const HERO_CLASSES: Record<HeroClassId, HeroClass> = {
   },
   echoreader: {
     id: 'echoreader',
-    name: { hu: 'Visszhang-olvasó', en: 'Echo-reader' },
+    name: { hu: 'Múltidéző', en: 'Echo-reader' },
     description: {
       hu:
         'A mintaolvasó. Távolsági rontómágus, aki a saját elhasznált lapjaival játszik: ' +
@@ -46,7 +46,7 @@ export const HERO_CLASSES: Record<HeroClassId, HeroClass> = {
   },
   cantor: {
     id: 'cantor',
-    name: { hu: 'Kántor', en: 'Cantor' },
+    name: { hu: 'Rítushívó', en: 'Cantor' },
     description: {
       hu:
         'A hangadó. Támogató: gyógyítás, vért, Fluxus a csapatnak. Nem ő öl meg semmit — ' +
@@ -60,7 +60,7 @@ export const HERO_CLASSES: Record<HeroClassId, HeroClass> = {
   },
   surveyor: {
     id: 'surveyor',
-    name: { hu: 'Csillagmérő', en: 'Surveyor' },
+    name: { hu: 'Asztromanta', en: 'Surveyor' },
     description: {
       hu:
         'A távolságok embere. Tüzérség: nagy hatótáv, bemérés, területsebzés — de lassú ' +

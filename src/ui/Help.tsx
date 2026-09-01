@@ -17,7 +17,15 @@ import { marked } from 'marked'
 import rulesHu from '../../RULES.hu.md?raw'
 import rulesEn from '../../RULES.md?raw'
 import { ENEMY_TYPES } from '../content/enemies'
-import { GRID_LINE, TERRAIN_COLOR, TERRAIN_TEXT, TILE } from './gridStyle'
+import {
+  ENEMY_COLOR,
+  GRID_LINE,
+  HERO_COLOR,
+  HERO_TONE,
+  TERRAIN_COLOR,
+  TERRAIN_TEXT,
+  TILE,
+} from './gridStyle'
 import { HERO_CLASSES } from '../content/heroes'
 import {
   CollapsingShape,
@@ -26,6 +34,7 @@ import {
   PillarShape,
   RelicShape,
   Shape,
+  ShapeDefs,
   TrapShape,
   type ShapeKey,
 } from './shapes'
@@ -229,6 +238,8 @@ function ShapeSample({ shape, color }: { shape: ShapeKey; color: string }) {
   const size = 46
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="sample">
+      {/* the legend has to draw exactly what the board draws, paint included */}
+      <ShapeDefs />
       <rect width={size} height={size} fill={TERRAIN_COLOR.floor} />
       <rect width={size} height={size} fill="none" stroke={GRID_LINE.floor} strokeWidth={1} />
       <g transform={`translate(${size * 0.12} ${size * 0.06}) scale(${size * 0.76})`}>
@@ -473,14 +484,9 @@ function GamePieces() {
       <div className="legend">
         {heroList.map((h) => (
           <div key={h.id} className="legend-item">
-            <ShapeSample
-              shape={h.shape}
-              color={h.id === 'runesmith' ? 'var(--rune)' : 'var(--echo)'}
-            />
+            <ShapeSample shape={h.shape} color={HERO_COLOR[h.id]} />
             <div>
-              <strong className={h.id === 'runesmith' ? 'tone-rune' : 'tone-echo'}>
-                {s(h.name)}
-              </strong>
+              <strong className={HERO_TONE[h.id]}>{s(h.name)}</strong>
               <span className="legend-meta">
                 {h.hp} {t.helpHp}
               </span>
@@ -494,10 +500,7 @@ function GamePieces() {
       <div className="legend">
         {ENEMY_TYPES.map((e) => (
           <div key={e.id} className="legend-item">
-            <ShapeSample
-              shape={e.shape}
-              color={e.id === 'godmachine-shard' ? '#9a5a4a' : 'var(--danger)'}
-            />
+            <ShapeSample shape={e.shape} color={ENEMY_COLOR[e.id] ?? 'var(--danger)'} />
             <div>
               <strong className="tone-danger">{s(e.name)}</strong>
               <span className="legend-meta">

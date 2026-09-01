@@ -18,16 +18,22 @@ import {
   attunementSlots,
   directiveProgress,
   heroMaxHp,
+  landingHeroes,
   menteesOf,
   mentorLimit,
+  pledgeLabel,
 } from '../../engine/expedition/expedition'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
 import { directiveAtDeadline, directiveLabel, party } from '../../engine/expedition/expedition'
 import { HERO_CLASSES } from '../../content/heroes'
 import { MARK_NAMES, MARK_SOURCES, perkAvailable, perksOf } from '../../content/advance'
 import { RANK_NAMES, SPECIALITY_NAMES, crewRank, xpToNextRank } from '../../content/crew'
+import { canFollow } from '../../engine/followers'
+import { privateReading, readingHeading } from '../../engine/expedition/insight'
+import { PLEDGE_DEFS } from '../../content/pledges'
+import { MIN_LANDING_PARTY, SUPPORT_DEFS } from '../../content/support'
 import { dutiesOf } from '../../content/watch'
-import { STATIONS } from '../../content/ship'
+import { RESOURCES, STATIONS } from '../../content/ship'
 import { relic, relicFits } from '../../content/relics'
 import { describeReward } from '../../i18n/describeChoice'
 import { Portrait } from '../Portrait'
@@ -40,9 +46,17 @@ import type { StationId } from '../../content/ship'
 export function ConsoleView({
   state,
   dispatch,
+  mine,
 }: {
   state: ExpeditionState
   dispatch: (action: ExpeditionAction) => void
+  /**
+   * The heroes this browser runs. Empty means one keyboard, everybody.
+   *
+   * It decides one thing only: whose private readings are shown. See
+   * `engine/expedition/insight.ts` for why that matters.
+   */
+  mine?: HeroClassId[]
 }) {
   const { t, s } = useLang()
   // One tab per seat at the table, in seat order.
@@ -74,7 +88,13 @@ export function ConsoleView({
         ))}
       </div>
 
-      <Console key={who} state={state} dispatch={dispatch} hero={who} />
+      <Console
+        key={who}
+        state={state}
+        dispatch={dispatch}
+        hero={who}
+        readable={!mine || mine.length === 0 || mine.includes(who)}
+      />
     </div>
   )
 }
@@ -83,10 +103,13 @@ function Console({
   state,
   dispatch,
   hero,
+  readable,
 }: {
   state: ExpeditionState
   dispatch: (action: ExpeditionAction) => void
   hero: HeroClassId
+  /** May the person at this browser read this hero's private panel? */
+  readable: boolean
 }) {
   const { t, s } = useLang()
   const record = state.heroRecords[hero]
@@ -95,6 +118,10 @@ function Console({
 
   return (
     <div className={`console console-${hero}`} data-hero={hero}>
+      <ReadingPanel state={state} hero={hero} readable={readable} />
+      <PledgePanel state={state} dispatch={dispatch} hero={hero} />
+      <AshorePanel state={state} dispatch={dispatch} hero={hero} />
+
       <section className="panel console-head-panel">
         <div className="console-identity">
           <Portrait path={portrait.hero(hero)} />
@@ -412,13 +439,34 @@ function Mentees({
                   </span>
                 </div>
                 {isMine ? (
-                  <button
-                    className="button button-small"
-                    data-action="releaseMentee"
-                    onClick={() => dispatch({ k: 'setMentor', crewId: member.id, hero: null })}
-                  >
-                    {t.menteeRelease}
-                  </button>
+                  <div className="mentee-buttons">
+                    {/* The one decision on this screen that can cost a life. It
+                        sits here, next to the person, rather than at the hatch:
+                        you choose it in the quiet and then live with it. */}
+                    <button
+                      className={`button button-small ${
+                        state.landingParty.includes(member.id) ? 'button-primary' : ''
+                      }`}
+                      data-action="toggleFollower"
+                      data-crew={member.id}
+                      disabled={!canFollow(member) && !state.landingParty.includes(member.id)}
+                      title={
+                        canFollow(member)
+                          ? t.takeFollowersHint
+                          : t.followerNeedsRank
+                      }
+                      onClick={() => dispatch({ k: 'toggleFollower', crewId: member.id })}
+                    >
+                      {state.landingParty.includes(member.id) ? t.followerComing : t.followerTake}
+                    </button>
+                    <button
+                      className="button button-small"
+                      data-action="releaseMentee"
+                      onClick={() => dispatch({ k: 'setMentor', crewId: member.id, hero: null })}
+                    >
+                      {t.menteeRelease}
+                    </button>
+                  </div>
                 ) : mentor ? (
                   <span className="mentee-state muted">
                     {t.menteeOther(s(HERO_CLASSES[mentor].name))}
@@ -496,6 +544,169 @@ function Watch({
           )
         })}
       </div>
+    </section>
+  )
+}
+
+/**
+ * What this hero can see and nobody else can.
+ *
+ * The point of the panel is not the information — it is that ONE person has it
+ * and has to say it out loud. That is the difference between four people playing
+ * together and one strong player working out everybody's move: you cannot route
+ * around somebody whose facts you do not have.
+ *
+ * At one keyboard it is simply shown, because there is one screen and hiding
+ * things from it would be theatre. Online it is closed for everybody but the
+ * seat that owns it, and the closed state says whose it is — knowing WHO to ask
+ * is half of what makes it social.
+ */
+function ReadingPanel({
+  state,
+  hero,
+  readable,
+}: {
+  state: ExpeditionState
+  hero: HeroClassId
+  readable: boolean
+}) {
+  const { t, s } = useLang()
+  const readings = privateReading(state, hero)
+
+  return (
+    <section className="panel console-reading" data-readable={readable}>
+      <header className="panel-head">
+        <h3>{s(readingHeading(hero))}</h3>
+        <span className="panel-meta">{readable ? t.readingYours : t.readingTheirs}</span>
+      </header>
+      {readable ? (
+        <>
+          <p className="panel-intro">{t.readingIntro}</p>
+          <ul className="reading-list">
+            {readings.map((reading, i) => (
+              <li key={i} className={`reading reading-${reading.tone}`}>
+                {s(reading.text)}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="panel-intro reading-closed">
+          {t.readingClosed(s(HERO_CLASSES[hero].name), readings.length)}
+        </p>
+      )}
+    </section>
+  )
+}
+
+/**
+ * What this player promises the others.
+ *
+ * On the console rather than on the ship screen, because a pledge is one
+ * person's word and not the table's decision. There is one at a time for the
+ * whole run: four simultaneous promises is a to-do list; one is somebody
+ * standing up and saying they will handle it.
+ */
+function PledgePanel({
+  state,
+  dispatch,
+  hero,
+}: {
+  state: ExpeditionState
+  dispatch: (action: ExpeditionAction) => void
+  hero: HeroClassId
+}) {
+  const { t, s } = useLang()
+  const live = state.pledge && state.pledge.state === 'open' ? state.pledge : null
+
+  return (
+    <section className="panel">
+      <header className="panel-head">
+        <h3>{t.pledgeHeading}</h3>
+        <span className="panel-meta">{t.pledgeMeta}</span>
+      </header>
+
+      {live ? (
+        <div className={`pledge pledge-${live.by === hero ? 'mine' : 'theirs'}`}>
+          <strong>{s(pledgeLabel(live))}</strong>
+          <span className="pledge-who">
+            {t.pledgeBy(s(HERO_CLASSES[live.by].name), Math.max(0, live.due - state.week))}
+          </span>
+        </div>
+      ) : (
+        <>
+          <p className="panel-intro">{t.pledgeIntro}</p>
+          <div className="pledge-options">
+            {PLEDGE_DEFS.map((def) => (
+              <button
+                key={def.kind}
+                className="button button-small"
+                data-action="makePledge"
+                data-pledge={def.kind}
+                title={s(def.said)}
+                onClick={() => dispatch({ k: 'makePledge', hero, kind: def.kind })}
+              >
+                {s(def.name)}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
+/**
+ * Whether this hero goes down on the next landing.
+ *
+ * Staying behind is not sitting out: whoever is aboard runs the ship during the
+ * fight, one action a round, paid out of the hold. It is the only place in the
+ * game where two groups of players are doing different things in the same
+ * minute — and the party on the ground is smaller for it, which is the trade.
+ */
+function AshorePanel({
+  state,
+  dispatch,
+  hero,
+}: {
+  state: ExpeditionState
+  dispatch: (action: ExpeditionAction) => void
+  hero: HeroClassId
+}) {
+  const { t, s } = useLang()
+  const staying = state.ashore.includes(hero)
+  const going = landingHeroes(state)
+  const locked = !staying && going.length <= MIN_LANDING_PARTY
+
+  return (
+    <section className="panel">
+      <header className="panel-head">
+        <h3>{t.ashoreHeading}</h3>
+        <span className="panel-meta">{t.ashoreMeta(going.length)}</span>
+      </header>
+      <p className="panel-intro">{t.ashoreIntro}</p>
+      <button
+        className={`button button-small ${staying ? 'button-primary' : ''}`}
+        data-action="toggleAshore"
+        data-hero={hero}
+        disabled={locked || state.activeMission !== null}
+        title={locked ? t.ashoreLocked : undefined}
+        onClick={() => dispatch({ k: 'toggleAshore', hero })}
+      >
+        {staying ? t.ashoreStaying : t.ashoreGoing}
+      </button>
+      {staying && (
+        <ul className="support-list">
+          {SUPPORT_DEFS.map((def) => (
+            <li key={def.kind}>
+              <strong>{s(def.name)}</strong> — {s(def.text)}{' '}
+              <span className="muted">
+                ({def.cost.amount} {s(RESOURCES[def.cost.id].name)})
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

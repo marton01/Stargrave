@@ -70,6 +70,21 @@ export type EncounterEffect =
   | { k: 'defect' }
   /** Open a situation on the ship. Used by the departure chain. */
   | { k: 'aboard'; id: string }
+  /**
+   * Move where you stand with somebody who comes back — see content/figures.ts.
+   *
+   * Standing is the only number in the game that is about how you treated a
+   * person rather than about what you took from a situation.
+   */
+  | { k: 'standing'; figure: string; amount: number }
+  /**
+   * They will catch up with you.
+   *
+   * Scheduled as an ordinary dated debt, so it announces itself in the log and
+   * sits on the ship screen before it lands. WHICH scene arrives is decided when
+   * it lands, from the standing you have by then — not now.
+   */
+  | { k: 'figureReturns'; figure: string }
   | { k: 'startMission'; flavour: 'boarding' | 'ruins' | 'explore' }
   | { k: 'startPuzzle'; kind?: PuzzleKind }
   /** A split task: the rune line. See engine/task/runeline.ts. */
@@ -140,6 +155,13 @@ export type Encounter = {
    * is not four people voting, it is four people each answering for something.
    */
   aboard?: true
+  /**
+   * Somebody who comes back. The stage is which meeting this is, from nought.
+   *
+   * A figure scene is never rolled off the map after the first: `chained` keeps
+   * it out of the pool, and the dated return is the only way in.
+   */
+  figure?: { id: string; stage: number }
   /** Whose call it is. Absent means anybody at the table. */
   owner?: HeroClassId
   title: Text
@@ -2125,9 +2147,20 @@ export function findEncounter(id: string): Encounter | undefined {
   return ENCOUNTER_INDEX.get(id)
 }
 
-/** Register more situations into the one index. Used by content/aboard.ts. */
+/**
+ * Register more situations. Used by content/aboard.ts, council.ts, figures.ts.
+ *
+ * They go into the index AND into the draw pool, because a registered encounter
+ * that is only in the index can be resolved but never met — which is exactly
+ * what happened to the figures' first scenes: they were content nothing could
+ * ever reach. What keeps the ship's own situations off the map is `aboard`,
+ * which `encountersFor` filters on, not which list they were declared in.
+ */
 export function registerEncounters(extra: readonly Encounter[]): void {
-  for (const e of extra) ENCOUNTER_INDEX.set(e.id, e)
+  for (const e of extra) {
+    ENCOUNTER_INDEX.set(e.id, e)
+    if (!ALL_ENCOUNTERS.some((existing) => existing.id === e.id)) ALL_ENCOUNTERS.push(e)
+  }
 }
 
 export function encountersFor(
@@ -2139,6 +2172,10 @@ export function encountersFor(
 ): Encounter[] {
   return ALL_ENCOUNTERS.filter((e) => {
     if (e.chained) return false
+    // Something that happens on the ship is never found at a place: it is rolled
+    // during the week by `rollAboard`. Without this the corridor arguments and
+    // the crew's motions would start turning up on the star map.
+    if (e.aboard) return false
     if (e.once && used.includes(e.id)) return false
     if (e.archiveGated && !archiveOpen) return false
     if (e.requiresFlag && !flags.includes(e.requiresFlag)) return false

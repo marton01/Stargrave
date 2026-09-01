@@ -123,6 +123,73 @@ export function describeExpeditionEvent(event: ExpeditionEvent, lang: Lang): str
     case 'crewJoined':
       return hu ? `${event.name} beszállt.` : `${event.name} has come aboard.`
 
+    case 'crewBond':
+      return hu
+        ? event.kind === 'trust'
+          ? `${event.a} és ${event.b} hamar egymásra találtak. Egy állomáson többet végeznek.`
+          : `${event.a} és ${event.b} első nap összekaptak. Egy állomáson kevesebbet végeznek.`
+        : event.kind === 'trust'
+          ? `${event.a} and ${event.b} took to each other at once. On one station they get more done.`
+          : `${event.a} and ${event.b} fell out on the first day. On one station they get less done.`
+
+    case 'stayedAboard':
+      return hu
+        ? `${pick(HERO_CLASSES[event.hero].name, lang)} fent marad a hajón a következő partraszállásra.`
+        : `The ${pick(HERO_CLASSES[event.hero].name, lang)} stays aboard for the next landing.`
+
+    case 'shipSupport':
+      return hu
+        ? `A hajóról: ${pick(event.what, lang)} — ${pick(HERO_CLASSES[event.hero].name, lang)}.`
+        : `From the ship: ${pick(event.what, lang)} — the ${pick(HERO_CLASSES[event.hero].name, lang)}.`
+
+    case 'pledgeMade':
+      return hu
+        ? `${pick(HERO_CLASSES[event.hero].name, lang)} szava rá: ${pick(event.label, lang)} (${event.weeks} hét).`
+        : `The ${pick(HERO_CLASSES[event.hero].name, lang)} gives their word: ${pick(event.label, lang)} (${event.weeks} weeks).`
+
+    case 'pledgeKept':
+      return hu
+        ? `${pick(HERO_CLASSES[event.hero].name, lang)} megtartotta: ${pick(event.label, lang)}`
+        : `The ${pick(HERO_CLASSES[event.hero].name, lang)} kept it: ${pick(event.label, lang)}`
+
+    case 'pledgeBroken':
+      return hu
+        ? `${pick(HERO_CLASSES[event.hero].name, lang)} nem tartotta meg: ${pick(event.label, lang)}`
+        : `The ${pick(HERO_CLASSES[event.hero].name, lang)} did not keep it: ${pick(event.label, lang)}`
+
+    case 'darkeningNamed':
+      return `${pick(event.name, lang)} — ${pick(event.text, lang)}`
+
+    case 'figureStanding':
+      return hu
+        ? `${pick(event.name, lang)} megjegyezte. (${event.standing >= 0 ? '+' : ''}${event.standing})`
+        : `${pick(event.name, lang)} noted it. (${event.standing >= 0 ? '+' : ''}${event.standing})`
+
+    case 'figureExpected':
+      return hu
+        ? `${pick(event.name, lang)} ${event.weeks} hét múlva utolér titeket.`
+        : `${pick(event.name, lang)} catches up with you in ${event.weeks} weeks.`
+
+    case 'councilCalled':
+      return hu
+        ? `A legénység szót kér: ${pick(event.title, lang)} — ${event.supporters} a ${event.of} főből.`
+        : `The crew ask to be heard: ${pick(event.title, lang)} — ${event.supporters} of ${event.of}.`
+
+    case 'crewFriction':
+      return hu
+        ? `${event.a} és ${event.b} egész héten egymás mellett dolgozott. Nem ment jól.`
+        : `${event.a} and ${event.b} worked side by side all week. It did not go well.`
+
+    case 'followerChosen':
+      return hu
+        ? `${event.name} lemegy a következő partraszállásra ${pick(HERO_CLASSES[event.hero].name, lang)} mellett.`
+        : `${event.name} will come down on the next landing at ${pick(HERO_CLASSES[event.hero].name, lang)}’s side.`
+
+    case 'followerDied':
+      return hu
+        ? `${event.name} nem jött vissza a partraszállásról. ${pick(HERO_CLASSES[event.hero].name, lang)} vitte le.`
+        : `${event.name} did not come back from the landing. ${pick(HERO_CLASSES[event.hero].name, lang)} took them down.`
+
     case 'stationRan':
       return hu
         ? `${pick(STATIONS[event.station].name, lang)}: elvégezte a heti munkát.`

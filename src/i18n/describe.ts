@@ -174,6 +174,43 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
         ? `${pick(event.unit, lang)} kifáradt, és ki kellett vinni a csatából.`
         : `${pick(event.unit, lang)} is exhausted and had to be carried out.`
 
+    // The crew, on the ground. Every line names the person on purpose: what is
+    // down there is somebody off the ship's list.
+    case 'followerJoins':
+      return hu
+        ? `${pick(event.unit, lang)} lejött ${pick(event.mentor, lang)} mellett.`
+        : `${pick(event.unit, lang)} came down at ${pick(event.mentor, lang)}’s side.`
+
+    case 'followerGuards':
+      return hu
+        ? `${pick(event.unit, lang)} ${pick(event.target, lang)} elé állt: Vért 1.`
+        : `${pick(event.unit, lang)} stepped in front of ${pick(event.target, lang)}: Shield 1.`
+
+    case 'followerMoves':
+      return hu
+        ? `${pick(event.unit, lang)} odébb ment, de nem ért oda.`
+        : `${pick(event.unit, lang)} moved up, but did not get there.`
+
+    case 'followerHolds':
+      return hu
+        ? `${pick(event.unit, lang)} tartja a helyét.`
+        : `${pick(event.unit, lang)} holds their ground.`
+
+    case 'followerWaits':
+      return hu
+        ? `${pick(event.unit, lang)} nem talált senkit.`
+        : `${pick(event.unit, lang)} found nobody.`
+
+    case 'followerHeld':
+      return hu
+        ? `${pick(event.unit, lang)} a földön van, nem tud mit tenni.`
+        : `${pick(event.unit, lang)} is on the ground and can do nothing.`
+
+    case 'followerOrdered':
+      return hu
+        ? `${pick(event.unit, lang)} parancsa: ${pick(event.order, lang)}.`
+        : `${pick(event.unit, lang)}’s order: ${pick(event.order, lang)}.`
+
     case 'relicPicked':
       return hu
         ? `${pick(event.unit, lang)} felvett egy ereklyét.${event.remaining > 0 ? ` Még ${event.remaining} kell.` : ''}`

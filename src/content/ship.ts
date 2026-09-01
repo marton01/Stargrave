@@ -182,7 +182,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     id: 'forge',
     name: { hu: 'Kohó', en: 'Forge' },
     description: {
-      hu: 'Hajótest-javítás és gyártás. A Rúnakovács hatásköre.',
+      hu: 'Hajótest-javítás és gyártás. A Rúnaszövő hatásköre.',
       en: 'Hull repair and fabrication. The Runesmith’s domain.',
     },
     max: 3,

@@ -7,8 +7,9 @@
 import { useState } from 'react'
 import { allTiles, distance, fromTileKey, terrainAt, tileKey, unitAt } from '../engine/grid'
 import { ENEMY_TYPES, intentOf } from '../content/enemies'
-import { GRID_LINE, TERRAIN_COLOR, TILE } from './gridStyle'
+import { ENEMY_COLOR, GRID_LINE, HERO_COLOR, TERRAIN_COLOR, TILE } from './gridStyle'
 import { HERO_CLASSES } from '../content/heroes'
+import { portrait, useOptionalImage } from './assets'
 import {
   CollapsingShape,
   ExitShape,
@@ -16,21 +17,138 @@ import {
   PillarShape,
   RelicShape,
   Shape,
+  ShapeDefs,
   TrapShape,
   type ShapeKey,
 } from './shapes'
+import { isFollower, isHero } from '../engine/state'
 import type { BattleState, Unit } from '../engine/types'
 
 export function unitShape(u: Unit): ShapeKey {
-  if (u.side === 'hero') return HERO_CLASSES[u.heroClass].shape
-  return ENEMY_TYPES.find((t) => t.id === u.enemyType)?.shape ?? 'husk'
+  if (isFollower(u)) return 'mentee'
+  if (isHero(u)) return HERO_CLASSES[u.heroClass].shape
+  return u.side === 'enemy'
+    ? (ENEMY_TYPES.find((t) => t.id === u.enemyType)?.shape ?? 'husk')
+    : 'husk'
 }
 
 export function unitColor(u: Unit): string {
-  if (u.side === 'hero') {
-    return u.heroClass === 'runesmith' ? 'var(--rune)' : 'var(--echo)'
+  // A follower wears the colour of whoever taught them. That is the whole
+  // reading of the board: two figures the same colour are one player's.
+  if (isFollower(u)) return HERO_COLOR[u.mentor]
+  if (isHero(u)) return HERO_COLOR[u.heroClass]
+  return u.side === 'enemy' ? (ENEMY_COLOR[u.enemyType] ?? 'var(--danger)') : 'var(--danger)'
+}
+
+/**
+ * Depth for the floor itself.
+ *
+ * Both of these are ONE element covering the whole board rather than something
+ * per tile: the bevel is a `pattern` the size of a tile, so a hundred-tile map
+ * costs a single rect. Flat colour fields were what made the board read as a
+ * spreadsheet with counters on it.
+ */
+function BoardDefs() {
+  return (
+    <defs>
+      <linearGradient id="tile-light" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#ffffff" stopOpacity="0.055" />
+        <stop offset="0.55" stopColor="#ffffff" stopOpacity="0" />
+        <stop offset="1" stopColor="#000000" stopOpacity="0.14" />
+      </linearGradient>
+      <pattern id="tile-bevel" width={TILE} height={TILE} patternUnits="userSpaceOnUse">
+        <rect width={TILE} height={TILE} fill="url(#tile-light)" />
+        <path d={`M0,0.5 H${TILE}`} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        <path d={`M0.5,0 V${TILE}`} stroke="rgba(255,255,255,0.035)" strokeWidth="1" />
+        <path d={`M0,${TILE - 0.5} H${TILE}`} stroke="rgba(0,0,0,0.32)" strokeWidth="1" />
+      </pattern>
+      {/* objectBoundingBox units, so one clip rounds every token wherever it
+          stands on the board */}
+      <clipPath id="token-round" clipPathUnits="objectBoundingBox">
+        <circle cx="0.5" cy="0.5" r="0.5" />
+      </clipPath>
+      <radialGradient id="token-shade" cx="0.38" cy="0.3" r="0.78">
+        <stop offset="0" stopColor="#ffffff" stopOpacity="0.14" />
+        <stop offset="0.55" stopColor="#000000" stopOpacity="0" />
+        <stop offset="1" stopColor="#000000" stopOpacity="0.55" />
+      </radialGradient>
+      <radialGradient id="board-vignette" cx="0.5" cy="0.45" r="0.75">
+        <stop offset="0.45" stopColor="#000000" stopOpacity="0" />
+        <stop offset="1" stopColor="#000000" stopOpacity="0.22" />
+      </radialGradient>
+    </defs>
+  )
+}
+
+/**
+ * What a unit looks like on the board.
+ *
+ * If a portrait file happens to be sitting in `public/assets` for this hero
+ * class or enemy type, the unit is drawn as a **token**: the art in a coin, in a
+ * ring of its own colour. If not, the silhouette is drawn instead, and it is not
+ * a placeholder — it is the same figure the help legend teaches.
+ *
+ * The rule from `assets.ts` holds all the way to here: a missing file is not an
+ * error and leaves no gap. Nothing on this board needs a download to be legible.
+ */
+function UnitFigure({ unit }: { unit: Unit }) {
+  // A follower is never drawn from art: they must read as smaller and plainer
+  // than the four, and a portrait coin would make them look like a fifth hero.
+  const art = useOptionalImage(
+    isHero(unit)
+      ? portrait.hero(unit.heroClass)
+      : unit.side === 'enemy'
+        ? portrait.enemy(unit.enemyType)
+        : null,
+  )
+  const color = unitColor(unit)
+
+  if (!art) {
+    return (
+      <g transform={`translate(${TILE * 0.12} ${TILE * 0.06}) scale(${TILE * 0.76})`}>
+        <Shape shape={unitShape(unit)} color={color} />
+      </g>
+    )
   }
-  return u.enemyType === 'godmachine-shard' ? '#9a5a4a' : 'var(--danger)'
+
+  const r = TILE * 0.34
+  const cx = TILE / 2
+  const cy = TILE * 0.46
+  return (
+    <g>
+      <ellipse cx={cx} cy={TILE * 0.86} rx={r * 0.8} ry={r * 0.22} fill="#000" opacity="0.45" />
+      {/* a breath of the unit's own colour behind it: portrait art is dark, the
+          floor is dark, and without this the coins sink into the board */}
+      <circle cx={cx} cy={cy} r={r * 1.6} fill={color} opacity="0.13" />
+      <circle cx={cx} cy={cy} r={r + 1.5} fill="#080b11" opacity="0.9" />
+      <image
+        href={art}
+        x={cx - r}
+        y={cy - r}
+        width={r * 2}
+        height={r * 2}
+        clipPath="url(#token-round)"
+        preserveAspectRatio="xMidYMid slice"
+      />
+      {/* Every portrait is dark art, and at forty pixels four dark circles look
+          alike — the flat style's whole promise is that you can tell what
+          something is at a glance. `color` blending keeps the art's drawing and
+          takes its hue from the unit, so a Choir-wraith is magenta and an Ash
+          husk is red before you have read anything. It also pulls art from four
+          different sources into one palette. */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={r}
+        fill={color}
+        opacity="0.5"
+        style={{ mixBlendMode: 'color' }}
+      />
+      {/* the same light the silhouettes get, so art and drawing sit together */}
+      <circle cx={cx} cy={cy} r={r} fill="url(#token-shade)" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={2} />
+    </g>
+  )
 }
 
 export type GridProps = {
@@ -98,6 +216,9 @@ export function Grid({
       height={height}
       onMouseLeave={() => setHovered(null)}
     >
+      <ShapeDefs />
+      <BoardDefs />
+
       {/* terrain */}
       {tiles.map((c) => {
         const kind = terrainAt(state.map, c)
@@ -141,6 +262,11 @@ export function Grid({
           </g>
         )
       })}
+
+      {/* the floor's own light: one bevel pattern and one vignette for the
+          whole board, both of them deaf to the mouse */}
+      <rect width={width} height={height} fill="url(#tile-bevel)" pointerEvents="none" />
+      <rect width={width} height={height} fill="url(#board-vignette)" pointerEvents="none" />
 
       {/* area effect preview */}
       {[...previewTiles].map((key) => {
@@ -261,9 +387,7 @@ export function Grid({
                 />
               )}
 
-              <g transform={`translate(${TILE * 0.12} ${TILE * 0.06}) scale(${TILE * 0.76})`}>
-                <Shape shape={unitShape(u)} color={unitColor(u)} />
-              </g>
+              <UnitFigure unit={u} />
 
               {/* hit point bar */}
               <rect

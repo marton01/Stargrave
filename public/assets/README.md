@@ -75,11 +75,21 @@ asked, and looping needs its own switch. Drop them in and say the word.
 ## 2. prioritás — Portrék / Portraits (`portraits/`)
 
 **HU:** Az oldalsávban (hősök, ellenfelek) és a hajón (legénység) jelennek meg, 44×44
-pixeles bélyegként. **A rácson maradnak a sziluettek**, mert azok olvashatóbbak. Mind be
-van kötve.
+pixeles bélyegként — **és mostantól a csatatéren is**, korongba vágva, az osztály saját
+színéből való gyűrűvel. Amelyikhez nincs fájl, ott a rajzolt figura áll a táblán, és az
+nem helykitöltő: pontosan azt rajzolja, amit a súgó legendája tanít. Mind be van kötve.
+
+Vagyis a `hero-cantor` és a `hero-surveyor` az egyetlen két hős, aki most is rajzolt
+alakként áll a csatában, míg a másik kettő portréval — ez a legláthatóbb hiányzó fájl a
+listán.
 
 **EN:** These appear in the sidebar (heroes, enemies) and on the ship (crew) as a 44×44
-thumbnail. **The grid keeps its silhouettes**, because those read better. All wired.
+thumbnail — **and now on the battlefield as well**, cut into a coin inside a ring of the
+unit's own colour. Whatever has no file is drawn as its figure instead, and that is not a
+placeholder: it is exactly what the help legend teaches. All wired.
+
+So `hero-cantor` and `hero-surveyor` are the only two heroes still standing as drawings
+while the other two stand as portraits — the most visible missing file on this list.
 
 | Kész | Be | Fájl | Mi legyen / What it should be |
 |---|---|---|---|
@@ -145,8 +155,8 @@ will wire up a `crew-engineer-2.webp` form too.
 
 **KRITIKUS / CRITICAL:** a betűtípusnak **teljes magyar karakterkészlete** legyen — `ő ű Ő
 Ű` és az összes ékezet. Ez a leggyakoribb csapda: sok szép display font pont az `ő`-t és
-`ű`-t hagyja ki. Próbáld ki letöltés előtt ezzel: **„Csillagsír Rúnakovács
-Visszhang-olvasó őrző ütköző"**. — The typeface must cover **the full Hungarian character
+`ű`-t hagyja ki. Próbáld ki letöltés előtt ezzel: **„Csillagsír Rúnaszövő
+Múltidéző őrző ütköző"**. — The typeface must cover **the full Hungarian character
 set**. Many beautiful display fonts omit exactly `ő` and `ű`. Test with the string above
 before downloading.
 
@@ -161,33 +171,33 @@ fallback does not work the same way here. Drop the files in and it is a one-line
 
 **HU:** Be van kötve: ha ott a fájl, halványan (22% átlátszóság) a lap szövege *mögé*
 kerül, mert a szöveggel játszol, nem a képpel. **A fájlnév pontosan a lap azonosítója.**
-Ez 54 kép, tehát ne ezzel kezdd — a hangok sokkal többet adnak. Nem baj, ha csak néhány
+Ez 56 kép, tehát ne ezzel kezdd — a hangok sokkal többet adnak. Nem baj, ha csak néhány
 van meg: a többi lap ugyanúgy működik.
 
 **EN:** Wired: when the file is there it sits *behind* the card text at 22% opacity,
 because you play with the words, not the picture. **The filename is exactly the card id.**
-54 images, so do not start here. A partial set is fine — the rest simply have no art.
+56 images, so do not start here. A partial set is fine — the rest simply have no art.
 
-**Rúnakovács / Runesmith:** `rs-hammer-arc`, `rs-iron-ward`, `rs-rune-pillar`,
+**Rúnaszövő / Runesmith:** `rs-hammer-arc`, `rs-iron-ward`, `rs-rune-pillar`,
 `rs-earthquake`, `rs-shove`, `rs-set-trap`, `rs-forge-wrath`, `rs-endurance`,
 `rs-cast-anchor`, `rs-last-anvil`, `rs-ore-throw`, `rs-charging-cut`, `rs-stand-fast`
 
-**Visszhang-olvasó / Echo-reader:** `er-rune-mark`, `er-ashing-wind`, `er-echo`,
+**Múltidéző / Echo-reader:** `er-rune-mark`, `er-ashing-wind`, `er-echo`,
 `er-dimming`, `er-choir-shard`, `er-hex-ring`, `er-flux-tap`, `er-memory-shred`,
 `er-weakening-song`, `er-silent-command`, `er-ash-veil`, `er-soul-swap`, `er-echo-choir`
 
-**Kántor / Cantor** (új, 3-4 játékosnál · new, for 3-4 players)**:** `ct-steady-note`,
+**Rítushívó / Cantor** (új, 3-4 játékosnál · new, for 3-4 players)**:** `ct-steady-note`,
 `ct-litany`, `ct-hold-the-line`, `ct-open-throat`, `ct-hymn-of-iron`, `ct-breath`,
 `ct-choir-call`, `ct-marching-song`, `ct-flux-hymn`, `ct-shield-of-voices`, `ct-rebuke`,
 `ct-name-the-fallen`, `ct-last-verse`
 
-**Csillagmérő / Surveyor** (új · new)**:** `sv-quick-sight`, `sv-star-fix`, `sv-fall-back`,
+**Asztromanta / Surveyor** (új · new)**:** `sv-quick-sight`, `sv-star-fix`, `sv-fall-back`,
 `sv-range-mark`, `sv-spotter`, `sv-set-the-legs`, `sv-plumb-line`, `sv-triangulate`,
 `sv-scatter-shot`, `sv-shell`, `sv-long-shot`, `sv-steady-hand`, `sv-final-measure`
 
 **Fejlesztéssel szerezhető lapok / Advancement cards** (jegyekért vehetők, ezért ritkán
 látszanak — a legvégére valók · bought with marks, so rarely seen; leave these for last)**:**
-`rs-rampart`, `er-still-note`
+`rs-rampart`, `er-still-note`, `ct-choirline`, `sv-ranging-shot`
 
 **Formátum / Format:** `.webp` **vagy `.png`**, 400×400 px (a lap kétszerese; a kép a lap
 egész felületét kitölti, tehát a széleken vághat), sötét alaptónussal. Példa útvonal:

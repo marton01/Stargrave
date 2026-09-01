@@ -24,11 +24,14 @@ import {
   forgeOutput,
   heroMaxHp,
   labOutput,
+  loyaltyTarget,
+  mentorLimit,
   sensorOutput,
   shipBonus,
   startExpedition,
+  travelWeeks,
   weeklyAttention,
-  mentorLimit,
+  weeklyFromModules,
 } from './expedition'
 import { HERO_PERKS, perksOf } from '../../content/advance'
 import { HERO_ORDER, moraleTarget } from './expedition'
@@ -221,6 +224,15 @@ describe('no perk is a lie', () => {
       moraleTarget(s),
       bondRange(s),
       weeklyAttention(s),
+      // What the perks that pay on the road reach. A field nobody probes here is
+      // a field a perk can quietly do nothing to.
+      ...(['food', 'fuel', 'credits', 'information', 'hull', 'morale'] as const).map((id) =>
+        weeklyFromModules(s, id),
+      ),
+      loyaltyTarget(s, s.crew[0]!),
+      travelWeeks(s, 4),
+      shipBonus(s, 'crewXp'),
+      shipBonus(s, 'startShield'),
       s.heroes.map((h) => h.hand.length).join('/'),
     ].join('|')
   }
@@ -261,6 +273,40 @@ describe('no perk is a lie', () => {
       expect(after.heroRecords[perk.heroClass].perks, `${perk.id}: not bought`).toContain(perk.id)
       expect(probe(after), `${perk.id} (${perk.name.en}) changed nothing`).not.toBe(before)
     }
+  })
+
+  it('gives every hero something that pays between landings', () => {
+    // A hero used to stop being a hero the moment a landing ended: marks bought
+    // toughness and cards, so between fights the four of them were
+    // interchangeable. Each of them now has at least one perk that is felt on a
+    // week when nothing happens.
+    const onTheRoad = (effect: (typeof HERO_PERKS)[number]['effect']) =>
+      effect.weekly !== undefined ||
+      effect.loyaltyTarget !== undefined ||
+      effect.travelCut !== undefined ||
+      effect.crewXp !== undefined ||
+      effect.moraleTarget !== undefined ||
+      effect.mentees !== undefined ||
+      effect.sensorRange !== undefined
+    for (const hero of HERO_ORDER) {
+      expect(
+        perksOf(hero).filter((p) => onTheRoad(p.effect)).length,
+        `${hero} has nothing to buy that matters outside a fight`,
+      ).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('shortens a long jump and leaves a short one alone', () => {
+    // The distances on the map ARE the game. A hero who could turn every hop
+    // into a one-week hop would be paying nothing for it, so what she knows only
+    // bites on a leg long enough to be worth knowing something about.
+    const s = ship(HERO_ORDER)
+    s.power.engines = 1
+    const plain = [travelWeeks(s, 1), travelWeeks(s, 2), travelWeeks(s, 4)]
+    s.heroRecords.echoreader.perks = ['reader-longsight', 'reader-borrowed-hour']
+    expect(travelWeeks(s, 1)).toBe(plain[0])
+    expect(travelWeeks(s, 2)).toBe(plain[1])
+    expect(travelWeeks(s, 4)).toBe(plain[2]! - 1)
   })
 
   it('gives every hero something to spend marks on', () => {

@@ -6,7 +6,7 @@
 // from there. That way the rules engine knows nothing about the interface and
 // is still fully interactive.
 
-import { applyStatus, hasStatus, livingEnemies, log, partnerOf } from './state'
+import { applyStatus, hasStatus, isHero, livingEnemies, log, partnerOf } from './state'
 import { afterMove, dealDamage, grantShield, heal, knockback } from './combat'
 import {
   allTiles,
@@ -288,7 +288,8 @@ export function resolveEffects(s: BattleState): void {
   const turn = s.heroTurn
   if (!turn || !turn.active) return
   const hero = s.units.find((u) => u.id === turn.heroId)
-  if (!hero || hero.side !== 'hero') return
+  // Only one of the four plays cards. A follower has no turn to resolve.
+  if (!isHero(hero)) return
 
   s.pending = null
 

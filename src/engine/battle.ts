@@ -7,7 +7,19 @@
 // The same engine serves combat and exploration missions. What differs is the
 // OBJECTIVE — see checkOutcome. Nothing else in here cares which kind it is.
 
-import { clone, livingEnemies, livingHeroes, heroes, log, tickStatuses, unitById } from './state'
+import { FOLLOWER_ORDER_NAMES, followerTurn } from './followers'
+import {
+  clone,
+  heroes,
+  followers,
+  isFollower,
+  isHero,
+  livingEnemies,
+  livingHeroes,
+  log,
+  tickStatuses,
+  unitById,
+} from './state'
 import { buildEncounter, enemyType, intentOf } from '../content/enemies'
 import { card, cardsOfClass } from '../content/cards'
 import { MODULES } from '../content/ship'
@@ -36,14 +48,17 @@ import type {
   Collapsing,
   Coord,
   Enemy,
+  Follower,
+  FollowerOrder,
   Hero,
   HeroClassId,
-  MissionKind,
   Installation,
+  MissionKind,
   Objective,
   SiteEvent,
   SiteEventKind,
   TerrainKind,
+  Text,
   Unit,
 } from './types'
 import type { Rng } from './rng'
@@ -101,6 +116,33 @@ export type BattleSetup = {
    * a perk and a relic can widen it.
    */
   bondRange?: number
+  /**
+   * Shield every hero is standing behind when the landing opens.
+   *
+   * Bought on the strategic layer (the Runeweaver's field forge) and spent on
+   * the grid, which is the point of it: a decision made between landings that
+   * you feel in the first round of the next one.
+   */
+  startShield?: number
+  /**
+   * The crew brought down with the party — see `engine/followers.ts`.
+   *
+   * The expedition decides who is allowed to come (trained, and somebody's
+   * mentee); the battle only has to put them on the board.
+   */
+  followers?: FollowerSetup[]
+}
+
+/** One crew member, as the expedition hands them to a landing. */
+export type FollowerSetup = {
+  crewId: string
+  name: Text
+  mentor: HeroClassId
+  playerSlot: 1 | 2 | 3 | 4
+  order: FollowerOrder
+  hp: number
+  attack: number
+  speed: number
 }
 
 export type Action =
@@ -116,6 +158,15 @@ export type Action =
   | { k: 'skipHalf'; half: 'top' | 'bottom' }
   | { k: 'endTurn' }
   | { k: 'advanceEnemy' }
+  /**
+   * Tell a follower what to do from now on.
+   *
+   * A standing order rather than a turn: a mentee has no cards to play, and
+   * asking the table for a decision on their behalf every round would put four
+   * extra clicks in front of every round. It can be changed at any time and
+   * takes effect on their next turn.
+   */
+  | { k: 'orderFollower'; followerId: string; order: FollowerOrder }
   /**
    * Change the ground under a tile.
    *
@@ -222,6 +273,8 @@ export function startMission(setup: BattleSetup): BattleState {
   }
 
 
+  const followerSpots: Coord[] = []
+
   const heroUnits: Hero[] = slots.map((slot, i) => {
     const cls = HERO_CLASSES[slot.heroClass]
     const carried = setup.heroes?.find((h) => h.heroClass === slot.heroClass)
@@ -229,13 +282,14 @@ export function startMission(setup: BattleSetup): BattleState {
     return {
       id: `hero-${slot.heroClass}`,
       side: 'hero',
+      kind: 'hero',
       name: cls.name,
       heroClass: slot.heroClass,
       playerSlot: slot.playerSlot,
       pos: heroSpawns[i] ?? heroSpawns[0] ?? { x: 0, y: 0 },
       hp: carried ? Math.max(1, Math.min(maxHp, carried.hp)) : maxHp,
       maxHp,
-      statuses: {},
+      statuses: setup.startShield ? { shield: setup.startShield } : {},
       alive: true,
       hand: carried ? [...carried.hand] : cardsOfClass(slot.heroClass).map((c) => c.id),
       discard: carried ? [...carried.discard] : [],
@@ -266,13 +320,47 @@ export function startMission(setup: BattleSetup): BattleState {
     }
   })
 
+  // The crew who came down. They start beside their mentor, because that is
+  // where somebody who is being taught stands.
+  const followerUnits: Follower[] = (setup.followers ?? []).map((f) => {
+    const mentorUnit = heroUnits.find((h) => h.heroClass === f.mentor)
+    const home = mentorUnit?.pos ?? heroSpawns[0] ?? { x: 0, y: 0 }
+    const spot =
+      allTiles(map).find(
+        (c) =>
+          walkable(map, c) &&
+          distance(c, home) <= 2 &&
+          !heroUnits.some((h) => sameTile(h.pos, c)) &&
+          !enemyUnits.some((e) => sameTile(e.pos, c)) &&
+          !followerSpots.some((taken) => sameTile(taken, c)),
+      ) ?? home
+    followerSpots.push(spot)
+    return {
+      id: `follower-${f.crewId}`,
+      side: 'hero',
+      kind: 'follower',
+      name: f.name,
+      crewId: f.crewId,
+      mentor: f.mentor,
+      playerSlot: f.playerSlot,
+      order: f.order,
+      pos: spot,
+      hp: f.hp,
+      maxHp: f.hp,
+      attack: f.attack,
+      speed: f.speed,
+      statuses: {},
+      alive: true,
+    }
+  })
+
   const s: BattleState = {
     seed: setup.seed,
     rngStep: 0,
     round: 0,
     phase: 'cardSelection',
     map,
-    units: [...heroUnits, ...enemyUnits],
+    units: [...heroUnits, ...followerUnits, ...enemyUnits],
     flux: setup.flux ?? STARTING_FLUX,
     traps: [],
     order: [],
@@ -388,10 +476,18 @@ function beginRound(s: BattleState): void {
 
 // ------------------------------------------------------------ initiative
 
-function initiativeOf(u: Unit): number {
-  if (u.side === 'hero') {
+function initiativeOf(s: BattleState, u: Unit): number {
+  if (isHero(u)) {
     if (u.resting || !u.initiativeCard) return 99
     return card(u.initiativeCard).initiative
+  }
+  if (isFollower(u)) {
+    // Half a step behind their mentor, always. What a follower does is what they
+    // saw done, one beat late — and it means the order you give them is read in
+    // the light of the card you just played, not before it.
+    const mentor = heroes(s).find((h) => h.heroClass === u.mentor && h.alive)
+    if (!mentor || mentor.resting || !mentor.initiativeCard) return 98
+    return card(mentor.initiativeCard).initiative + 0.5
   }
   if (!u.intent) return 99
   return intentOf(u.enemyType, u.intent).initiative
@@ -402,8 +498,8 @@ function buildOrder(s: BattleState): void {
     .filter((u) => u.alive)
     .slice()
     .sort((a, b) => {
-      const ia = initiativeOf(a)
-      const ib = initiativeOf(b)
+      const ia = initiativeOf(s, a)
+      const ib = initiativeOf(s, b)
       if (ia !== ib) return ia - ib
       // On a tie the hero goes first — deciding in the player's favour is right.
       if (a.side !== b.side) return a.side === 'hero' ? -1 : 1
@@ -426,6 +522,12 @@ function advanceOrder(s: BattleState): void {
     const u = unitById(s, id)
 
     if (!u || !u.alive) {
+      s.orderIndex += 1
+      continue
+    }
+
+    if (isFollower(u)) {
+      followerTurn(s, u)
       s.orderIndex += 1
       continue
     }
@@ -776,6 +878,15 @@ export type MissionResult = {
    * expedition — the briefing said so.
    */
   modulesLost: string[]
+  /**
+   * Crew who came down and did not come back, by id.
+   *
+   * Ids rather than a count: what has to change is the ship's crew list. A
+   * follower's death is the only thing in the game that takes a named person
+   * away as the direct result of a decision made a few minutes earlier, and it
+   * would be worth nothing if it settled up as a number.
+   */
+  followersLost: string[]
   heroes: CarriedHero[]
 }
 
@@ -790,6 +901,12 @@ export function missionResult(s: BattleState): MissionResult {
     relicsCollected: s.carried,
     enemiesDefeated: s.units.filter((u) => u.side === 'enemy' && !u.alive).length,
     casualties: heroes(s).filter((h) => !h.alive).length,
+    // Who came down and did not come back. Ids, because the ship's crew list is
+    // what has to be changed, not a counter — this is the whole price of taking
+    // somebody with you.
+    followersLost: followers(s)
+      .filter((f) => !f.alive)
+      .map((f) => f.crewId),
     // Whatever is no longer standing was destroyed: the list only shrinks.
     modulesLost: (s.setupInstallations ?? []).filter(
       (id) => !s.installations.some((i) => i.id === id),
@@ -818,7 +935,7 @@ function finishHeroTurn(s: BattleState): void {
   const turn = s.heroTurn
   if (!turn) return
   const h = unitById(s, turn.heroId)
-  if (h && h.side === 'hero') {
+  if (isHero(h)) {
     for (const cardId of h.selected) {
       const index = h.hand.indexOf(cardId)
       if (index >= 0) h.hand.splice(index, 1)
@@ -843,7 +960,7 @@ export function step(previous: BattleState, action: Action): BattleState {
     case 'selectCard': {
       if (s.phase !== 'cardSelection' || s.selectingHero !== action.heroId) break
       const h = unitById(s, action.heroId)
-      if (!h || h.side !== 'hero' || h.resting) break
+      if (!isHero(h) || h.resting) break
       if (!h.hand.includes(action.cardId)) break
       const index = h.selected.indexOf(action.cardId)
       if (index >= 0) {
@@ -860,7 +977,7 @@ export function step(previous: BattleState, action: Action): BattleState {
     case 'setInitiativeCard': {
       if (s.phase !== 'cardSelection' || s.selectingHero !== action.heroId) break
       const h = unitById(s, action.heroId)
-      if (!h || h.side !== 'hero') break
+      if (!isHero(h)) break
       if (h.selected.includes(action.cardId)) h.initiativeCard = action.cardId
       break
     }
@@ -868,7 +985,7 @@ export function step(previous: BattleState, action: Action): BattleState {
     case 'rest': {
       if (s.phase !== 'cardSelection' || s.selectingHero !== action.heroId) break
       const h = unitById(s, action.heroId)
-      if (!h || h.side !== 'hero') break
+      if (!isHero(h)) break
       if (!h.discard.includes(action.loseCard)) break
 
       h.discard = h.discard.filter((id) => id !== action.loseCard)
@@ -886,7 +1003,7 @@ export function step(previous: BattleState, action: Action): BattleState {
     case 'confirmSelection': {
       if (s.phase !== 'cardSelection' || s.selectingHero !== action.heroId) break
       const h = unitById(s, action.heroId)
-      if (!h || h.side !== 'hero') break
+      if (!isHero(h)) break
       if (!h.resting && (h.selected.length !== CARDS_PER_ROUND || !h.initiativeCard)) break
 
       const waiting = livingHeroes(s)
@@ -907,7 +1024,7 @@ export function step(previous: BattleState, action: Action): BattleState {
       const turn = s.heroTurn
       if (!turn || turn.active) break
       const h = unitById(s, turn.heroId)
-      if (!h || h.side !== 'hero') break
+      if (!isHero(h)) break
       if (!h.selected.includes(action.cardId)) break
       if (turn.topDone || turn.bottomDone) break
       turn.topCard = action.cardId
@@ -959,6 +1076,15 @@ export function step(previous: BattleState, action: Action): BattleState {
       const turn = s.heroTurn
       if (!turn || turn.active) break
       finishHeroTurn(s)
+      break
+    }
+
+    case 'orderFollower': {
+      const f = unitById(s, action.followerId)
+      if (!isFollower(f) || !f.alive) break
+      if (f.order === action.order) break
+      f.order = action.order
+      log(s, { k: 'followerOrdered', unit: f.name, order: FOLLOWER_ORDER_NAMES[action.order] })
       break
     }
 

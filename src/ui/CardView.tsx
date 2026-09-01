@@ -5,6 +5,10 @@
 
 import { card } from '../content/cards'
 import { cardArt, useOptionalImage } from './assets'
+import { HERO_CLASSES } from '../content/heroes'
+import { HERO_COLOR } from './gridStyle'
+import { Shape, ShapeDefs } from './shapes'
+import type { HeroClassId } from '../engine/types'
 import { useLang } from '../i18n/LangContext'
 
 export type HalfState = 'idle' | 'assigned' | 'done'
@@ -55,8 +59,18 @@ export function CardView({
     .join(' ')
 
   return (
-    <div className={className} onClick={onClick} data-card-id={cardId} data-selected={!!selected}>
-      {art && <div className="card-art" style={{ backgroundImage: `url(${art})` }} />}
+    <div
+      className={className}
+      onClick={onClick}
+      data-card-id={cardId}
+      data-card-class={c.heroClass}
+      data-selected={!!selected}
+    >
+      {art ? (
+        <div className="card-art" style={{ backgroundImage: `url(${art})` }} />
+      ) : (
+        <CardMark heroClass={c.heroClass} />
+      )}
 
       <div className="card-header">
         <span className={`card-initiative ${initiative ? 'card-initiative-active' : ''}`}>
@@ -150,5 +164,23 @@ function HalfView({
       </div>
       <div className="card-half-text">{text}</div>
     </div>
+  )
+}
+
+/**
+ * The owner's mark, drawn behind a card that has no art file.
+ *
+ * A hand of cards used to be a wall of identical grey rectangles, and with four
+ * heroes at the table that is the wrong thing for it to be: whose hand this is
+ * should be the first thing you see, before you read a single word. The mark is
+ * the same figure the board draws, faint, in the class colour — no download, and
+ * it steps aside the moment real art is dropped in for the card.
+ */
+function CardMark({ heroClass }: { heroClass: HeroClassId }) {
+  return (
+    <svg className="card-mark" viewBox="0 0 1 1" aria-hidden="true">
+      <ShapeDefs />
+      <Shape shape={HERO_CLASSES[heroClass].shape} color={HERO_COLOR[heroClass]} />
+    </svg>
   )
 }

@@ -2975,3 +2975,145 @@
   color: var(--text-soft);
   line-height: 1.45;
 }
+
+/* What only one player can see.
+ *
+ * Deliberately at the top of the console and deliberately loud: the panel's job
+ * is to be noticed and read out, not to be found. */
+.console-reading {
+  border-left: 3px solid var(--rune);
+}
+
+.console-reading[data-readable='false'] {
+  border-left-color: var(--line);
+  opacity: 0.7;
+}
+
+.reading-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.reading {
+  border-left: 2px solid var(--line);
+  padding-left: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.reading-warn {
+  border-left-color: var(--rune);
+}
+
+.reading-bad {
+  border-left-color: var(--danger);
+  color: var(--text);
+}
+
+.reading-closed {
+  font-style: italic;
+}
+
+/* Where the run stands with the people who come back. */
+.figure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.figure {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.8rem;
+  border-left: 2px solid var(--line);
+  padding-left: 0.6rem;
+}
+
+.figure-warm {
+  border-left-color: var(--green);
+}
+
+.figure-cold {
+  border-left-color: var(--danger);
+}
+
+.figure-who {
+  grid-column: 1;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.figure-standing {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* What the understanding is for. Sits next to what it costs, on purpose: a price
+   with no visible reward reads as "do not do this". */
+.prospect-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.prospect {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.88rem;
+  border-left: 2px solid var(--line);
+  padding-left: 0.6rem;
+}
+
+.prospect-open {
+  border-left-color: var(--rune);
+  color: var(--text);
+}
+
+.prospect-shut {
+  color: var(--text-faint);
+}
+
+.prospect-need {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.prospect-open .prospect-need {
+  color: var(--rune);
+}
+
+/* Somebody's word. One at a time, for the whole table. */
+.pledge-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.pledge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border-left: 3px solid var(--line);
+  padding-left: 0.7rem;
+}
+
+.pledge-mine {
+  border-left-color: var(--rune);
+}
+
+.pledge-who {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}

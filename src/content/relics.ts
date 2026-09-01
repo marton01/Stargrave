@@ -46,6 +46,10 @@ export type RelicEffect = {
   research?: number
   /** Extra hull from the Forge. */
   repair?: number
+  /** Where every crew member's loyalty is heading. */
+  loyaltyTarget?: number
+  /** Weeks cut from a long jump. See `travelWeeks` for what counts as long. */
+  travelCut?: number
 }
 
 export type Relic = {
@@ -79,7 +83,7 @@ export const RELICS: Relic[] = [
     description: {
       hu:
         'Egy tenyérnyi, élére állított üvegdarab, ami akkor is szól, ha nem fújja semmi. ' +
-        'A Visszhang-olvasó a fülénél hordja.',
+        'A Múltidéző a fülénél hordja.',
       en:
         'A palm-sized sliver of glass stood on its edge, sounding even when nothing moves it. ' +
         'The Echo-reader wears it at her ear.',
@@ -94,7 +98,7 @@ export const RELICS: Relic[] = [
     description: {
       hu:
         'Egy isten-gép talpazatának letört sarka. Nehéz, hideg, és nem lehet elrontani. ' +
-        'A Rúnakovács a mellvértjébe kötözi.',
+        'A Rúnaszövő a mellvértjébe kötözi.',
       en:
         'The broken corner of a godmachine’s plinth. Heavy, cold, and impossible to ruin. ' +
         'The Runesmith straps it into his breastplate.',
@@ -195,7 +199,7 @@ export const RELICS: Relic[] = [
     name: { hu: 'A nevek jegyzéke', en: 'The ledger of names' },
     description: {
       hu:
-        'Egy lista mindenkiről, aki itt maradt. A Visszhang-olvasó fel tudja olvasni — ' +
+        'Egy lista mindenkiről, aki itt maradt. A Múltidéző fel tudja olvasni — ' +
         'és amit felolvas, azt érteni kezdi.',
       en:
         'A list of everyone who stayed. The Echo-reader can read it aloud — and what she reads ' +
@@ -222,7 +226,7 @@ export const RELICS: Relic[] = [
     name: { hu: 'Az első rúna', en: 'The first rune' },
     description: {
       hu:
-        'Egyetlen jel, kőbe vágva, mielőtt a jelrendszer létezett volna. A Rúnakovács ' +
+        'Egyetlen jel, kőbe vágva, mielőtt a jelrendszer létezett volna. A Rúnaszövő ' +
         'órákig nézi, és a keze utána biztosabb.',
       en:
         'One sign cut into stone before the sign system existed. The Runesmith looks at it for ' +
@@ -241,7 +245,7 @@ export const RELICS: Relic[] = [
     name: { hu: 'Hangolóvilla', en: 'Tuning fork' },
     description: {
       hu:
-        'Két ág, ami hetven év után is ugyanazt a hangot adja. A Kántor ehhez hangolja a ' +
+        'Két ág, ami hetven év után is ugyanazt a hangot adja. A Rítushívó ehhez hangolja a ' +
         'legénységet — és amíg szól, könnyebb bírni.',
       en:
         'Two prongs that still give the same note after seventy years. The Cantor tunes the crew ' +
@@ -251,13 +255,99 @@ export const RELICS: Relic[] = [
     value: 20,
     bearer: 'cantor',
   },
+  // ---------------------------------------------------------------------
+  // The Rite-caller's and the Astromancer's own finds.
+  //
+  // For a while they had one each while the original pair had five between them,
+  // which quietly told the third and fourth players that the hold was somebody
+  // else's. What each of them can wear is character, not balance: hers are things
+  // that hold people together, his are things that measure a distance.
+  {
+    id: 'oath-ring',
+    name: { hu: 'Fogadalomgyűrű', en: 'Oath ring' },
+    description: {
+      hu:
+        'Egy sima fémgyűrű, aminek a belsejébe egyetlen szó van vésve, és senki nem tudja, ' +
+        'melyik nyelven. Aki hordja, azt könnyebb elhinni.',
+      en:
+        'A plain metal ring with a single word cut into the inside of it, and nobody knows in ' +
+        'which language. Whoever wears it is easier to believe.',
+    },
+    effect: { loyaltyTarget: 1 },
+    value: 24,
+    bearer: 'cantor',
+  },
+  {
+    id: 'vigil-lamp',
+    name: { hu: 'Virrasztólámpás', en: 'Vigil lamp' },
+    description: {
+      hu:
+        'Éjszaka is ég a menzán, és nem fogy belőle semmi. A legénység megszokta, hogy valaki ' +
+        'ébren van.',
+      en:
+        'It burns in the mess through the night and nothing in it is used up. The crew have got ' +
+        'used to somebody being awake.',
+    },
+    effect: { moraleTarget: 1, attention: -1 },
+    value: 22,
+    bearer: 'cantor',
+  },
+  {
+    id: 'warden-bell',
+    name: { hu: 'Őrharang', en: 'Warden bell' },
+    description: {
+      hu:
+        'Nem kongatják: magától szólal meg, egy ütemmel az előtt, hogy baj lenne. Épp annyival, ' +
+        'amennyi elég ahhoz, hogy valaki eléálljon.',
+      en:
+        'Nobody rings it: it sounds on its own, one beat before anything goes wrong. Exactly enough ' +
+        'for somebody to step in front.',
+    },
+    effect: { wards: 1, flux: 1 },
+    value: 20,
+    bearer: 'cantor',
+  },
+  {
+    id: 'long-road-plumb',
+    name: { hu: 'A hosszú út mérőónja', en: 'The long road’s plumb' },
+    description: {
+      hu:
+        'Egy súly egy zsinór végén, ami nem lefelé húz, hanem előre. Amerre kifeszül, arra ' +
+        'rövidebb az út — de amíg kint lóg, valami számolja a hetedet.',
+      en:
+        'A weight on a cord that does not pull down but forward. The way it pulls taut is the ' +
+        'shorter way — but while it hangs out there, something is counting your week.',
+    },
+    effect: { travelCut: 1, attention: 1 },
+    whisper: {
+      hu: 'Amíg kifeszítve hordod, hetente +1 figyelem.',
+      en: 'While you carry it taut, +1 attention a week.',
+    },
+    value: 26,
+    bearer: 'surveyor',
+  },
+  {
+    id: 'starglass',
+    name: { hu: 'Csillagüveg', en: 'Starglass' },
+    description: {
+      hu:
+        'Egy lencse, amiben a csillagok egy héttel előbbre állnak, mint az ablakban. Az ' +
+        'Asztromanta ezt olvassa, és leírja, amit lát.',
+      en:
+        'A lens in which the stars stand a week ahead of where the window has them. The Surveyor ' +
+        'reads it and writes down what he sees.',
+    },
+    effect: { sensorRange: 1, weekly: { id: 'information', amount: 2 } },
+    value: 24,
+    bearer: 'surveyor',
+  },
   {
     id: 'measuring-chain',
     name: { hu: 'Mérőlánc', en: 'Measuring chain' },
     description: {
       hu:
         'Egy lánc, aminek minden szeme pontosan ugyanakkora, és ami mindig kifeszül a helyes ' +
-        'irányba. A Csillagmérő ebből dolgozik.',
+        'irányba. Az Asztromanta ebből dolgozik.',
       en:
         'A chain whose every link is exactly the same length, and which always pulls taut in the ' +
         'right direction. The Surveyor works from it.',

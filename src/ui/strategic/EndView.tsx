@@ -10,6 +10,7 @@ import { ENDING_TEXTS, ENDING_TITLES, LOSS_TEXTS } from '../../engine/expedition
 import { availableEndings, canGoHome, homewardFuel } from '../../engine/expedition/expedition'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
 import { understandingTier } from '../../content/research'
+import { epilogue, epilogueHeading } from '../../engine/expedition/epilogue'
 import { useLang } from '../../i18n/LangContext'
 import type { EndingId, ExpeditionState } from '../../engine/expedition/types'
 import type { UiKey } from '../../i18n/ui'
@@ -151,6 +152,20 @@ export function OverView({
           {t.overWeeks(state.week)} · {t.overUnderstanding(state.understanding)}
         </p>
         <p className="over-archive">{t.overArchiveEarned(state.archiveEarned)}</p>
+
+        {/* Everybody who was ever aboard, by name. A run that cost you somebody
+            in week nine used to finish as an integer. */}
+        <section className="epilogue">
+          <h3>{s(epilogueHeading(state))}</h3>
+          <ul className="epilogue-list">
+            {epilogue(state).map((entry) => (
+              <li key={entry.name} className={entry.home ? 'epilogue-home' : 'epilogue-lost'}>
+                <strong>{entry.name}</strong> — {s(entry.line)}
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <div className="button-row">
           <button className="button button-primary" data-action="returnToArchive" onClick={onReturn}>
             {t.overReturn}
