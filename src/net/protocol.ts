@@ -39,6 +39,14 @@ export type NetMessage =
   | { k: 'intent'; action: ExpeditionAction }
   /** Host → all: this action, at this position in the order. */
   | { k: 'action'; step: number; action: ExpeditionAction }
+  /**
+   * Guest → host: my name changed.
+   *
+   * A name is not an address. It used to be part of the connection's identity,
+   * which meant every keystroke in the lobby's name box tore the peer down and
+   * built a new one — see `useRoomNetwork`.
+   */
+  | { k: 'rename'; name: string }
   /** Guest → host: seat me (in this chair, or any free one). */
   | { k: 'sit'; slot?: number }
   /** Guest → host, or host about anybody: empty this chair. */
@@ -115,6 +123,7 @@ export function peerIdFor(code: string): string {
 export function isForHost(message: NetMessage): boolean {
   return (
     message.k === 'hello' ||
+    message.k === 'rename' ||
     message.k === 'intent' ||
     message.k === 'sit' ||
     message.k === 'stand' ||

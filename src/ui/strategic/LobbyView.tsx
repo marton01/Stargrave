@@ -18,6 +18,13 @@ import { formatRoomCode, freeSeats, keyTag, roomIsSeated } from '../../engine/se
 import type { PlayerIdentity, RoomState } from '../../engine/session/room'
 import type { NetStatus } from '../../net/peer'
 import { useLang } from '../../i18n/LangContext'
+import {
+  DEFAULT_BROKER,
+  brokerHost,
+  brokerIsInsecureFromHttps,
+  brokerOptions,
+  setBrokerHost,
+} from '../../net/broker'
 
 export function LobbyView({
   room,
@@ -29,6 +36,7 @@ export function LobbyView({
   onStand,
   onPick,
   onBegin,
+  onPlayLocally,
   onLeave,
 }: {
   room: RoomState
@@ -40,6 +48,8 @@ export function LobbyView({
   onStand: (slot: number) => void
   onPick: (slot: number, heroClass: HeroClassId) => void
   onBegin: () => void
+  /** Give up on the network and carry on as a hotseat game. */
+  onPlayLocally: () => void
   onLeave: () => void
 }) {
   const { t, s } = useLang()
@@ -67,6 +77,12 @@ export function LobbyView({
           <span className={`panel-meta net-${status.k}`}>{netLabel(status, t)}</span>
         </header>
         <p className="panel-intro">{t.lobbyIntro}</p>
+
+        {/* When the line will not come up, the ONE thing that matters is which
+            part failed. The console fills with hundreds of "WebSocket connection
+            failed" and the lobby used to say only "the line dropped", which
+            sounds like the other player's fault and is not. */}
+        {status.k === 'lost' && <BrokerTrouble onPlayLocally={onPlayLocally} />}
 
         <div className="lobby-code">
           <span className="lobby-code-label">{t.roomCode}</span>
@@ -217,4 +233,71 @@ function netLabel(status: NetStatus, t: ReturnType<typeof useLang>['t']): string
     case 'lost':
       return t.netLost
   }
+}
+
+/**
+ * What to do when the signalling server cannot be reached.
+ *
+ * This is the failure that costs an evening, and it is invisible from inside the
+ * game unless the game says it out loud: the service that introduces two
+ * browsers to each other is somebody else's, it is free, and plenty of networks
+ * block it. Everything here exists so that a player can tell in ten seconds
+ * whether the problem is the game, their network, or the server — and then do
+ * something about it.
+ */
+function BrokerTrouble({ onPlayLocally }: { onPlayLocally: () => void }) {
+  const { t } = useLang()
+  const [host, setHost] = useState(brokerHost())
+  const [saved, setSaved] = useState(false)
+  const shown = host.trim() || DEFAULT_BROKER
+  const options = brokerOptions(host)
+  const testUrl = options
+    ? `${options.secure ? 'https' : 'http'}://${options.host}:${options.port}${options.path}peerjs/id?key=peerjs`
+    : `https://${DEFAULT_BROKER}/peerjs/id?key=peerjs`
+
+  const save = (next: string) => {
+    setHost(next)
+    setBrokerHost(next)
+    setSaved(true)
+  }
+
+  return (
+    <div className="net-trouble">
+      <p>{t.netBrokerDown(shown)}</p>
+      <p>
+        <a href={testUrl} target="_blank" rel="noreferrer">
+          {t.netBrokerTest}
+        </a>
+      </p>
+
+      <label className="setting">
+        {t.netBrokerHeading}
+        <input
+          type="text"
+          data-action="setBroker"
+          value={host}
+          placeholder={t.netBrokerPlaceholder}
+          onChange={(event) => save(event.target.value)}
+          size={26}
+        />
+      </label>
+      <p className="panel-note">{t.netBrokerIntro}</p>
+      {brokerIsInsecureFromHttps(host) && <p className="net-warning">{t.netBrokerInsecure}</p>}
+      {saved && <p className="panel-note">{t.netBrokerSaved}</p>}
+      <div className="net-trouble-actions">
+        {host.trim() !== '' && (
+          <button className="button button-small" data-action="resetBroker" onClick={() => save('')}>
+            {t.netBrokerReset}
+          </button>
+        )}
+        {/* The evening does not have to end because somebody's ISP dislikes a
+            domain. The room code carries the seed, so the same galaxy opens as a
+            hotseat game on whichever machine can see everybody's faces. */}
+        <button className="button button-small" data-action="playLocally" onClick={onPlayLocally}>
+          {t.netPlayLocally}
+        </button>
+      </div>
+      <p className="panel-note">{t.netPlayLocallyHint}</p>
+    </div>
+  )
 }

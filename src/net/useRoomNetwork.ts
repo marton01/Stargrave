@@ -14,7 +14,14 @@ import { openRoom } from './peer'
 import type { NetStatus, Transport } from './peer'
 import { accept, newLockstep } from './protocol'
 import type { NetMessage } from './protocol'
-import { claimSeat, keyTag, pickHero, releaseSeat, seatByTag } from '../engine/session/room'
+import {
+  claimSeat,
+  keyTag,
+  pickHero,
+  releaseSeat,
+  renameSeat,
+  seatByTag,
+} from '../engine/session/room'
 import type { PlayerIdentity, RoomState } from '../engine/session/room'
 import type { ExpeditionAction } from '../engine/expedition/expedition'
 import type { ExpeditionState } from '../engine/expedition/types'
@@ -33,10 +40,13 @@ export type RoomNetwork = {
   pick: (slot: number, heroClass: HeroClassId) => void
   /** Hand everybody the opening state. Host only. */
   begin: (expedition: ExpeditionState) => void
+  /** Out of reconnection attempts: the line is not coming back on its own. */
+  gaveUp: boolean
 }
 
 export function useRoomNetwork({
   room,
+  active,
   identity,
   expedition,
   onApply,
@@ -44,6 +54,20 @@ export function useRoomNetwork({
   onExpedition,
 }: {
   room: RoomState | null
+  /**
+   * Is this player actually at the table?
+   *
+   * A saved game restores its room, and an online room used to be dialled the
+   * moment the page loaded — from the title screen, before anybody had asked for
+   * anything. Whoever had once opened a room therefore reconnected to a dead
+   * code on every single visit, for ever, and the console filled with websocket
+   * failures before a single click. Anybody looking at that would conclude the
+   * game was broken; it was the game phoning an empty room.
+   *
+   * So the line opens when somebody is at the table — the lobby or a running
+   * expedition — and not while the archive is on screen.
+   */
+  active: boolean
   identity: PlayerIdentity
   expedition: ExpeditionState | null
   /** Apply an action locally. The same call the offline game makes. */
@@ -62,6 +86,8 @@ export function useRoomNetwork({
    * retrying finds whoever is hosting now, even if that is a different person.
    */
   const [attempt, setAttempt] = useState(0)
+  /** Reconnection attempts before the game admits it cannot get through. */
+  const MAX_ATTEMPTS = 5
   const transport = useRef<Transport | null>(null)
   const lockstep = useRef(newLockstep())
   /** Every action, in order. The host's copy is the one that counts. */
@@ -72,8 +98,8 @@ export function useRoomNetwork({
 
   // Handlers read the live game through refs: they outlive any single render,
   // and a stale closure here would mean answering a join with last week's state.
-  const latest = useRef({ room, expedition })
-  latest.current = { room, expedition }
+  const latest = useRef({ room, expedition, identity })
+  latest.current = { room, expedition, identity }
 
   const isHost = transport.current?.role === 'host'
 
@@ -97,6 +123,15 @@ export function useRoomNetwork({
                 step: log.current.length,
               })
             }
+            return
+          }
+          case 'rename': {
+            const tag = tags.current.get(from)
+            names.current.set(from, message.name)
+            if (!tag || !here.room) return
+            const updated = renameSeat(here.room, tag, message.name)
+            onRoom(updated)
+            pipe.broadcast({ k: 'room', room: updated })
             return
           }
           case 'sit': {
@@ -167,7 +202,7 @@ export function useRoomNetwork({
 
   // Open and close the connection with the room.
   useEffect(() => {
-    if (!room || room.mode !== 'online') {
+    if (!room || room.mode !== 'online' || !active) {
       transport.current?.close()
       transport.current = null
       setStatus({ k: 'off' })
@@ -177,14 +212,27 @@ export function useRoomNetwork({
     let retry = 0
     const onStatus = (next: NetStatus) => {
       setStatus(next)
-      // Wait a moment and try again, a handful of times. Long enough that a
-      // reloading host has come back up, short enough that nobody wonders
-      // whether the game is dead.
-      if (next.k === 'lost' && live && retry === 0) {
-        retry = window.setTimeout(() => {
-          if (live) setAttempt((n) => n + 1)
-        }, 2500)
-      }
+      if (next.k !== 'lost' || !live || retry !== 0) return
+
+      // Back off, and stop.
+      //
+      // This used to be a flat 2.5 seconds, for ever. When the signalling server
+      // is simply not reachable — a blocked domain, a DNS filter, an ad-blocker,
+      // a server having a bad hour — that is an infinite loop: a new peer, a new
+      // websocket, a new failure, several times a minute, until the tab closes.
+      // It fills the console with hundreds of identical errors, it buries the one
+      // message that would tell you what is wrong, and against a free shared
+      // service it is exactly the behaviour that gets an address rate-limited —
+      // so the retry was making the problem worse for everybody in the house.
+      //
+      // Doubling, and then giving up, is both kinder and more honest: a line that
+      // dropped comes back within a few seconds, and a line that was never there
+      // stops pretending.
+      if (attempt >= MAX_ATTEMPTS) return
+      const wait = Math.min(2500 * 2 ** attempt, 40000)
+      retry = window.setTimeout(() => {
+        if (live) setAttempt((n) => n + 1)
+      }, wait)
     }
 
     openRoom(room.code, {
@@ -211,7 +259,29 @@ export function useRoomNetwork({
     // The code is the address: reopening on anything else would drop the room
     // every time a seat changed. `attempt` is the deliberate exception — it is
     // how a dropped line gets picked back up.
-  }, [room?.code, room?.mode, identity.key, identity.name, handle, attempt])
+    // The code is the address. NOTHING else may reopen the line — a name is not
+    // an address, and putting `identity.name` in here meant the lobby's name box
+    // destroyed and rebuilt the peer on every keystroke.
+  }, [room?.code, room?.mode, active, identity.key, handle, attempt])
+
+  /**
+   * Tell the table when the name changes — without reconnecting.
+   *
+   * This is the other half of the fix above: the name still has to travel, it
+   * just must not travel by way of a new WebRTC peer.
+   */
+  useEffect(() => {
+    const pipe = transport.current
+    const here = latest.current.room
+    if (!pipe || !here || here.mode !== 'online') return
+    if (pipe.role === 'host') {
+      const updated = renameSeat(here, keyTag(identity.key), identity.name)
+      onRoom(updated)
+      pipe.broadcast({ k: 'room', room: updated })
+      return
+    }
+    pipe.send('host', { k: 'rename', name: identity.name })
+  }, [identity.name, identity.key, onRoom])
 
   const dispatch = useCallback(
     (action: ExpeditionAction) => {
@@ -298,5 +368,5 @@ export function useRoomNetwork({
     [],
   )
 
-  return { status, isHost, dispatch, sit, stand, pick, begin }
+  return { status, isHost, dispatch, sit, stand, pick, begin, gaveUp: attempt >= MAX_ATTEMPTS }
 }

@@ -1,0 +1,5 @@
+- magyarítási hiba: egy galaxis ami nem háborúban halt meg, valami befejezte.
+- lehessen megnyitott szobát törölni adminként (aki elsőre belépett és akkor oda más se tudjon visszamenni ha lehet)
+- lehessen nevet adni a játékosoknak saját maguknak, hogy tudjuk ki kicsoda
+- nem egyértelmű, hogy amennyiben elhagyom a szobát, akkor hogyan tudok visszacsatlakozni
+- ha a logóra bal fent rákattintok (csillagsír felirat), akkor irányítson vissza a kezdőképernyőre

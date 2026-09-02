@@ -3143,3 +3143,34 @@
   font-size: 0.8rem;
   color: var(--text-soft);
 }
+
+/* The failure that costs an evening. Loud enough to be read, calm enough not to
+   look like the game broke. */
+.net-trouble {
+  margin: 0.6rem 0 0;
+  padding: 0.8rem 0.9rem;
+  border-left: 3px solid var(--danger);
+  background: var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.net-trouble p {
+  margin: 0;
+}
+
+.net-trouble a {
+  color: var(--echo);
+}
+
+.net-warning {
+  color: var(--danger);
+}
+
+.net-trouble-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}

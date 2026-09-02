@@ -275,6 +275,21 @@ export function seatByTag(
   return { ...room, seats }
 }
 
+/**
+ * Change the name on a seat, without touching who is sitting in it.
+ *
+ * Typing your name must never cost you your chair — and, far worse, it must
+ * never cost anybody the connection. The name used to be part of the network
+ * effect's dependency list, so every keystroke in the lobby's name box tore the
+ * WebRTC peer down and re-registered it with the broker. See `useRoomNetwork`.
+ */
+export function renameSeat(room: RoomState, tag: string, name: string): RoomState {
+  const seats = room.seats.map((seat) =>
+    seat.claimedBy === tag ? { ...seat, name } : { ...seat },
+  )
+  return { ...room, seats }
+}
+
 /** Sit down in the first free seat, or in a particular one. */
 export function claimSeat(room: RoomState, who: PlayerIdentity, slot?: number): RoomState {
   return seatByTag(room, keyTag(who.key), who.name, slot)

@@ -270,6 +270,8 @@ function Game() {
 
   const net = useRoomNetwork({
     room: game.room,
+    // Only dial when this player is actually at the table. See `active`.
+    active: !showArchive,
     identity,
     expedition: game.expedition,
     onApply: applyAction,
@@ -523,6 +525,48 @@ function Game() {
     setShowArchive(false)
   }
 
+  /**
+   * The network cannot be had: carry on as a hotseat game.
+   *
+   * The escape hatch for the one failure the game itself cannot fix — the
+   * signalling server being unreachable from somebody's network. Without this
+   * the evening is simply over. The room code carries the seed, so the same
+   * galaxy opens on whichever machine everybody can gather around.
+   */
+  const playLocally = () => {
+    setGame((previous) => {
+      const room = previous.room
+      if (!room) return previous
+      const setup = parseRoomCode(room.code)
+      if (!setup) return previous
+      const party = room.seats.map((seat) => seat.heroClass)
+      const tagOfMine = keyTag(identity.key)
+      return {
+        ...previous,
+        room: {
+          ...room,
+          mode: 'local' as const,
+          hostKey: tagOfMine,
+          // Everybody is at this keyboard now, so every chair is this player's.
+          seats: room.seats.map((seat) => ({
+            ...seat,
+            claimedBy: tagOfMine,
+            name: seat.name || identity.name,
+          })),
+        },
+        expedition:
+          previous.expedition ??
+          startExpedition(
+            setup.seed,
+            setup.length,
+            previous.archive,
+            loadDialPreset() ?? undefined,
+            party,
+          ),
+      }
+    })
+  }
+
   const renamePlayer = (name: string) => {
     const next = { ...identity, name }
     setIdentity(next)
@@ -627,6 +671,7 @@ function Game() {
             net.begin(opening)
             setExpedition(opening)
           }}
+          onPlayLocally={playLocally}
           onLeave={() => {
             setGame((previous) => ({ ...previous, room: null, expedition: null }))
             setRooms(listRooms())

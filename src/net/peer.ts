@@ -14,10 +14,39 @@
 
 import Peer from 'peerjs'
 import type { DataConnection } from 'peerjs'
+import { brokerOptions } from './broker'
 import { peerIdFor } from './protocol'
 import type { NetMessage } from './protocol'
 
 export type NetRole = 'host' | 'guest'
+
+/**
+ * When this tab last gave up a room id.
+ *
+ * The broker does not free a registration the instant the peer is destroyed. So
+ * a host that reopens — a reload, a retry, anything — asks for its own id back,
+ * is told the id is taken, concludes that somebody else must be hosting, and
+ * goes off to join... itself. Nobody is hosting; every guest retries into an
+ * empty room, and the table is dead with no error anywhere.
+ *
+ * Remembering the moment we let go of an id is enough to tell the two cases
+ * apart: "taken by somebody else" is a room to join, "taken by the ghost of my
+ * own registration" is a room to wait a second and re-take.
+ */
+const releasedAt = new Map<string, number>()
+
+/** How long the broker's copy of a destroyed registration may linger. */
+const GHOST_WINDOW_MS = 8000
+
+/**
+ * How long a guest waits for the channel before calling it a failure.
+ *
+ * Without this a connection whose ICE never completes — a hostile NAT, a
+ * corporate firewall, a TURN server having a bad day — simply hangs: no error
+ * event, no open event, and a lobby that says "connecting…" until somebody gives
+ * up. Saying so out loud lets the retry in `useRoomNetwork` do its job.
+ */
+const DIAL_TIMEOUT_MS = 15000
 
 export type NetStatus =
   | { k: 'off' }
@@ -56,7 +85,10 @@ export function openRoom(code: string, handlers: NetHandlers): Promise<Transport
   handlers.onStatus({ k: 'opening' })
 
   return new Promise((resolve) => {
-    const peer = new Peer(id)
+    // `undefined` means PeerJS's own free cloud. A group whose network blocks it
+    // — an ad-blocker, a DNS filter, a school or office firewall — can point the
+    // game at any other PeerServer instead. See broker.ts.
+    const peer = new Peer(id, brokerOptions())
     const connections = new Map<string, DataConnection>()
     let settled = false
 
@@ -114,6 +146,9 @@ export function openRoom(code: string, handlers: NetHandlers): Promise<Transport
         },
         close: () => {
           for (const conn of connections.values()) conn.close()
+          // Note the moment, so that reopening can tell "somebody else has the
+          // code" from "the broker has not noticed I let go yet".
+          releasedAt.set(id, Date.now())
           peer.destroy()
           handlers.onStatus({ k: 'off' })
         },
@@ -121,10 +156,21 @@ export function openRoom(code: string, handlers: NetHandlers): Promise<Transport
     })
 
     peer.on('error', (error: { type?: string; message?: string }) => {
-      // The id is taken, so somebody is already hosting: go and join them.
+      // The id is taken. Either somebody else is hosting — go and join them — or
+      // it is our own registration, not yet expired, in which case joining would
+      // mean dialling ourselves.
       if (error?.type === 'unavailable-id' && !settled) {
         settled = true
         peer.destroy()
+        const ours = Date.now() - (releasedAt.get(id) ?? 0) < GHOST_WINDOW_MS
+        if (ours) {
+          handlers.onStatus({ k: 'opening' })
+          setTimeout(() => {
+            releasedAt.delete(id)
+            void openRoom(code, handlers).then(resolve)
+          }, 1200)
+          return
+        }
         joinRoom(code, handlers).then(resolve)
         return
       }
@@ -144,13 +190,25 @@ export function openRoom(code: string, handlers: NetHandlers): Promise<Transport
 function joinRoom(code: string, handlers: NetHandlers): Promise<Transport> {
   return new Promise((resolve) => {
     // No id of our own: the broker hands out a random one for guests.
-    const peer = new Peer()
+    const options = brokerOptions()
+    const peer = options ? new Peer(options) : new Peer()
     let settled = false
+
+    // A dial that never completes is the worst failure mode there is: no error,
+    // no channel, and a lobby that says "connecting…" forever.
+    const timeout = setTimeout(() => {
+      if (settled) return
+      settled = true
+      peer.destroy()
+      handlers.onStatus({ k: 'lost', reason: 'timeout' })
+      resolve(deadTransport('guest'))
+    }, DIAL_TIMEOUT_MS)
 
     peer.on('open', () => {
       const conn = peer.connect(peerIdFor(code), { reliable: true })
 
       conn.on('open', () => {
+        clearTimeout(timeout)
         handlers.onStatus({ k: 'live', role: 'guest', peers: 1 })
         if (settled) return
         settled = true
@@ -179,6 +237,7 @@ function joinRoom(code: string, handlers: NetHandlers): Promise<Transport> {
       handlers.onStatus({ k: 'lost', reason: error?.type ?? 'error' })
       if (!settled) {
         settled = true
+        clearTimeout(timeout)
         resolve(deadTransport('guest'))
       }
     })

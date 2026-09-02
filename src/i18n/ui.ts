@@ -761,6 +761,39 @@ const HU = {
   netHosting: (peers: number) => `te vagy a házigazda · ${peers} csatlakozott`,
   netJoined: 'csatlakozva',
   netLost: 'megszakadt a kapcsolat',
+  netRetrying: 'újrapróbálkozás…',
+  netGaveUp: 'nem sikerült kapcsolódni',
+  /**
+   * Az egyetlen hibaüzenet, ami tényleg számít.
+   *
+   * A böngésző konzoljában ilyenkor több száz „WebSocket connection failed" áll,
+   * a felületen viszont eddig annyi volt, hogy „megszakadt a kapcsolat" — amiből
+   * senki nem tudja kitalálni, hogy nem a másik játékossal van baj, hanem azzal a
+   * szerverrel, ami összeismerteti a két gépet.
+   */
+  netBrokerDown: (host: string): string =>
+    `Nem érjük el a jelzőszervert (${host}). Ez az a szolgáltatás, ami összeismerteti ` +
+    'a két gépet — játékadat nem megy át rajta. Ha a többieknek megy, akkor nálad blokkolja ' +
+    'valami: reklámblokkoló vagy adatvédelmi kiegészítő, DNS-szűrő, céges/iskolai tűzfal, ' +
+    'VPN vagy víruskereső. Próbáld ki: nyisd meg ezt a címet egy új fülön — ha nem ad vissza ' +
+    'egy hosszú azonosítót, akkor nem a játékkal van baj.',
+  netBrokerTest: 'A jelzőszerver tesztje',
+  netBrokerHeading: 'Jelzőszerver',
+  netBrokerIntro:
+    'Alapból a PeerJS ingyenes szervere. Ha valakinél a hálózat blokkolja, itt átírhatjátok ' +
+    'egy másikra — de MINDENKINEK ugyanazt kell beírnia az asztalnál. Saját szervert egy ' +
+    'paranccsal lehet indítani: npx peerjs --port 9000',
+  netBrokerPlaceholder: 'alapértelmezett (0.peerjs.com)',
+  netBrokerReset: 'Vissza az alapértelmezettre',
+  netBrokerInsecure:
+    'Ez a cím http://, a játék viszont https-en fut — a böngésző az ilyen kapcsolatot letiltja. ' +
+    'Vagy https-es szerver kell, vagy a játékot is http-n kell megnyitni.',
+  netBrokerSaved: 'Elmentve. Töltsd újra az oldalt, hogy érvénybe lépjen.',
+  netPlayLocally: 'Játsszunk egy gépen',
+  netPlayLocallyHint:
+    'Ha a hálózat nem jön össze, ne bukjon el az este: a szobakód magában hordozza a magot, ' +
+    'tehát ugyanez a galaxis megnyílik egy gépen, felváltva. Aki előtt a gép van, az nyom, ' +
+    'a többiek mondják.',
   notYourHero: 'Ez nem a te hősöd — az ő gépén kell lépni vele.',
   notYourTurn: (who: string) => `Most ${who} lép — az ő gépén kell megnyomni.`,
   // ------------------------------------------------------ the split task
@@ -1540,7 +1573,32 @@ const EN: Catalog = {
   netOpening: 'connecting…',
   netHosting: (peers: number) => `you are hosting · ${peers} connected`,
   netJoined: 'connected',
-  netLost: 'the connection dropped',
+  netLost: 'the line dropped',
+  netRetrying: 'trying again…',
+  netGaveUp: 'could not connect',
+  netBrokerDown: (host: string): string =>
+    `Cannot reach the signalling server (${host}). That is the service that introduces the ` +
+    'two machines to each other — no game data passes through it. If it works for everybody ' +
+    'else, something on your side is blocking it: an ad-blocker or privacy extension, a DNS ' +
+    'filter, a school or office firewall, a VPN, or antivirus web protection. Try opening this ' +
+    'address in a new tab — if it does not return a long id, the problem is not the game.',
+  netBrokerTest: 'Test the signalling server',
+  netBrokerHeading: 'Signalling server',
+  netBrokerIntro:
+    'PeerJS’s free server by default. If somebody’s network blocks it, point the game at ' +
+    'another one here — but EVERYBODY at the table has to enter the same address. Running your ' +
+    'own takes one command: npx peerjs --port 9000',
+  netBrokerPlaceholder: 'default (0.peerjs.com)',
+  netBrokerReset: 'Back to the default',
+  netBrokerInsecure:
+    'That address is http:// while the game runs on https — browsers block such a connection. ' +
+    'Either use an https server, or open the game over http as well.',
+  netBrokerSaved: 'Saved. Reload the page for it to take effect.',
+  netPlayLocally: 'Play on one machine',
+  netPlayLocallyHint:
+    'If the network will not come together, the evening does not have to end: the room code ' +
+    'carries the seed, so this same galaxy opens as a hotseat game. Whoever has the keyboard ' +
+    'clicks, and the others say what they think.',
   notYourHero: 'Not your hero — that move belongs on their machine.',
   notYourTurn: (who: string) => `It is ${who}’s move — it has to be pressed on their machine.`,
   // ------------------------------------------------------ the split task
