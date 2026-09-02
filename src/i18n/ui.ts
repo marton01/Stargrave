@@ -796,21 +796,21 @@ const HU = {
     'A jelzőszerver elérhető, a WebSocket is nyílik. Ha a játék mégsem kapcsolódik, az már ' +
     'nem a szerver: próbáld újratölteni az oldalt.',
   netProbeVerdictWs:
-    'Itt a hiba: a sima HTTPS átmegy, a WebSocket viszont nem. Ez majdnem mindig valami helyi ' +
-    'dolog, ami belenéz a titkosított forgalomba, és nem érti a WebSocket-átkapcsolást: ' +
-    'víruskereső HTTPS-vizsgálata (Kaspersky, ESET, Avast, Bitdefender), céges vagy iskolai ' +
-    'proxy, VPN, vagy egy böngészőkiegészítő (uBlock, AdGuard, Brave pajzs) — a peerjs.com több ' +
-    'szűrőlistán rajta van. Próbáld ki inkognitóban, kiegészítők nélkül; ha ott megy, az egyik ' +
-    'kiegészítő a bűnös. Ha a víruskereső a ludas, a HTTPS-vizsgálatból ki lehet venni ezt a ' +
-    'címet. Ha egyik sem oldható meg, írjatok be másik jelzőszervert.',
+    'A sima HTTPS átmegy, a WebSocket viszont nem. Két dolog okozhatja. (1) ÁTMENETI KITILTÁS: ' +
+    'a szerver előbb túl sok kérést kapott erről az internetkapcsolatról, és most korlátoz ' +
+    '(a konzolban „429"). Ez magától elmúlik — csak ne próbálkozzatok, mert minden kísérlet ' +
+    'meghosszabbítja. (2) Valami helyben belenéz a titkosított forgalomba, és nem érti a ' +
+    'WebSocket-átkapcsolást: víruskereső HTTPS-vizsgálata (Kaspersky, ESET, Avast, Bitdefender), ' +
+    'céges vagy iskolai proxy, VPN, vagy egy WebSocket-szabály egy reklámblokkolóban. ' +
+    'Kipróbálni egyszerű: nyisd meg a játékot egy olyan böngészőben, amiben nincs kiegészítő.',
   netProbeVerdictAll:
-    'A szerver egyáltalán nem érhető el innen — se HTTPS, se WebSocket. A leggyakoribb ok, hogy ' +
-    'a jelzőszerver ÁTMENETILEG KITILTOTT titeket, mert túl sok kapcsolódás jött erről az ' +
-    'internetkapcsolatról (a böngészőben ilyenkor „Error 1015 — You are being rate limited" ' +
-    'látszik). Ez magától elmúlik, jellemzően fél–egy óra alatt: addig egyszerűen ne próbálkozzatok, ' +
-    'mert minden újabb kísérlet meghosszabbítja. Ha nem ez, akkor DNS-szűrés, tűzfal vagy ' +
-    'hálózati blokk — érdemes másik hálózatról (pl. mobilnetről) kipróbálni, vagy másik ' +
-    'jelzőszervert beírni.',
+    'A szerverhez SEMMI nem jut el innen — se HTTPS, se WebSocket. Ez jellemzően azt jelenti, ' +
+    'hogy valami az egész címet blokkolja, nem csak a kapcsolatot: REKLÁMBLOKKOLÓ vagy ' +
+    'adatvédelmi kiegészítő (uBlock, AdGuard, Brave pajzs — a peerjs.com több szűrőlistán ' +
+    'rajta van), DNS-szűrő (NextDNS, Pi-hole, szolgáltatói szűrés), vagy tűzfal. ' +
+    'A gyors teszt: nyisd meg a játékot egy olyan böngészőben, amiben nincs kiegészítő — ha ott ' +
+    'megy, megvan a tettes. Megoldás: vedd fel kivételnek a peerjs.com-ot (vagy engedélyezd a ' +
+    'blokkolóban ezt az oldalt), vagy írjatok be másik jelzőszervert.',
   netCooldownHeading: 'Most pihentetjük a kapcsolatot',
   netCooldown: (minutes: number): string =>
     `A jelzőszerver kitiltotta ezt az internetkapcsolatot, mert túl sok kérés ment rá ` +
@@ -1639,20 +1639,21 @@ const EN: Catalog = {
     'The signalling server is reachable and the socket opens. If the game still will not ' +
     'connect, it is not the server: try reloading the page.',
   netProbeVerdictWs:
-    'This is the fault: ordinary HTTPS gets through, the WebSocket does not. That is almost ' +
-    'always something local that inspects encrypted traffic and does not understand the ' +
+    'Ordinary HTTPS gets through, the WebSocket does not. Two things do that. (1) A TEMPORARY ' +
+    'BAN: the server has had too many requests from this internet connection and is limiting it ' +
+    '("429" in the console). It clears on its own — just stop trying, because every attempt ' +
+    'extends it. (2) Something local inspects encrypted traffic and does not understand the ' +
     'WebSocket upgrade: antivirus https scanning (Kaspersky, ESET, Avast, Bitdefender), a ' +
-    'corporate or school proxy, a VPN, or a browser extension (uBlock, AdGuard, Brave shields) ' +
-    '— peerjs.com is on more than one blocklist. Try a private window with extensions off; if ' +
-    'it works there, an extension is the culprit. If antivirus is doing it, this address can be ' +
-    'excluded from https scanning. If neither can be changed, use a different signalling server.',
+    'corporate or school proxy, a VPN, or a websocket rule in an ad blocker. Easy to tell ' +
+    'apart: open the game in a browser with no extensions in it.',
   netProbeVerdictAll:
-    'The server cannot be reached at all from here — neither HTTPS nor WebSocket. The commonest ' +
-    'reason is that the signalling server has TEMPORARILY BANNED you for too many connections ' +
-    'from this internet connection (the browser shows "Error 1015 — You are being rate limited"). ' +
-    'It clears on its own, usually within half an hour to an hour: simply stop trying until then, ' +
-    'because every further attempt extends it. Failing that it is DNS filtering, a firewall or a ' +
-    'network block — worth trying from another network, or using a different signalling server.',
+    'NOTHING reaches the server from here — neither HTTPS nor WebSocket. That usually means ' +
+    'something is blocking the whole address rather than the connection: an AD BLOCKER or ' +
+    'privacy extension (uBlock, AdGuard, Brave shields — peerjs.com is on more than one ' +
+    'blocklist), a DNS filter (NextDNS, Pi-hole, an ISP filter), or a firewall. The quick test: ' +
+    'open the game in a browser with no extensions in it — if it works there, you have your ' +
+    'culprit. The fix is to allow peerjs.com (or whitelist this page in the blocker), or to use ' +
+    'a different signalling server.',
   netCooldownHeading: 'Letting the connection rest',
   netCooldown: (minutes: number): string =>
     'The signalling server has banned this internet connection for making too many requests ' +
