@@ -130,7 +130,7 @@ export const RELICS: Relic[] = [
     },
     effect: { sensorRange: 2, attention: 1 },
     whisper: {
-      hu: 'Amíg nézel vele, néznek is: hetente +1 figyelem.',
+      hu: 'Amíg nézel vele, néznek is: hetente +1 zaj.',
       en: 'While you look through it, you are looked at: +1 attention a week.',
     },
     value: 20,
@@ -234,7 +234,7 @@ export const RELICS: Relic[] = [
     },
     effect: { flux: 1, heroHp: 2, attention: 1 },
     whisper: {
-      hu: 'Válaszol, amikor olvassák: hetente +1 figyelem.',
+      hu: 'Válaszol, amikor olvassák: hetente +1 zaj.',
       en: 'It answers when it is read: +1 attention a week.',
     },
     value: 30,
@@ -320,7 +320,7 @@ export const RELICS: Relic[] = [
     },
     effect: { travelCut: 1, attention: 1 },
     whisper: {
-      hu: 'Amíg kifeszítve hordod, hetente +1 figyelem.',
+      hu: 'Amíg kifeszítve hordod, hetente +1 zaj.',
       en: 'While you carry it taut, +1 attention a week.',
     },
     value: 26,

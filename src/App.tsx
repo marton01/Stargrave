@@ -10,7 +10,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArchiveView } from './ui/strategic/ArchiveView'
 import { bankExpedition, newArchive, purchaseUnlock } from './engine/expedition/archive'
-import { canAdvanceWeek, expeditionStep, livingCrew, party } from './engine/expedition/expedition'
+import {
+  canAdvanceWeek,
+  expeditionStep,
+  livingCrew,
+  party,
+  understandingTierOf,
+} from './engine/expedition/expedition'
 import type { ExpeditionAction } from './engine/expedition/expedition'
 import {
   clearSave,
@@ -755,9 +761,18 @@ function Game() {
             <span className="meter-label">☍ {t.crewHeading}</span>
             <span className="meter-value">{livingCrew(expedition).length}</span>
           </div>
-          <div className="meter meter-tight meter-flux">
+          {/*
+            The most important number in the game, and for a long time the least
+            legible one: "Understanding 8" never said understanding of WHAT. It
+            now carries the tier in words — "we are starting to see it" — and the
+            question itself is in the tooltip.
+          */}
+          <div className="meter meter-tight meter-flux" title={t.understandingHint}>
             <span className="meter-label">◈ {t.understanding}</span>
-            <span className="meter-value">{expedition.understanding}</span>
+            <span className="meter-value">
+              {expedition.understanding}
+              <span className="meter-delta">{t.tierName(understandingTierOf(expedition))}</span>
+            </span>
           </div>
           {/*
             Attention, from the very first point. A meter that only appears once
@@ -785,7 +800,7 @@ function Game() {
             </div>
           )}
           {expedition.darkening > 0 && (
-            <div className="meter meter-tight meter-danger">
+            <div className="meter meter-tight meter-danger" title={t.darkeningHint}>
               <span className="meter-label">{t.darkening}</span>
               <span className="meter-value">{t.darkeningLevel(expedition.darkening)}</span>
             </div>

@@ -94,7 +94,7 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     branch: 'technology',
     name: { hu: 'Rúnaerősítő', en: 'Rune amplifier' },
     description: {
-      hu: 'A rúnamag energiáját sűríteni. A partraszálló csapat +2 Fluxussal indul.',
+      hu: 'A rúnamag energiáját sűríteni. A partraszálló csapat +2 Töltettel indul.',
       en: 'Concentrating the rune core’s output. The landing party starts with +2 Flux.',
     },
     cost: 10,
@@ -147,7 +147,7 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     name: { hu: 'Csendburok', en: 'Silence shroud' },
     description: {
       hu:
-        'A hajó lenyomatát elnyelni, mielőtt kijut. Hetente 2 figyelemmel kevesebb: a Hírnök ' +
+        'A hajó lenyomatát elnyelni, mielőtt kijut. Hetente 2 zajjal kevesebb: a Hírnök ' +
         'később ébred, és lassabban talál rátok.',
       en:
         'Swallowing the ship’s signature before it leaves the hull. Two less attention a week: the ' +

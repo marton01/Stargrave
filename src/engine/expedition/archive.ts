@@ -102,7 +102,7 @@ export const ARCHIVE_UNLOCKS: ArchiveUnlock[] = [
     cost: 12,
     name: { hu: 'Stabilizált Kapu', en: 'A stabilised Gate' },
     description: {
-      hu: 'Négy héttel több minden expedícióra. Nem könnyebb — csak több idő a megértésre.',
+      hu: 'Négy héttel több minden expedícióra. Nem könnyebb — csak több idő a megfejtésre.',
       en: 'Four more weeks on every expedition. Not easier — just more time to understand.',
     },
   },
@@ -187,21 +187,21 @@ export const EARNED_ENDINGS: { id: EndingId; condition: Text }[] = [
   {
     id: 'silence',
     condition: {
-      hu: 'Megállítani a Hírnököt, és 1. megértés-szinttel elérni a Csillagsírt.',
+      hu: 'Megállítani a Hírnököt, és 1. megfejtés-szinttel elérni a Csillagsírt.',
       en: 'Stop the Herald, and reach the Stargrave at understanding tier 1.',
     },
   },
   {
     id: 'inheritance',
     condition: {
-      hu: 'Három ereklyével a fedélzeten, 1. megértés-szinttel.',
+      hu: 'Három ereklyével a fedélzeten, 1. megfejtés-szinttel.',
       en: 'Three relics aboard, at understanding tier 1.',
     },
   },
   {
     id: 'custodian',
     condition: {
-      hu: 'Öt élő legénységgel, 8+ morállal, 2. megértés-szinttel megérkezni.',
+      hu: 'Öt élő legénységgel, 8+ morállal, 2. megfejtés-szinttel megérkezni.',
       en: 'Arrive with five crew alive, morale 8 or more, at understanding tier 2.',
     },
   },

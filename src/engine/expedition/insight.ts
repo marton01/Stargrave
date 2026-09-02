@@ -287,8 +287,11 @@ function roadReading(s: ExpeditionState): Reading[] {
 /** The heading a hero's own readings sit under. */
 export function readingHeading(hero: HeroClassId): Text {
   const name = HERO_CLASSES[hero].name
+  // Hungarian wants the definite article, and which one depends on the sound the
+  // name starts with: "a Rúnaszövő", but "az Asztromanta".
+  const article = /^[aáeéiíoóöőuúüű]/i.test(name.hu) ? 'az' : 'a'
   return {
-    hu: `Amit csak ${name.hu} lát`,
+    hu: `Amit csak ${article} ${name.hu} lát`,
     en: `What only the ${name.en} can see`,
   }
 }

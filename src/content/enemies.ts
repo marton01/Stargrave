@@ -96,7 +96,7 @@ export const ENEMY_TYPES: EnemyType[] = [
     id: 'choir-wraith',
     name: { hu: 'Kórus-fantom', en: 'Choir Wraith' },
     description: {
-      hu: 'Gyors, és elszívja a Fluxust. Ha hagyod élni, kifogytok az erőből.',
+      hu: 'Gyors, és elszívja a Töltetet. Ha hagyod élni, kifogytok az erőből.',
       en: 'Fast, and it drains Flux. Let it live and you will run out of power.',
     },
     hp: 5,
@@ -105,7 +105,7 @@ export const ENEMY_TYPES: EnemyType[] = [
       {
         id: 'wraith-strike',
         text: {
-          hu: 'Mozgás 4, Támadás 2, elszív 1 Fluxust',
+          hu: 'Mozgás 4, Támadás 2, elszív 1 Töltetet',
           en: 'Move 4, Attack 2, drains 1 Flux',
         },
         initiative: 15,

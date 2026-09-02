@@ -3096,9 +3096,35 @@
 
 /* Somebody's word. One at a time, for the whole table. */
 .pledge-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.35rem;
+}
+
+.pledge-options li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.pledge-options .button {
+  flex: 0 0 auto;
+  min-width: 9rem;
+  text-align: left;
+}
+
+.pledge-ask {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.panel-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-faint);
 }
 
 .pledge {

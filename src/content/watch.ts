@@ -58,7 +58,7 @@ export const WATCH_DUTIES: WatchDuty[] = [
     description: {
       hu:
         'Rúnákat éget a fegyverekbe, a hajótest anyagából. A következő partraszállás +2 ' +
-        'Fluxussal indul — 1 hajótestbe kerül.',
+        'Töltettel indul — 1 hajótestbe kerül.',
       en:
         'He burns runes into the weapons, out of the hull’s own stock. The next landing starts ' +
         'with 2 more Flux — at the price of 1 hull.',
@@ -70,7 +70,7 @@ export const WATCH_DUTIES: WatchDuty[] = [
     heroClass: 'runesmith',
     name: { hu: 'Tompítás', en: 'Damping' },
     description: {
-      hu: 'Hidegen dolgozik, és lefogja, ami zörög. 2 figyelemmel kevesebb.',
+      hu: 'Hidegen dolgozik, és lefogja, ami zörög. 2 zajjal kevesebb.',
       en: 'He works cold and holds down whatever rattles. Two less attention.',
     },
     effect: { attention: -2 },
@@ -93,7 +93,7 @@ export const WATCH_DUTIES: WatchDuty[] = [
     name: { hu: 'Hallgatózás', en: 'Listening' },
     description: {
       hu:
-        'Kikapcsol mindent, és csak hallgat. +1 megértés — de amit hall, azt a legénység is ' +
+        'Kikapcsol mindent, és csak hallgat. +1 megfejtés — de amit hall, azt a legénység is ' +
         'megérzi: 1 morál.',
       en:
         'She switches everything off and only listens. +1 understanding — but the crew feels what ' +
@@ -174,7 +174,7 @@ export const WATCH_DUTIES: WatchDuty[] = [
     heroClass: 'surveyor',
     name: { hu: 'Figyelés', en: 'Watching' },
     description: {
-      hu: 'Nem mér, csak néz — csendben. +2 információ és 1 figyelemmel kevesebb.',
+      hu: 'Nem mér, csak néz — csendben. +2 információ és 1 zajjal kevesebb.',
       en: 'He does not measure, he just watches — quietly. +2 information and one less attention.',
     },
     effect: { information: 2, attention: -1 },

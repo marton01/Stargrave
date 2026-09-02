@@ -72,8 +72,8 @@ tehát kevés extra kód — de teljesen más ritmus.
 | Feladványok | **9 típus**, mind generált és **nyelvfüggetlen** |
 | Nyelv | **Magyar és angol**, valós idejű váltással · a kód angol |
 | Időnyomás | **A Kapu N hét múlva bezárul** |
-| Győzelem | **Eljutni a galaxis szívébe** — és a *megértés* dönti el, mit tehetsz ott |
-| Kutatás | **Két ág:** technológia (képesség) és megértés (a végjáték kulcsa) |
+| Győzelem | **Eljutni a galaxis szívébe** — és a *megfejtés* dönti el, mit tehetsz ott |
+| Kutatás | **Két ág:** technológia (képesség) és megfejtés (a végjáték kulcsa) |
 | Küldetés-kudarc | **Visszavonulás veszteséggel** — nem a futam vége |
 | Mentés | **Automatikus**, egy folyó futam, visszaújratöltés nélkül |
 | Futam vége | **Roguelite** — bukás után új expedíció, a feloldott tartalom megmarad |
@@ -114,7 +114,7 @@ között — **ez közös döntés**, és ez a legerősebb kooperatív elem a j�
 | **Labor** | Információ-termelés, kutatási sebesség |
 | **Kohó** | javítás és gyártás |
 | **Érzékelők** | mennyit látsz előre a csillagtérképen |
-| **Rúnamag** | **ebből lesz a partraszálló csapat Fluxusa a küldetésen** |
+| **Rúnamag** | **ebből lesz a partraszálló csapat Töltete a küldetésen** |
 
 Nyolc egység, hét rendszer — mindegyik 1-3-at akar. Sosem elég, és minden héten másra kell.
 A Rúnamag sora külön fontos: **ez köti össze a két réteget.** Amit a héten a rúnamagra adtál,
@@ -147,7 +147,7 @@ Minden legénységtagnak van **szakterülete**: a megfelelő állomáson lényeg
 | **Hajótest** | fizikai | a hajó integritása; nullán vége | Rúnaszövő javítja |
 | **Legénység** | emberi | állomások betöltése, partraszállás | közös felvétel |
 | **Morál** | emberi | alacsonyan: hibák, lázongás, kilépők | közös |
-| **Információ** | absztrakt | kutatási projektek, megértés | Múltidéző |
+| **Információ** | absztrakt | kutatási projektek, megfejtés | Múltidéző |
 | **Kredit** | absztrakt | vásárlás, felvétel, kereskedés | közös |
 
 ### 4.5 Hatáskörök: mi közös, mi a tiéd
@@ -207,11 +207,11 @@ Az **Információ** a Múltidéző valutája, és **két ágra** költhető:
 **Technológia-ág** — azonnali képesség: hajómodulok, reaktor-fejlesztés, új rúnatípusok, új lapok
 az osztályaidhoz, hatékonyabb állomások.
 
-**Megértés-ág** — a világ titkai: mi történt ezzel a galaxissal, mik az isten-gépek, mi fejezte be
+**Megfejtés-ág** — a világ titkai: mi történt ezzel a galaxissal, mik az isten-gépek, mi fejezte be
 őket. **Ez nyitja a végjáték lehetőségeit** és az Archívum bejegyzéseit. A Jelfejtés-feladványok
 közvetlenül ide táplálnak be.
 
-A dilemma szándékosan éles: **a megértés nem ad harci előnyt.** Nem lesz tőle erősebb a hajó és
+A dilemma szándékosan éles: **a megfejtés nem ad harci előnyt.** Nem lesz tőle erősebb a hajó és
 nem lesznek jobbak a lapjaid — mégis ez a győzelem kulcsa. Tehát a tisztán optimalizáló út
 *nem* a helyes út, és ezt a játékosnak magának kell felfedeznie.
 
@@ -220,10 +220,10 @@ nem lesznek jobbak a lapjaid — mégis ez a győzelem kulcsa. Tehát a tisztán
 Van egy végső helyszín: **a Csillagsír**, a galaxis szíve. A cél eljutni oda, mielőtt a Kapu
 bezárul.
 
-És itt a csavar: **a megértés-szintetek dönti el, mit tudtok ott egyáltalán *tenni*.** Ugyanaz a
+És itt a csavar: **a megfejtés-szintetek dönti el, mit tudtok ott egyáltalán *tenni*.** Ugyanaz a
 helyszín, de teljesen más végkifejlet:
 
-| Megértés | Mit tehetsz a Szívben |
+| Megfejtés | Mit tehetsz a Szívben |
 |---|---|
 | alacsony | csak elmenekülhetsz, vagy vakon elpusztítod, amit találtál |
 | közepes | megtudod, mi történt — és haza tudod vinni a tudást |
@@ -314,7 +314,7 @@ elveszik a bónuszuk az expedíció hátralevő részére.
 │  Név                         │
 ├──────────────────────────────┤
 │  FELSŐ FÉL                   │  ← támadás / erős hatás / feladvány-eszköz
-│  ◇ rúnafoglalat   ⟐ Fluxus   │
+│  ◇ rúnafoglalat   ⟐ Töltet   │
 ├──────────────────────────────┤
 │  ALSÓ FÉL                    │  ← mozgás / támogatás / terepkezelés
 │  ◇ rúnafoglalat              │
@@ -340,8 +340,8 @@ monitor előtt kettesben működik.
 | Állapot | Ki teszi fel | Mit ad a párjának |
 |---|---|---|
 | **Horgony** | Rúnaszövő | a megjelölt nem tud elmozdulni, és a területhatások +1 sebzést tesznek rá |
-| **Rúnajel** | Múltidéző | a megjelöltre a közelharci támadás +2, és ha megöli, Fluxus jár |
-| **Kötés** | passzív, ha 2 mezőn belül vagytok | mindkettőtöknek +1 sebzés |
+| **Rúnajel** | Múltidéző | a megjelöltre a közelharci támadás +2, és ha megöli, Töltet jár |
+| **Kötelék** | passzív, ha 2 mezőn belül vagytok | mindkettőtöknek +1 sebzés |
 | **Előkészítés** | ledöntés, hátralökés, elvakítás | pozicionális előny a másiknak |
 
 Kölcsönös: mindkét hős tud előkészíteni és kihasználni.
@@ -350,9 +350,9 @@ Kölcsönös: mindkét hős tud előkészíteni és kihasználni.
 Vért minden találatból levon, a kis sebzésű támadások nullát tettek. A korlát megtartja a
 páncélt értékes befektetésnek, de nem engedi fallá nőni.
 
-### 6.6 Fluxus — a réteg-összekötő erőforrás
+### 6.6 Töltet — a réteg-összekötő erőforrás
 
-A küldetés kezdetén kapott Fluxus mennyiségét **az határozza meg, mennyi energiát adtatok a
+A küldetés kezdetén kapott Töltet mennyiségét **az határozza meg, mennyi energiát adtatok a
 héten a Rúnamagra.** Egy közös készlet, amiből mindketten költhetitek az erős képességeket —
 tehát a küldetés alatt is folyamatos egyeztetés.
 
@@ -365,7 +365,7 @@ Nem-harci helyzetekben (romok, anomáliák, találkozások) **lapokkal fizetsz a
 
   ▸ Erővel kinyitni       — veszíts el 2 lapot ⚒ szimbólummal
   ▸ Megérteni a mintát    — veszíts el 2 lapot ◈ szimbólummal
-  ▸ Fluxussal átégetni    — 3 Fluxus
+  ▸ Töltettel átégetni    — 3 Töltet
   ▸ Továbbmenni           — nincs költség, nincs jutalom
 ```
 
@@ -400,7 +400,7 @@ együtt dolgozik. Kevés extra kód, mert a rács már megvan.
 | **Energia-útvonaltervezés** | korlátozott kapacitású vezetékeken kell energiát célokhoz vezetni, sérült hálózatban | erőművek, hajójavítás, zárt ajtók | rendszer-hozzáférés, energia |
 | **Rúnadekódolás** | rúnasorozat kitalálása részleges visszajelzésekből (Mastermind-logika) | zárak, ereklye-aktiválás | ereklyék, rúnák |
 | **Rezonancia-hangolás** | több tárcsát kell egyszerre beállítani, de mindegyik hat a szomszédaira (Lights Out-logika) | kórus-kapuk, jeladók | idegen technológia |
-| **Jelfejtés** | idegen jelrendszer *kompozíciós szabályait* kell kikövetkeztetni: melyik alakelem mit módosít. Ismert részfordítások **ikonokkal** adottak, és a válasz is ikonválasztás — nulla nyelvi tartalom | feliratok, naplók, isten-gépek | **a fő történet megértése**, Archívum |
+| **Jelfejtés** | idegen jelrendszer *kompozíciós szabályait* kell kikövetkeztetni: melyik alakelem mit módosít. Ismert részfordítások **ikonokkal** adottak, és a válasz is ikonválasztás — nulla nyelvi tartalom | feliratok, naplók, isten-gépek | **a fő történet megfejtése**, Archívum |
 | **Csillagtérkép-illesztés** | térképtöredékeket kell forgatni és illeszteni, hogy kirajzolódjon egy rejtett hely | ősi archívumok, hajónaplók | **új helyszínek a csillagtérképen** |
 | **Egyensúly-mérleg** | ereklyék relatív súlyát kell kikövetkeztetni összehasonlításokból | kincskamrák, áldozati oltárok | ereklyék, Információ |
 
@@ -427,12 +427,12 @@ stabilizál összeomló szerkezeteket.
 
 ### Múltidéző — a mintaolvasó
 Távolsági rontómágus, aki **a saját elhasznált lapjaival játszik**: területhatású rontás és
-gyengítés, **Rúnajel**, és a **Visszhang** — Fluxusért újra kijátszhat egy hatást az elhasznált
+gyengítés, **Rúnajel**, és a **Visszhang** — Töltetért újra kijátszhat egy hatást az elhasznált
 kupacából. Ő az, aki *jól bánik* a kifáradással, míg a Rúnaszövő csak elszenvedi. Törékeny,
 gyors kezdeményezés. Feladvány-küldetéseken ő ad tippeket és részinformációt.
 
 A párosítás azért működik, mert a két hős **más erőforrással gazdálkodik**: a Rúnaszövő térrel
-és páncéllal, a Múltidéző lapokkal és Fluxussal.
+és páncéllal, a Múltidéző lapokkal és Töltettel.
 
 ---
 
@@ -446,7 +446,7 @@ kristályerdő.
 **2. Random ellenségek és modifikátorok.** Induló ellenségkészlet:
 - **Hamvadó váz** — közelharci horda, kevés életerő
 - **Rúnaőrző** — távolsági, pajzsot ad a társainak
-- **Kórus-fantom** — gyors, Fluxust szív
+- **Kórus-fantom** — gyors, Töltetet szív
 - **Istengép-töredék** — lassú, hatalmas területsebzés
 
 Mindegyiknek van egy **szándék-készlete** (3-4 szándék), amiből a kör elején felmutat egyet.
@@ -483,8 +483,8 @@ huszadik futam is izgalmas.
 
 A bevezetés **az első expedícióhoz kötődik, nem minden futamhoz:**
 
-- 1-3. hét: csak alap állomások és alap lapok, nincs rúna, nincs Fluxus
-- 4-8. hét: megjelenik a Rúnamag és a Fluxus, első feladvány
+- 1-3. hét: csak alap állomások és alap lapok, nincs rúna, nincs Töltet
+- 4-8. hét: megjelenik a Rúnamag és a Töltet, első feladvány
 - 9. héttől: rúnafoglalatok, kutatási projektek, idegen technológia
 - utána minden nyitva, és az Archívum további rétegeket ad
 
@@ -545,8 +545,8 @@ először, kézzel írt tartalom utána, folyamatosan.
 Ami a tervből megvalósult, gyakorlatilag hiánytalanul: a stratégiai réteg (heti kör,
 energia-elosztás, állomások, legénység, hét erőforrás, csillagtérkép, Kapu és Sötétülés,
 kutatás két ággal, piac, találkozások), a taktikai réteg (öt küldetéstípus, kártyaökonómia,
-kezdeményezés, kombók, Fluxus, kifáradás, csapdák, omló padló), mind a kilenc feladvány,
-a Csillagsír megértés-vezérelt befejezései, az Archívum, az automatikus mentés és a
+kezdeményezés, kombók, Töltet, kifáradás, csapdák, omló padló), mind a kilenc feladvány,
+a Csillagsír megfejtés-vezérelt befejezései, az Archívum, az automatikus mentés és a
 valós idejű magyar/angol nyelvváltás minden képernyőn.
 
 ### Amiben eltértünk a tervtől — és miért

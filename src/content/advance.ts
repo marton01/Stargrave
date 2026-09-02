@@ -76,10 +76,10 @@ export type HeroPerk = {
 
 /** What the two currencies are called, because they are not the same thing. */
 export const MARK_NAMES: Record<HeroClassId, Text> = {
-  runesmith: { hu: 'kovácsjegy', en: 'forge mark' },
+  runesmith: { hu: 'szövőjegy', en: 'forge mark' },
   echoreader: { hu: 'visszhangjegy', en: 'echo mark' },
-  cantor: { hu: 'hangjegy', en: 'note' },
-  surveyor: { hu: 'mérőjegy', en: 'survey mark' },
+  cantor: { hu: 'rítusjegy', en: 'note' },
+  surveyor: { hu: 'csillagjegy', en: 'survey mark' },
 }
 
 /** How the two of them earn marks, in one line each, for the interface. */
@@ -94,7 +94,7 @@ export const MARK_SOURCES: Record<HeroClassId, Text> = {
   },
   echoreader: {
     hu:
-      'Minden megnyert partraszállásért 1. Minden megfejtett szerkezetért +2 — a megértés az ő ' +
+      'Minden megnyert partraszállásért 1. Minden megfejtett szerkezetért +2 — a megfejtés az ő ' +
       'számlája.',
     en:
       'One for every landing won. Two more for every mechanism solved — understanding is on her ' +
@@ -181,7 +181,7 @@ export const HERO_PERKS: HeroPerk[] = [
     name: { hu: 'Csendes kohó', en: 'The quiet forge' },
     description: {
       hu:
-        'Hidegen dolgozik, szikra nélkül. Hetente 1 figyelemmel kevesebb — a Hírnök lassabban ' +
+        'Hidegen dolgozik, szikra nélkül. Hetente 1 zajjal kevesebb — a Hírnök lassabban ' +
         'talál rá a hajóra.',
       en:
         'He works cold, without sparks. One less attention a week — the Herald takes longer to ' +
@@ -243,7 +243,7 @@ export const HERO_PERKS: HeroPerk[] = [
     name: { hu: 'Fonál', en: 'Tether' },
     description: {
       hu:
-        'Nem kell látnia, hogy tudja, hol van a párja. A Kötés 3 mezőn belül is működik ' +
+        'Nem kell látnia, hogy tudja, hol van a legközelebbi társa. A Kötelék 3 mezőn belül is működik ' +
         '(a szokásos 2 helyett).',
       en:
         'She does not need to see him to know where he is. The Bond holds at 3 tiles instead of 2.',
@@ -370,7 +370,7 @@ export const HERO_PERKS: HeroPerk[] = [
     heroClass: 'surveyor',
     name: { hu: 'Töltetek', en: 'Charges' },
     description: {
-      hu: 'A partraszálló csapat +1 Fluxussal indul: az ő lövései abból mennek.',
+      hu: 'A partraszálló csapat +1 Töltettel indul: az ő lövései abból mennek.',
       en: 'The landing party starts with 1 more Flux: his shots come out of it.',
     },
     cost: 3,
@@ -382,7 +382,7 @@ export const HERO_PERKS: HeroPerk[] = [
     heroClass: 'surveyor',
     name: { hu: 'Csendes optika', en: 'Quiet Optics' },
     description: {
-      hu: 'Nézni lehet feltűnés nélkül is. Hetente 1 figyelemmel kevesebb.',
+      hu: 'Nézni lehet feltűnés nélkül is. Hetente 1 zajjal kevesebb.',
       en: 'Looking can be done without being noticed. One less attention a week.',
     },
     cost: 3,

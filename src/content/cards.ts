@@ -44,7 +44,7 @@ export const CARDS: Card[] = [
       effects: [{ k: 'attack', power: 2, range: 1 }],
     },
     bottom: {
-      text: { hu: 'Vért 2 magadra és a párodra', en: 'Shield 2 to yourself and your partner' },
+      text: { hu: 'Vért 2 magadra és a legközelebbi társadra', en: 'Shield 2 to yourself and your partner' },
       effects: [{ k: 'shield', power: 2, alsoPartner: true }],
     },
   },
@@ -277,7 +277,7 @@ export const CARDS: Card[] = [
     symbols: ['insight'],
     top: {
       text: {
-        hu: 'Rúnajel egy ellenségre 4 hatótávon belül. A párod közelharci támadása +2 rá.',
+        hu: 'Rúnajel egy ellenségre 4 hatótávon belül. A társaid közelharci támadása +2-t sebez rá.',
         en: "Rune Mark an enemy within range 4. Your partner's melee attacks deal +2 to it.",
       },
       effects: [{ k: 'status', status: 'runeMark', rounds: 2, range: 4 }],
@@ -343,7 +343,7 @@ export const CARDS: Card[] = [
     },
     bottom: {
       text: {
-        hu: 'Mozgás 2, Vért 1 magadra és a párodra',
+        hu: 'Mozgás 2, Vért 1 magadra és a legközelebbi társadra',
         en: 'Move 2, Shield 1 to yourself and your partner',
       },
       effects: [
@@ -391,13 +391,13 @@ export const CARDS: Card[] = [
 
   {
     id: 'er-flux-tap',
-    name: { hu: 'Fluxus-csapolás', en: 'Flux Tap' },
+    name: { hu: 'Töltet-csapolás', en: 'Flux Tap' },
     heroClass: 'echoreader',
     initiative: 30,
     symbols: ['insight'],
     top: {
       text: {
-        hu: 'Támadás 1, hatótáv 3, majd +2 Fluxus a közös készletbe.',
+        hu: 'Támadás 1, hatótáv 3, majd +2 Töltet a közös készletbe.',
         en: 'Attack 1, range 3, then +2 Flux into the shared pool.',
       },
       effects: [
@@ -450,7 +450,7 @@ export const CARDS: Card[] = [
     },
     bottom: {
       text: {
-        hu: 'Mozgás 2, Gyógyítás 1 magadra és a párodra',
+        hu: 'Mozgás 2, Gyógyítás 1 magadra és a legközelebbi társadra',
         en: 'Move 2, Heal 1 on yourself and your partner',
       },
       effects: [
@@ -530,7 +530,7 @@ export const CARDS: Card[] = [
     },
     bottom: {
       text: {
-        hu: 'Gyógyítás 2 magadra és a párodra',
+        hu: 'Gyógyítás 2 magadra és a legközelebbi társadra',
         en: 'Heal 2 on yourself and your partner',
       },
       effects: [{ k: 'heal', power: 2, alsoPartner: true }],
@@ -703,12 +703,12 @@ export const CARDS: Card[] = [
 
   {
     id: 'ct-flux-hymn',
-    name: { hu: 'Fluxus-ének', en: 'Flux Hymn' },
+    name: { hu: 'Töltet-ének', en: 'Flux Hymn' },
     heroClass: 'cantor',
     initiative: 45,
     symbols: ['insight'],
     top: {
-      text: { hu: 'A csapat 2 Fluxust kap', en: 'The party gains 2 Flux' },
+      text: { hu: 'A csapat 2 Töltetet kap', en: 'The party gains 2 Flux' },
       effects: [{ k: 'flux', power: 2 }],
     },
     bottom: {
@@ -1079,7 +1079,7 @@ export const CARDS: Card[] = [
     },
     bottom: {
       text: {
-        hu: 'Vért 2 magadra és a párodra, majd emelj rúnaoszlopot egy szomszédos mezőre',
+        hu: 'Vért 2 magadra és a legközelebbi társadra, majd emelj rúnaoszlopot egy szomszédos mezőre',
         en: 'Shield 2 to yourself and your partner, then raise a rune pillar on an adjacent tile',
       },
       flux: 1,
@@ -1130,7 +1130,7 @@ export const CARDS: Card[] = [
     symbols: ['insight'],
     top: {
       text: {
-        hu: 'Gyógyítás 2 magadra és a párodra, majd Vért 2 mindenkire 2 mezőn belül.',
+        hu: 'Gyógyítás 2 magadra és a legközelebbi társadra, majd Vért 2 mindenkire 2 mezőn belül.',
         en: 'Heal 2 to yourself and your partner, then Shield 2 to everyone within 2 tiles.',
       },
       flux: 2,

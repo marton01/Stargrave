@@ -130,9 +130,9 @@ export const DIRECTIVE_DEFS: DirectiveDef[] = [
   {
     kind: 'understand',
     owner: 'echoreader',
-    name: { hu: 'Megértés', en: 'Understanding' },
+    name: { hu: 'Megfejtés', en: 'Understanding' },
     ask: (n) => ({
-      hu: `Érjetek el ${n} megértést.`,
+      hu: `Érjetek el ${n} megfejtést.`,
       en: `Reach ${n} understanding.`,
     }),
     reason: {

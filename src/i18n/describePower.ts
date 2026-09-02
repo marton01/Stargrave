@@ -144,7 +144,7 @@ export function describeSystemYield(
       const value = missionFlux(s)
       return {
         text: hu
-          ? `${value} Fluxussal indul a partraszálló csapat — ebből fizetik a lapok árcédulás (◈) feleit.`
+          ? `${value} Töltettel indul a partraszálló csapat — ebből fizetik a lapok azon feleit, amelyeken ◈ jel van.`
           : `The landing party starts with ${value} Flux — what the expensive card halves cost.`,
       }
     }
@@ -191,7 +191,7 @@ export function describeStationYield(
     }
     case 'armoury': {
       const v = armouryOutput(s)
-      return v > 0 ? (hu ? `+${v} Fluxus a csapatnak` : `+${v} Flux for the party`) : null
+      return v > 0 ? (hu ? `+${v} Töltet a csapatnak` : `+${v} Flux for the party`) : null
     }
     case 'sensors': {
       const v = sensorOutput(s)

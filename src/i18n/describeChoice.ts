@@ -71,7 +71,7 @@ export function describeEffect(effect: EncounterEffect, lang: Lang): ChoiceLine 
     }
     case 'understanding':
       return {
-        text: hu ? `Megértés +${effect.amount}` : `Understanding +${effect.amount}`,
+        text: hu ? `Megfejtés +${effect.amount}` : `Understanding +${effect.amount}`,
         tone: 'echo',
       }
     case 'module':
@@ -234,10 +234,10 @@ export function describeEffect(effect: EncounterEffect, lang: Lang): ChoiceLine 
         text:
           effect.amount >= 0
             ? hu
-              ? `Figyelem +${effect.amount} — a Hírnök hamarabb indul`
+              ? `Zaj +${effect.amount} — a Hírnök hamarabb indul`
               : `Attention +${effect.amount} — the Herald sets out sooner`
             : hu
-              ? `Figyelem −${Math.abs(effect.amount)} — csendesebbek lesztek`
+              ? `Zaj −${Math.abs(effect.amount)} — csendesebbek lesztek`
               : `Attention −${Math.abs(effect.amount)} — you go quieter`,
         tone: effect.amount >= 0 ? 'loss' : 'gain',
       }
@@ -282,7 +282,7 @@ export function describeRequirement(need: ChoiceRequirement, lang: Lang): string
         ? `Kell: ${pick(MODULES[need.id].name, lang)}`
         : `Needs: ${pick(MODULES[need.id].name, lang)}`
     case 'understandingAtLeast':
-      return hu ? `Megértés ${need.value}+` : `Understanding ${need.value}+`
+      return hu ? `Megfejtés ${need.value}+` : `Understanding ${need.value}+`
     case 'crewWithTrait':
       return hu
         ? `Kell egy ${pick(CREW_TRAITS[need.trait].name, lang)} legénységtag`
@@ -300,7 +300,7 @@ export function describeRequirement(need: ChoiceRequirement, lang: Lang): string
     case 'subjectIsMentee':
       return hu ? 'Ő valakinek a tanítványa' : 'They are somebody’s mentee'
     case 'attentionAtLeast':
-      return hu ? `Figyelem ${need.value}+` : `Attention ${need.value}+`
+      return hu ? `Zaj ${need.value}+` : `Attention ${need.value}+`
     case 'flag':
     case 'noFlag':
     case 'mark':

@@ -182,7 +182,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     id: 'forge',
     name: { hu: 'Kohó', en: 'Forge' },
     description: {
-      hu: 'Hajótest-javítás és gyártás. A Rúnaszövő hatásköre.',
+      hu: 'Hajótest-javítás és gyártás. Ez a Rúnaszövő dolga.',
       en: 'Hull repair and fabrication. The Runesmith’s domain.',
     },
     max: 3,
@@ -204,7 +204,7 @@ export const SYSTEMS: Record<SystemId, SystemDef> = {
     id: 'runeCore',
     name: { hu: 'Rúnamag', en: 'Rune core' },
     description: {
-      hu: 'Ebből lesz a partraszálló csapat Fluxusa. Amit ide adtál, azzal fognak harcolni.',
+      hu: 'Ebből lesz a partraszálló csapat Töltete. Amit ide adtál, azzal fognak harcolni.',
       en: 'This becomes the landing party’s Flux. Whatever you give it is what they fight with.',
     },
     max: 5,
@@ -333,7 +333,7 @@ export const STATIONS: Record<StationId, StationDef> = {
     id: 'armoury',
     name: { hu: 'Fegyverzet', en: 'Armoury' },
     effect: {
-      hu: 'A partraszálló csapat +1 Fluxussal indul, ha a Rúnamag is kap energiát — testőrrel +2.',
+      hu: 'A partraszálló csapat +1 Töltettel indul, ha a Rúnamag is kap energiát — testőrrel +2.',
       en: 'The landing party starts with +1 Flux if the rune core has power — with a guard here, +2.',
     },
     domain: 'engineering',
@@ -437,7 +437,7 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     id: 'runeAmplifier',
     name: { hu: 'Rúnaerősítő', en: 'Rune amplifier' },
     description: {
-      hu: 'A partraszálló csapat +2 Fluxussal indul.',
+      hu: 'A partraszálló csapat +2 Töltettel indul.',
       en: 'The landing party starts with +2 Flux.',
     },
     flux: 2,
@@ -485,7 +485,7 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     name: { hu: 'Csendburok', en: 'Silence shroud' },
     description: {
       hu:
-        'A hajó hangja kifelé elhal. Hetente 2 figyelemmel kevesebb — a Hírnök nehezebben talál rá.',
+        'A hajó hangja kifelé elhal. Hetente 2 zajjal kevesebb — a Hírnök nehezebben talál rá.',
       en:
         'The ship’s noise dies on the way out. Two less attention a week — the Herald has more ' +
         'trouble finding you.',

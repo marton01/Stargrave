@@ -6,10 +6,13 @@
 >
 > **FONTOS:** a `RULES.md` (angol) fejezeteinek **ugyanabban a sorrendben** kell
 > lenniük, mint itt. A súgó pozíció szerint dönti el, melyik fülön nyíljon, mert a
-> fejezetcímek nyelvenként mások. A sorrend: 1. Áttekintés, 2. A heti kör,
-> 3. Csillagtérkép, 4. Partraszállás, 5. Feladványok, 6. Kutatás, 7. A Csillagsír,
-> 8. Az Archívum, 9. Pultok, 10. A figyelem és a Hírnök, 11. Parancsok otthonról,
-> 12. Mikor van vége?, 13. Játékmódok, 14. Tippek.
+> fejezetcímek nyelvenként mások.
+>
+> A sorrend: 1. Áttekintés, 2. Szótár, 3. A heti kör, 4. Csillagtérkép, 5.
+> Partraszállás, 6. Feladványok, 7. Kutatás és megfejtés, 8. A Csillagsír, 9.
+> Az Archívum, 10. Emberek, 11. Kezelőpultok, 12. A hajó élete, 13. A játék
+> szíve, 14. A zaj és a Hírnök, 15. Parancsok otthonról, 16. Mikor van vége?,
+> 17. Játékmódok, 18. Tippek.
 >
 > A játékelemek (egységek, terep, jelvények) nincsenek itt leírva: azokat a súgó
 > **élőben kirajzolja** ugyanazokkal a komponensekkel, amiket a rács használ, hogy
@@ -23,8 +26,12 @@ vagy külön gépeken (lásd a *Játékmódok* fejezetet). Megnyílt a Kapu egy 
 valami *befejezte* őket.
 
 A cél eljutni a galaxis szívébe, a **Csillagsírba**, mielőtt a Kapu bezárul. De hogy
-ott mit tudtok tenni, azt nem a fegyvereitek döntik el, hanem az, **mennyit
-értettetek meg** útközben.
+ott mit tudtok tenni, azt nem a fegyvereitek döntik el, hanem az, hogy **mennyit
+fejtettetek meg útközben abból, mi történt ezzel a néppel** — mitől tűnt el egy
+egész civilizáció egyetlen nemzedék alatt. Ezt méri a **Megfejtés** nevű szám a
+fejlécben, és ez dönti el, hányféleképpen érhet véget az expedíció. Aki semmit nem
+ért meg, annak a végén két lehetősége marad: elmenekülni, vagy szétverni azt, amit
+nem értett.
 
 **Minden információ nyílt.** Ez szándékos: egy monitoron nincs értelme titkolni, és
 így a feszültség a közös tervezésből jön, nem a titkolózásból.
@@ -37,9 +44,74 @@ ott mit tudtok tenni, azt nem a fegyvereitek döntik el, hanem az, **mennyit
   **a harc nem az alapeset**: körülbelül a küldetések harmada felderítés, harmada
   logikai feladvány, harmada harc.
 
-A fejléc mindig mutatja a hat erőforrást, a legénység létszámát, a megértést és azt,
+A fejléc mindig mutatja a hat erőforrást, a legénység létszámát, a megfejtést és azt,
 hány hét van még a Kapu bezárultáig. A jobb oldali sávban a **napló**: minden, ami
 történt, visszafelé.
+
+## Szótár: mi micsoda
+
+Ez a játék néhány dolgot a saját nevén hív. Egyik sem bonyolult, de egyiket sem
+lehet kitalálni — ezért itt van mind, egy-egy mondatban. Ha valahol elakadsz,
+ide gyere vissza.
+
+### A számok a fejlécben
+
+| Amit látsz | Mit jelent |
+|---|---|
+| **Üzemanyag** | Ebből megy el minden út közben töltött hét. Ha elfogy, a hajó áll. |
+| **Élelem** | A legénység hetente eszik. Ha elfogy, éheznek, és romlik minden. |
+| **Hajótest** | A hajó életereje. Ha nullára fogy, az expedíció véget ér. |
+| **Morál** | Milyen kedvvel dolgozik a legénység. Ha nullára esik, megtagadják a parancsot, és vége. |
+| **Információ** | Nyers adat. Ez a kutatás nyersanyaga — ebből lesz megfejtés vagy jobb hajó. |
+| **Kredit** | Pénz. Piacon lehet vele venni. |
+| **Legénység** | Hányan élnek még a hajón, a hősökön kívül. |
+| **Megfejtés** | **Mennyit fejtettetek meg abból, MI TÖRTÉNT ITT** — mitől halt ki egy egész galaxis. Harcban semmit nem ér; a végén viszont ez dönti el, hányféleképpen érhet véget az expedíció. |
+| **Zaj** | **Mennyire hallatszotok.** Zajt csap a harc, az erővel feltört szerkezet, a felpörgetett hajtómű — és minden, amit megfejtetek. Nyolcnál elindul felétek a Hírnök. |
+| **Sötétedés** | A galaxis kihűlése. Minden szintjével kevesebb energiát ad a reaktor, és erősebbek az ellenfelek odalent. Megállítani nem lehet. |
+| **A Kapu** | Az egyetlen átjáró haza. Számolja a heteket, és egyszer bezárul. |
+
+### Szavak, amiket a játék talált ki
+
+- **Töltet** — a partraszálló csapat közös „varázsereje" egy csatára. Azt kapjátok,
+  amennyi energiát a hajón a **Rúnamagra** adtatok. Ebből fizetitek a lapok azon
+  feleit, amelyeken **◈** jel van — ezek a csata nagy ütései.
+- **Jegy** — a **saját** fejlődési pontod. Nem a hajóé és nem a többieké: te
+  gyűjtöd azért, amit a hősöd csinál, és csak te költheted el arra, amit ő tanul
+  meg. Mindegyik hősnek más a neve rá (szövőjegy, visszhangjegy, rítusjegy,
+  csillagjegy) — ugyanaz a dolog.
+- **Kezelőpult** — a hajón mindenkinek van egy saját képernyője. Ott van a jegyed,
+  a parancsod, a tanítványaid, a heti őrséged. A többiekét is látod, de az az ő
+  dolguk.
+- **Kötelék** — ha egy társad **2 mezőn belül** áll, mindkettőtök támadása
+  +1-et sebez. Ezért érdemes együtt mozogni.
+- **Vért** — páncél. Ennyivel kevesebbet sebez a következő találat, aztán 1-gyel
+  fogy. Nem jár le magától.
+- **Ráhangolódás** — az ereklye a raktárban semmit nem tesz. Csak az hat, amit
+  valaki magára vesz, és mindenkinek csak egy-két helye van rá.
+- **Zárósor** — egy zár, amit egyedül senki nem tud kinyitni: a leírása szét van
+  osztva a játékosok között, mindenki csak a saját darabját látja.
+- **Tanítvány** — egy legénységi tag, akit a szárnyaid alá vettél. Gyorsabban
+  tanul, jobban bírja a hajót, és ha képzett lesz, le is viheted a
+  partraszállásra.
+- **Hírnök** — nem ellenfél a rácson, hanem valami, ami elindul felétek, amikor
+  túl hangosak lettetek. Mindig közeledik.
+- **Oszlop** — a csillagtérkép függőleges sávja. Balra a Kapu, jobbra a galaxis
+  szíve: minden oszloppal mélyebben jártok, nehezebb ellenfelekkel és jobb
+  leletekkel.
+- **Kezdőszám** — az a szám, ami az egész expedíciót kisorsolja. Ugyanaz a szám
+  ugyanazt a galaxist adja.
+
+### Amit a képernyőn látsz
+
+- **Csomópont** — egy pont a csillagtérképen: egy rendszer, ahová el lehet menni.
+- **Állomás** — a hajó egy munkahelye (kohó, labor, gyógyító). Csak akkor
+  dolgozik, ha energiát **is** kap és ember **is** áll rajta.
+- **Lapfél** — minden kártyának van egy **felső** és egy **alsó** fele, és minden
+  körben az egyik lapod felső, a másik alsó felét használod.
+- **Kezdeményezés** — a lap bal felső sarkában lévő szám. Aki kisebbet játszik,
+  az lép előbb.
+- **Elhasznált** — amit már kijátszottál. Pihenéssel visszakapod (egy lap
+  árán). **Véglegesen elveszett**: az többé nem jön vissza a csatában.
 
 ## A heti kör
 
@@ -70,7 +142,7 @@ Ez **közös döntés** — ez a játék legerősebb kooperatív eleme.
 - **Labor** — Információ-termelés és kutatási sebesség.
 - **Kohó** — hajótest-javítás.
 - **Érzékelők** — mennyit látsz előre a csillagtérképen.
-- **Rúnamag** — **ebből lesz a partraszálló csapat Fluxusa.** Amit ide adtál, azzal
+- **Rúnamag** — **ebből lesz a partraszálló csapat Töltete.** Amit ide adtál, azzal
   fognak harcolni. Ez köti össze a két réteget.
 
 **Számít-e, hogy mennyit adsz?** Igen, egy kivétellel — és a hajó képernyőjén minden
@@ -80,7 +152,7 @@ kitalálni, megéri-e a negyedik pont.
 - **Lineárisan számít**: Hajtómű (az első pont a mozgás maga, minden további egy hetet
   vág le egy útból),
   Pajzs (annyi hajótest-kockázatot fog fel), Labor (+1 információ hetente pontonként),
-  Érzékelők (annyi oszlopot fed fel), Rúnamag (annyi Fluxus a partraszálló csapatnak),
+  Érzékelők (annyi oszlopot fed fel), Rúnamag (annyi Töltet a partraszálló csapatnak),
   Kohó (az energia és a legénység együtt, félpontonként).
 - **Küszöb, nem skála**: az **Életfenntartás**. A szükséges szint alatt romlik a morál és
   fogyhat a legénység; a szint **fölött egyetlen pont sem ad semmit**. Ott spórolni kell,
@@ -108,7 +180,7 @@ mit ad hozzá a rangja meg a jellemvonása. Nem kell táblázatot vezetni hozzá
 **Számít-e, hogy hány ember áll rajta?** Az első ember kell ahhoz, hogy egyáltalán
 működjön. A második pedig **mindenhol ad valamit**: a Kohó többet javít, a Gyógyító
 többet gyógyít, a Szentély magasabbra teszi a morál-célt, a Híd több üzemanyagot spórol,
-az Archívum két hét kutatást ugrik egy helyett, a Fegyverzet egy plusz Fluxust ad, az
+az Archívum két hét kutatást ugrik egy helyett, a Fegyverzet egy plusz Töltetet ad, az
 Érzékelő navigátorral egy oszloppal többet fed fel. **Minden állomás jutalmazza a hozzá
 illő szakmát** — nincs kivétel —, és az állomás kártyáján ott látszik, mit termel **most**
 és miből jön a szám.
@@ -165,7 +237,7 @@ Amit az Érzékelők nem fedtek fel, azt kérdőjel jelöli. Az energia, amit az
 
 A találkozásokban a választás **két lépés**: rákattintasz, és megjelenik a teljes
 elszámolás — *amit kér* és *amit ad* —, és csak ezután van Így legyen / Mégse. Ez
-szándékos: egy opció megértése és a megválasztása nem lehet ugyanaz a mozdulat. Ugyanígy
+szándékos: egy opció megfejtése és a megválasztása nem lehet ugyanaz a mozdulat. Ugyanígy
 kétlépéses a piaci vásárlás és a Csillagsírban a végkifejlet választása is; a csatában
 pedig visszavonás van (Ctrl+Z).
 
@@ -184,7 +256,7 @@ valamerre, akkor az elindult valamerre.
 
 ### Kredit — miből lesz, mire megy
 
-**12 kredittel indultok**, és 99-nél megáll a számláló. Kredittel nem lehet megértést
+**12 kredittel indultok**, és 99-nél megáll a számláló. Kredittel nem lehet megfejtést
 vásárolni és hetet sem lehet vele nyerni: felszerelést, erőforrást és embert lehet.
 
 **Honnan jön:**
@@ -194,7 +266,7 @@ vásárolni és hetet sem lehet vele nyerni: felszerelést, erőforrást és emb
 - **Kikényszerített harc.** Amikor a hajót megszállják, vagy egy romot ki kell tisztítani,
   a harc **6** kreditet ad.
 - **Feladvány.** A megoldás jutalma véletlen: körülbelül **harminc százalék** eséllyel
-  kredit (**11–17**, a feladvány nehézségétől függően), egyébként információ, megértés
+  kredit (**11–17**, a feladvány nehézségétől függően), egyébként információ, megfejtés
   vagy térképfelfedés. Feladványra tehát nem lehet kreditért menni.
 - **Találkozások.** A legjobb üzlet az **információ eladása**: a kereskedő-rajnál 6
   információ **14** kredit, az Archiváriusnál 10 információ **20**. Emellett fizet egy
@@ -254,20 +326,20 @@ a **kezdeményezést** — ez határozza meg, hol lépsz az ellenség között. 
 hősök és ellenségek összekeverve.
 
 Amikor egy hős jön: a játék megkérdezi, **melyik lap felső felét** használod (a másik
-lap **alsó** fele lesz a párja), aztán rákattintasz a végrehajtandó félre. **A sorrend
+lap **alsó** fele lesz a legközelebbi társa), aztán rákattintasz a végrehajtandó félre. **A sorrend
 a tiéd** — előbb mozogsz, vagy előbb ütsz? Ha a hatás célt kér, a rácson felvillannak
 a lehetőségek.
 
-### Fluxus — a közös erő
+### Töltet — a közös erő
 
 Minden lapnak **két fele** van: egy **felső** és egy **alsó**, és a körödben az egyik lap
 felső, a másik lap alsó felét játszod ki. A legtöbb lapfél ingyen van — néhány erősebbre
-viszont **rá van írva egy ár**, egy `◈` jel és egy szám. **Ezt az árat fizeti a Fluxus.**
+viszont **rá van írva egy ár**, egy `◈` jel és egy szám. **Ezt az árat fizeti a Töltet.**
 
-**Tehát vannak lapfelek, amelyek csak akkor játszhatók ki, ha van elég Fluxus.** Ha nincs,
+**Tehát vannak lapfelek, amelyek csak akkor játszhatók ki, ha van elég Töltet.** Ha nincs,
 az a fél egyszerűen nem választható — a lap másik fele (a mozgás, a vért) attól még
-használható. És a Fluxus **másra nem is kell**: se mozgásra, se gyógyításra, se semmi
-egyébre. Egyetlen dolgot csinál: megnyitja az árcédulás lapfeleket.
+használható. És a Töltet **másra nem is kell**: se mozgásra, se gyógyításra, se semmi
+egyébre. Egyetlen dolgot csinál: megnyitja azokat a lapfeleket, amelyek Töltetbe kerülnek (◈).
 
 A készlet **közös**: egy szám, ami a fejlécben `FLUXUS (KÖZÖS)` néven látszik, és
 **mindkét játékos ugyanabból veszi el**. Nem életerő és nem magától visszatöltődő mana:
@@ -276,20 +348,20 @@ egy partraszállásra kaptok egy adagot, és az addig tart, ameddig tart.
 **Honnan jön?** A hajóról — ez az a szál, ami a két réteget összefűzi:
 
 - **A Rúnamagra adott energia.** Amennyi egységet a hajón a Rúnamagra tettél, annyi
-  Fluxussal indul a csapat. Ez a döntés fő része: a Rúnamagra adott energia nem termel
+  Töltettel indul a csapat. Ez a döntés fő része: a Rúnamagra adott energia nem termel
   semmit a hajón, csak *odalent* számít.
-- **A Fegyverzet állomás** +1 Fluxust ad, ha energiája is van és ember is áll rajta
+- **A Fegyverzet állomás** +1 Töltetet ad, ha energiája is van és ember is áll rajta
   (jól betöltve +2).
 - **A Rúnaerősítő modul** +2-t (kutatásból).
-- **A nehézségi tárcsa** „Induló Fluxus" beállítása +3 és −2 között módosítja.
+- **A nehézségi tárcsa** „Induló Töltet" beállítása +3 és −2 között módosítja.
 
 **Csata közben** két helyről szerezhetsz még:
 
-- **Fluxus-csapolás** (Múltidéző lap): Támadás 1 hatótáv 3, **és +2 Fluxus a közös
+- **Töltet-csapolás** (Múltidéző lap): Támadás 1 hatótáv 3, **és +2 Töltet a közös
   készletbe**. Ez az egyetlen lap, ami termel.
-- **Rúnajel**: ha egy megjelölt ellenfél a hősök keze által esik el, **+1 Fluxus**.
+- **Rúnajel**: ha egy megjelölt ellenfél a hősök keze által esik el, **+1 Töltet**.
 
-**Mire kell?** Összesen öt lapfélen van árcédula — ezek a csata „nagy ágyúi":
+**Mire kell?** Összesen öt lapfélen van ◈ jel, vagyis Töltet-ár — ezek a csata „nagy ágyúi":
 
 | Lap | Mit ad | Ár |
 |---|---|---|
@@ -302,30 +374,30 @@ egy partraszállásra kaptok egy adagot, és az addig tart, ameddig tart.
 A felületen az ár a lapon látszik (`◈2`), és ha a készletben nincs annyi, **az a lapfél
 nem kattintható** — a játék nem engedi kijátszani, amit nem tudsz kifizetni.
 
-**Miért közös?** Mert így a Fluxus nem erőforrás, hanem **beszélgetés**. Két Fluxusnál a
+**Miért közös?** Mert így a Töltet nem erőforrás, hanem **beszélgetés**. Két Töltetnél a
 Rúnaszövő Földrengése (2) és a Múltidéző Visszhangja (2) közül **csak az egyik**
 játszható ki — és azt meg kell beszélni. Ez a játék legsűrűbb kooperatív pillanata.
 
 **Egy példa.** A hajón 2 energiát adtál a Rúnamagra, a Fegyverzet működik: a csapat
-**3 Fluxussal** száll le. A második körben négy Hamvadó váz körülveszi a Rúnaszövőt.
+**3 Töltettel** száll le. A második körben négy Hamvadó váz körülveszi a Rúnaszövőt.
 
-- *Földrengés* (2 Fluxus): mind a négy sebződik és le is dől — marad **1 Fluxus**.
+- *Földrengés* (2 Töltet): mind a négy sebződik és le is dől — marad **1 Töltet**.
 - Vagy *Rontásgyűrű* (1) a másik hőssel + *Kohó dühe* (1) a Rúnaőrzőre — marad **1**.
 - Vagy semmi drágát: a maradék 3 megmarad a Rúnaőrzőre, aki a következő körben lép.
 
-Ha közben a Múltidéző eljátssza a *Fluxus-csapolást*, a készlet visszamegy 3-ra,
+Ha közben a Múltidéző eljátssza a *Töltet-csapolást*, a készlet visszamegy 3-ra,
 és mindkettő belejátszható. Ezért ér a csapolás többet, mint amennyit a sebzése mutat.
 
 **Amit érdemes tudni:**
 
 - **Nem töltődik újra körönként.** Egy partraszállásra egy adag.
-- **Nem visszük haza.** A megmaradt Fluxus a küldetés végén elveszik — nincs értelme
+- **Nem visszük haza.** A megmaradt Töltet a küldetés végén elveszik — nincs értelme
   „tartalékolni" az utolsó körre, ha most kellene.
 - **A Rúnamag energiája hetente újra eldönthető.** Egy harci küldetés előtt érdemes
   átcsoportosítani rá, egy felderítés előtt kevésbé.
 
 A körben kijátszott lapfelek közül néhányra **ár van írva** (`◈` és egy szám): azok csak
-akkor játszhatók ki, ha van elég **Fluxus** a közös készletben. Lásd lentebb.
+akkor játszhatók ki, ha van elég **Töltet** a közös készletben. Lásd lentebb.
 
 ### Miért csak két lap?
 
@@ -352,7 +424,7 @@ darabját ti választottátok.
 
 ### Kombók
 
-Ez az, amitől a játék kooperatív. A **Kötés** a legfontosabb: ha 2 mezőn belül vagytok
+Ez az, amitől a játék kooperatív. A **Kötelék** a legfontosabb: ha 2 mezőn belül vagytok
 egymástól, **mindkettőtök támadása +1-et sebez**. A **Rúnajel** és a **Horgony** az
 igazi együttműködés: a Múltidéző messziről megjelöl valakit, a Rúnaszövő
 ugyanabban a körben +2-vel csap le rá — ehhez viszont a **kezdeményezést** kell
@@ -366,7 +438,7 @@ Az ellenfelek egy körrel előre mutatják a szándékukat. Ugyanezt megkapja a
 **terep** is: minden pályának van két-három saját eseménye, és mindegyik **egy
 körrel előre ki van írva** a cél mellett.
 
-- **rúnalöket** — a padló alatti rúnák +2 Fluxust adnak;
+- **rúnalöket** — a padló alatti rúnák +2 Töltetet adnak;
 - **hamuhullás** — a padló egy része hamuvá válik: járható, de kétszer annyiba kerül;
 - **beszakadás** — kijelöl néhány mezőt, ami a következő kör végén beomlik (a
   kijáratra és az ereklyékre soha);
@@ -434,30 +506,30 @@ megnyomni, akié.
 
 Anomáliáknál és állomásokon bukkan fel, és néhány döntés is idehoz.
 
-## Kutatás és megértés
+## Kutatás és megfejtés
 
 Egy Információ-készlet, **két ág**:
 
-- **Technológia** — azonnali képesség: hajómodulok, reaktor-fejlesztés, több Fluxus,
+- **Technológia** — azonnali képesség: hajómodulok, reaktor-fejlesztés, több Töltet,
   messzebb látó érzékelők, nagyobb hajótest.
-- **Megértés** — a világ titkai: mi történt ezzel a galaxissal, mik az isten-gépek, mi
+- **Megfejtés** — a világ titkai: mi történt ezzel a galaxissal, mik az isten-gépek, mi
   fejezte be őket.
 
-**A dilemma szándékosan éles: a megértés nem ad harci előnyt.** Nem lesz tőle erősebb
+**A dilemma szándékosan éles: a megfejtés nem ad harci előnyt.** Nem lesz tőle erősebb
 a hajó és nem lesznek jobbak a lapjaid — mégis ez a győzelem kulcsa. A tisztán
 optimalizáló út *nem* a helyes út.
 
-Megértést nem csak kutatásból kapsz: találkozásokból, jelfejtésből és bizonyos
+Megfejtést nem csak kutatásból kapsz: találkozásokból, jelfejtésből és bizonyos
 küldetésekből is.
 
 ## A Csillagsír
 
 A galaxis szíve. Ide kell eljutni, mielőtt a Kapu bezárul.
 
-És itt a csavar: **a megértés-szintetek dönti el, mit tudtok ott egyáltalán tenni.**
+És itt a csavar: **a megfejtés-szintetek dönti el, mit tudtok ott egyáltalán tenni.**
 Ugyanaz a helyszín, de teljesen más végkifejlet:
 
-- **alacsony megértés** — csak elmenekülhetsz, vagy vakon elpusztítod, amit találtál;
+- **alacsony megfejtés** — csak elmenekülhetsz, vagy vakon elpusztítod, amit találtál;
 - **közepes** — megtudod, mi történt, és haza tudod vinni a tudást;
 - **magas** — felismered, mi *történik éppen*, és beavatkozhatsz;
 - **teljes** — a legmélyebb végkifejlet: érted, miért nem háború volt.
@@ -467,26 +539,26 @@ Ugyanaz a helyszín, de teljesen más végkifejlet:
 ### A perem elolvasása
 
 Megérkezéskor, **egyszer**, mielőtt bármit eldöntenétek: le lehet ülni a perem elé.
-Egy szerkezet a legnehezebb fokozaton. Ha megfejtitek, **+2 megértés** — és ez ott,
+Egy szerkezet a legnehezebb fokozaton. Ha megfejtitek, **+2 megfejtés** — és ez ott,
 abban a pillanatban új végkifejletet nyithat, miközben a lista már a képernyőn van.
 Ha nem, morálba kerül. Az expedíció utolsó képernyője is tud balul elsülni.
 
 ### A kilenc végkifejlet
 
-**Öt a megértésből jön** (visszafordulás, vak pusztítás, a tanú, a beavatkozás,
+**Öt a megfejtésből jön** (visszafordulás, vak pusztítás, a tanú, a beavatkozás,
 együtthangzás), **négyet pedig kiérdemelni kell** — ezeket nem egy szám nyitja,
 hanem az, amit tettetek:
 
 | Végkifejlet | Feltétel |
 |---|---|
 | **Hazatérés** | Bármikor útközben: megfordulni a Kapu felé, amíg van rá üzemanyag |
-| **A Hírnök hallgatása** | Megállítani a Hírnököt, és 1. megértés-szinttel megérkezni |
-| **Örökség** | Három ereklye a fedélzeten, 1. megértés-szinttel |
-| **Az őrség átvétele** | Öt élő legénységgel, 8+ morállal, 2. megértés-szinttel megérkezni |
+| **A Hírnök hallgatása** | Megállítani a Hírnököt, és 1. megfejtés-szinttel megérkezni |
+| **Örökség** | Három ereklye a fedélzeten, 1. megfejtés-szinttel |
+| **Az őrség átvétele** | Öt élő legénységgel, 8+ morállal, 2. megfejtés-szinttel megérkezni |
 
 Az **Archívum** kilistázza mind a kilencet a feltételükkel — a nevét és a
 feltételét előre látod, a szövegét csak akkor, ha ott állsz előtte. A tizedik, **A
-válasz**, az öt megértés-végkifejletből következik, és a játék vége.
+válasz**, az öt megfejtés-végkifejletből következik, és a játék vége.
 
 ### Amikor az expedíció elveszik
 
@@ -502,7 +574,7 @@ az Archívum, és ahogy nő, feloldja: új feladványtípusokat, mélyebb talál
 előkészített raktárt, stabilabb Kaput.
 
 **Nem erősödést old fel, hanem tartalmat.** A világ gazdagodik, nem könnyebbé válik —
-ezért a huszadik futam is izgalmas. A megértés akkor is pontot ér, ha az expedíció
+ezért a huszadik futam is izgalmas. A megfejtés akkor is pontot ér, ha az expedíció
 elveszett: semmi nem megy kárba.
 
 ### Mikor van vége a teljes játéknak?
@@ -511,7 +583,7 @@ Egy expedíció háromféleképpen zárul: elérted a Csillagsírt és **válasz
 végkifejletet**, elbuktál, vagy a Kapu bezárult. A *játéknak* viszont külön vége van, és
 ez a cél:
 
-**Öt végkifejlet van**, és a megértés kapuzza őket — kettő megértés nélkül is elérhető,
+**Öt végkifejlet van**, és a megfejtés kapuzza őket — kettő megfejtés nélkül is elérhető,
 a többi 1., 2. és 3. szinttől. Az Archívum mutatja, melyiket láttad már. Ez a gyűjtemény
 az igazi haladás: nem az, hogy erősebb legyél, hanem hogy mind az ötöt lásd, mert csak
 együtt állnak össze.
@@ -519,7 +591,7 @@ együtt állnak össze.
 **Amikor mind az öt megvan** — és legalább két szálat végig is vittél, tehát nem csak
 láttad a következményeket, hanem tettél is velük valamit —, az Archívumban megjelenik
 **Az utolsó kérdés**. Ez a legdrágább feloldás, és nem ad új játékelemet: egy **hatodik
-végkifejletet** nyit meg, amit csak a 3. megértés-szinten lehet megválaszolni a
+végkifejletet** nyit meg, amit csak a 3. megfejtés-szinten lehet megválaszolni a
 Csillagsírban.
 
 Az a hatodik a játék vége. Utána az Archívum **készen** áll — nem elveszve, hanem
@@ -550,7 +622,7 @@ döntése, és a következményét is ő viszi.
 
 Odalent **kísérő** lesz belőle:
 
-- Nincs lapja és nincs Fluxusa. Egy **állandó parancsot** kap, és azt hajtja végre.
+- Nincs lapja és nincs Töltete. Egy **állandó parancsot** kap, és azt hajtja végre.
 - Mindig a **mentora után** lép, fél lépéssel — amit csinál, azt tőle látta.
 - Hármat lehet mondani neki: **Fedez** (odamegy hozzád, és amíg melletted áll,
   minden körben Vért 1-et ad neked), **Támad** (a legközelebbi ellenségre megy),
@@ -615,21 +687,21 @@ ugyanazok — de van mit felolvasni.
 Amikor vége, a záróképernyő **név szerint** végigmegy mindenkin, aki valaha a
 fedélzeten volt: ki jött haza, ki nem, és mi lett velük. A halottak elöl.
 
-## Pultok: ami a tiéd
+## Kezelőpultok: ami a tiéd
 
 A hajón szinte minden közös: **egy reaktor, egy raktér, egy útvonal**. Ez a játék
 lényege — de ha *semmi* nem tartozik külön egyikőtökhöz sem, akkor egy idő után
 egyikőtök vezet, a másik nézi. Ezért van a **Pultok** fül (a fejlécben, a Kutatás
 mellett): két lap, két emberé.
 
-Ide **a másik nem nyúlhat bele**. Nem lehet elvenni a párod ereklyéjét, nem lehet
+Ide **a másik nem nyúlhat bele**. Nem lehet elvenni a legközelebbi társad ereklyéjét, nem lehet
 elkölteni a jegyeit, és nem lehet elvinni a tanítványát.
 
 ### Jegyek: kétféle, mert kétféle munka
 
 Mindkét hős a **saját** fejlesztési pontját gyűjti, és nem ugyanazért:
 
-| | Rúnaszövő — *kovácsjegy* | Múltidéző — *visszhangjegy* |
+| | Rúnaszövő — *szövőjegy* | Múltidéző — *visszhangjegy* |
 |---|---|---|
 | Megnyert partraszállás | +1 | +1 |
 | Hajóra törés, amiben **egy modul sem** pusztult el | **+2** | — |
@@ -638,13 +710,13 @@ Mindkét hős a **saját** fejlesztési pontját gyűjti, és nem ugyanazért:
 | Két képzett tanítvány munkája, partraszálláskor | +1 | +1 |
 | A Hírnök elhallgattatása | +3 | +3 |
 
-A hajó épsége az ő számlája; a megértés az övé. Ez nem díszítés: attól, hogy más
+A hajó épsége az ő számlája; a megfejtés az övé. Ez nem díszítés: attól, hogy más
 dologért fizet a játék, **más irányba is fogsz nyomni** a közös döntésekben.
 
 A jegyekből a pult saját listájáról lehet vásárolni. A két lista szándékosan nem
 egymás tükörképe: a Rúnaszövő szívósságot, terepet és hajószerkezetet vesz
 (Vasderék, Zsilipvonalak, Sáncvonal-lap, Ereklyehordozó, Csendes kohó), a
-Múltidéző látást, emlékezetet és megértést (Messzelátás, Levéltáros,
+Múltidéző látást, emlékezetet és megfejtést (Messzelátás, Levéltáros,
 Emlékezés, Fonál, Álló hang-lap, Ereklyeolvasó).
 
 Négy fejlesztés **új lapot** ad a paklidba, véglegesen — és csak a tiédbe (a
@@ -686,8 +758,8 @@ kérdés nem az, hogy találtatok-e ereklyét, hanem hogy **ki mit hord ezen a h
 - Van, amit **csak az egyikőtök** hordhat: az Üllőtöredék, a Hallgató lemez és Az
   első rúna a Rúnaszövőé; a Kórus-szilánk és A nevek jegyzéke a
   Múltidézőé.
-- Van, aminek **ára** van: Az őrző szeme messzebbre lát, de hetente +1 figyelmet
-  gyűjt; az Isten-gép csapolás Fluxust ad, de a legénység nem szeret vele egy
+- Van, aminek **ára** van: Az őrző szeme messzebbre lát, de hetente +1 zajt
+  gyűjt; az Isten-gép csapolás Töltetet ad, de a legénység nem szeret vele egy
   fedélzeten lenni. Ez mindig ki van írva.
 - Amit senki nem hord, azt **el lehet adni** egy kereskedőnél. Gondold meg:
   **három ereklyével** a Csillagsírban külön végkifejlet nyílik.
@@ -698,7 +770,7 @@ Bármelyik hős **legfeljebb hármat** vehet a szárnyai alá a legénységből.
 tanítvány, az **kétszer olyan gyorsan** tanul a posztján — és ha kettő is elérte a
 *képzett* szintet, minden megnyert partraszállás egy jegyet fizet a mesterének.
 
-Egy embert csak az egyikőtök vállalhat: ha a párodnál van, előbb el kell
+Egy embert csak az egyikőtök vállalhat: ha a legközelebbi társadnál van, előbb el kell
 engednie.
 
 ### A legénység is fejlődik
@@ -725,7 +797,7 @@ együtt kell dönteni.
 
 A Hajó képernyő tetején van egy **szűrő**: „Kinek a pultja”. Nem zár le semmit,
 csak leszűkíti a listát arra, ami a tiéd. A másik fele attól is olvasható marad —
-egy kooperatív játék, amiben nem látod a párod képernyőjét, két pasziánsz.
+egy kooperatív játék, amiben nem látod a legközelebbi társad képernyőjét, két pasziánsz.
 
 ## A hajó élete: hűség, váratlan események, adósságok
 
@@ -746,7 +818,7 @@ nem számmal:
 | 9–10 | elkötelezett |
 | 7–8 | rendben van |
 | 5–6 | fáradt |
-| 3–4 | elhúzódott |
+| 3–4 | visszahúzódott |
 | 0–2 | **nem beszél senkivel** |
 
 A hűség **hetente egy lépést** tesz afelé, amilyen a hajón élni. Sosem ugrik, tehát
@@ -815,12 +887,12 @@ Ez a fejezet arról szól, ami az összes többit összeköti. Egy mondat:
 > **Meg akarjuk érteni, mi lett velük — és minden lépés, amivel közelebb jutunk,
 > hallhatóbbá tesz minket.**
 
-### A megértés a tét
+### A megfejtés a tét
 
-A tíz végkifejletből **kilenc a megértéstől függ.** Csak kettő érhető el mindig:
+A tíz végkifejletből **kilenc a megfejtéstől függ.** Csak kettő érhető el mindig:
 a *Menekülés* és a *Vak pusztítás*. A többihez tudni kell, mi történt itt.
 
-| Szint | Megértés | Mit nyit |
+| Szint | Megfejtés | Mit nyit |
 |---|---|---|
 | 0 | 0–2 | Menekülés, Vak pusztítás |
 | 1. | 3–7 | Tanú, és a feltételes végkifejletek egy része |
@@ -830,29 +902,29 @@ a *Menekülés* és a *Vak pusztítás*. A többihez tudni kell, mi történt it
 A Kutatás képernyőn ott van a lista: mi van nyitva, és **mi hiányzik** azokhoz,
 amik nincsenek. Ez nem mellékes információ — ez a játék célja, számmal.
 
-### A figyelem az ára
+### A zaj az ára
 
-**Minden 2 megértés +1 figyelem.** Mindegy, honnan jön: kutatásból, megfejtett
+**Minden 2 megfejtés +1 zaj.** Mindegy, honnan jön: kutatásból, megfejtett
 szerkezetből, rúnasorból, találkozásból vagy a Csillagsír pereméről. A Hírnök
-**8 figyelemnél** ébred.
+**8 zajnál** ébred.
 
-Vagyis a 3. szint eléréséhez (14 megértés) magában **7 figyelem** tartozik — a
+Vagyis a 3. szint eléréséhez (14 megfejtés) magában **7 zaj** tartozik — a
 Hírnök küszöbe majdnem megvan tőle egyedül, és a partraszállások, az ugrások meg
 minden más még ezen felül van.
 
 Ez **nem büntetés, hanem a játék kérdése.** Nem lehet nyerni azzal, hogy
-csendben maradtok: alacsony megértéssel két végkifejlet marad. A kérdés soha nem
+csendben maradtok: alacsony megfejtéssel két végkifejlet marad. A kérdés soha nem
 az, hogy *legyünk-e hangosak* — hanem hogy **mennyire, meddig, és mikor állunk
 meg.**
 
 ### Amivel csendesíteni lehet
 
-- **Egy hét egy már lezárt rendszerben:** −1 figyelem.
+- **Egy hét egy már lezárt rendszerben:** −1 zaj.
 - **Állócsend-lámpás** és a hasonló ereklyék, **Csendes kohó** és a hasonló
   fejlesztések.
-- **Csendesítés a hajóról** partraszállás közben (lásd lent): −1 figyelem.
+- **Csendesítés a hajóról** partraszállás közben (lásd lent): −1 zaj.
 - **A Hírnök elhallgattatása** — ez végleg leveszi a rendszert.
-- És a nehézségi tárcsán a **Figyelem** kikapcsolható; akkor az ára is eltűnik.
+- És a nehézségi tárcsán a **Zaj** kikapcsolható; akkor az ára is eltűnik.
 
 ### Kettéválás: aki fent marad
 
@@ -862,8 +934,8 @@ viszi**: körönként egy támogatás, a raktár terhére.
 
 | Támogatás | Mit tesz | Ára |
 |---|---|---|
-| **Csendesítés** | −1 figyelem | 4 információ |
-| **Energiaátkötés** | +3 Fluxus a csapatnak | 3 üzemanyag |
+| **Csendesítés** | −1 zaj | 4 információ |
+| **Energiaátkötés** | +3 Töltet a csapatnak | 3 üzemanyag |
 | **Érzékelő-söprés** | Rúnajel a csapathoz legközelebbi ellenségre | 3 információ |
 | **Gyógyító készenlét** | a legrosszabbul álló hős +3 életerő | 4 üzemanyag |
 
@@ -879,8 +951,8 @@ van az egész asztalra. A játék felírja és számon kéri.
 
 | Ígéret | Amit vállalsz |
 |---|---|
-| **Csend** | 4 héten át nem nő a figyelem |
-| **Megfejtés** | a határidőre meglesz +4 megértés |
+| **Csend** | 4 héten át nem nő a zaj |
+| **Megfejtés** | a határidőre meglesz +4 megfejtés |
 | **A hajótest** | a határidőre legalább 16 hajótest |
 | **A raktár** | a határidőre legalább 20 élelem |
 | **Mindenki visszajön** | 5 hétig nem veszítünk el senkit |
@@ -892,13 +964,13 @@ van az egész asztalra. A játék felírja és számon kéri.
 - Amit *nem* csinálni ígértél (Csend, Mindenki visszajön), az **abban a
   pillanatban bukik**, amikor megtörik — nem a határidőn.
 
-A Csend a szív saját ígérete: mivel a megértés zajos, a „négy hétig nem tanulunk”
+A Csend a szív saját ígérete: mivel a megfejtés zajos, a „négy hétig nem tanulunk”
 valódi, fájó, ellenőrizhető vállalás arról, amiről az egész játék szól.
 
-## A figyelem és a Hírnök
+## A zaj és a Hírnök
 
 A Kapu órája minden expedícióban ugyanaz, és ha egyszer megismertétek, nem
-érzitek többé. A **figyelem** nem ilyen: ezt a számot **ti magatok írjátok**.
+érzitek többé. A **zaj** nem ilyen: ezt a számot **ti magatok írjátok**.
 
 **Növeli:**
 
@@ -914,7 +986,7 @@ A Kapu órája minden expedícióban ugyanaz, és ha egyszer megismertétek, nem
 - **Állócsend-lámpás** ereklye: −2 · **Üres harang**: −1 · *Csendes kohó*
   fejlesztés: −1
 
-A figyelem a fejlécben látszik az **első ponttól** kezdve, mert egy olyan
+A zaj a fejlécben látszik az **első ponttól** kezdve, mert egy olyan
 fenyegetés, amit nem látsz jönni, nem feszültség, hanem csapda.
 
 ### A Hírnök
@@ -924,22 +996,22 @@ hetven éven át azt számolta, mennyi zaj érkezik egy halott galaxisba, és mi
 alkalommal elindult megnézni.
 
 - A csillagtérképen egy **oszlop** van megjelölve: ott van. Nem az utakon jön,
-  hanem a folyosón — mindig felétek tart, **hetente egy oszlopot** (12 figyelem
+  hanem a folyosón — mindig felétek tart, **hetente egy oszlopot** (12 zaj
   fölött kettőt). Mélyebbre menekülni nem segít: veletek jön.
 - Ha **beér**, hajóra törés lesz, a játék legnehezebb csatája — és a modulok is a
   rácson állnak.
-- **Ha megállítjátok:** elhallgat, és a Csillagsír nem küld másikat. A figyelem
+- **Ha megállítjátok:** elhallgat, és a Csillagsír nem küld másikat. A zaj
   nullázódik, mindkét hős +3 jegyet kap, és megnyílik **A Hírnök hallgatása**
   végkifejlet. Az Archívum is megjegyzi: egy későbbi expedíciót meg lehet róla
   kérdezni.
 - **Ha csak kiszorítjátok:** sérül a hajótest, a Hírnök visszavonul három
   oszlopot — és **erősebben** jön vissza. Szándékosan: „veszítsünk neki
   direkt” nem lehet a mechanika kijátszása.
-- **A Hírnök** kutatás (megértés-ág) egy szinttel könnyebbé teszi a csatát: aki
+- **A Hírnök** kutatás (megfejtés-ág) egy szinttel könnyebbé teszi a csatát: aki
   érti, mit számol, az tudja, mikor fordul felé.
 
 A nehézségi tárcsán **teljesen ki is kapcsolható** (első fokozat: nincs Hírnök, és
-figyelem sem gyűlik).
+zaj sem gyűlik).
 
 ## Parancsok otthonról
 
@@ -950,7 +1022,7 @@ Egy parancs mindig **valakinek a parancsa** — az a játékos felel érte, és 
 a jegyeket, ha összejön. Ami lejár, az **−2 morál**.
 
 Miket kérhetnek: nyerjetek meg N partraszállást · fejtsetek meg N szerkezetet ·
-legyen N ereklye a hajón · érjetek el N megértést · fejezzetek be N kutatást ·
+legyen N ereklye a hajón · érjetek el N megfejtést · fejezzetek be N kutatást ·
 legyetek az N. oszlopban · legyen elég morál vagy élelem a határidőkor.
 
 A cél mindig **onnan** számol, ahol a hajó a parancs kiadásakor állt: egy parancs
@@ -962,7 +1034,7 @@ határidőkor** mérik — addig fenn kell tartani.
 Három válasz van, és ez szándékos:
 
 1. **Elérni a Csillagsírt**, és ott választani. Kilenc végkifejlet van odakint —
-   ötöt a megértés-szint nyit, négyet az, amit tettetek (lásd a Csillagsír
+   ötöt a megfejtés-szint nyit, négyet az, amit tettetek (lásd a Csillagsír
    fejezetet).
 2. **Visszafordulni a Kapu felé.** A csillagtérképen bármikor, amíg van rá
    üzemanyag: **2 üzemanyag oszloponként**. Ez **nem vereség**: amit
@@ -987,13 +1059,13 @@ száll partra**.
 ### Kik szállnak partra
 
 - **1-2 játékos:** Rúnaszövő és Múltidéző.
-- **3 játékos:** + **Rítushívó** — a hangadó. Támogató: gyógyítás, vért, Fluxus a
+- **3 játékos:** + **Rítushívó** — a hangadó. Támogató: gyógyítás, vért, Töltet a
   csapatnak. Ő az egyetlen, aki a rácson vissza tud adni életerőt.
 - **4 játékos:** + **Asztromanta** — a tüzérség. Nagy hatótáv, bemérés,
   területsebzés, de a legmagasabb kezdeményezés-számok (lassú) és nyolc életerő.
   Aki eléri, az meg is öli.
 
-Négy hőssel a **Kötés** is másképp működik: nem „a másik", hanem **bárki, aki elég
+Négy hőssel a **Kötelék** is másképp működik: nem „a másik", hanem **bárki, aki elég
 közel van** — ha van melletted társ, mindkettőtök találata +1. Négyen szétszóródni
 így sokkal drágább, mint ketten.
 
@@ -1014,14 +1086,14 @@ A három sosem „kicsi, közepes, nagy": az egyik biztonságos, az egyik **fize
 valamit azért, hogy erős legyen**, az egyik pedig csendes. Ezért nem lehet egyszer
 kitalálni a jó választ — attól függ, mire megy a hét.
 
-- **Rúnaszövő:** foltozás (+3 hajótest) · edzés (+2 Fluxus a következő
-  partraszállásra, 1 hajótestbe kerül) · tompítás (−2 figyelem)
-- **Múltidéző:** tanulmányozás (+4 információ) · hallgatózás (+1 megértés,
+- **Rúnaszövő:** foltozás (+3 hajótest) · edzés (+2 Töltet a következő
+  partraszállásra, 1 hajótestbe kerül) · tompítás (−2 zaj)
+- **Múltidéző:** tanulmányozás (+4 információ) · hallgatózás (+1 megfejtés,
   1 morálba kerül) · térképezés (egy oszloppal messzebb látsz, mint eddig)
 - **Rítushívó:** kötözés (minden hős +3 életerő) · éneklés (+2 morál) · tanítás
   (a tanítványai +2 munkahét, 1 morálba kerül)
 - **Asztromanta:** pásztázás (két oszlop) · útvonalszámítás (+3 üzemanyag) ·
-  figyelés (+2 információ, −1 figyelem)
+  csendes figyelés (+2 információ, −1 zaj)
 
 Aki nem ad ki őrséget, az egyszerűen nem csinál semmit — **nincs büntetés**, csak
 kimarad belőle. A hét lezárása alatt kiírja, hány pulton nincs még kiadva.
@@ -1099,16 +1171,16 @@ visszacsatlakoznak.
    kihagyod, vaktában játszol.
 2. **Ne hagyd az Életfenntartást a szükséges alatt.** Az a fajta veszteség, ami
    hetekig tart, és nem látszik azonnal.
-3. **A Rúnamag a Fluxus.** Ha holnap partra szálltok, ma érdemes odaadni az energiát —
+3. **A Rúnamag a Töltet.** Ha holnap partra szálltok, ma érdemes odaadni az energiát —
    és ha csak utaztok, kár rá.
 4. **A Szentélybe állítsatok valakit.** A morál cél felé sodródik, és a Szentély
    emeli a célt.
 5. **Az Érzékelők nem luxus.** Vakon választani utat drágább, mint egy egység energia.
 6. **A Rúnaőrzőt öld meg elsőnek** a csatákban: Vértet ad mindenkinek, és attól lassú
    lesz minden.
-7. **Maradjatok 2 mezőn belül** a Kötés bónuszért — de ne álljatok mindketten
+7. **Maradjatok 2 mezőn belül** a Kötelék bónuszért — de ne álljatok mindketten
    ugyanannak az ellenségnek a szomszédjába, ha területsebzést jelentett be.
 8. **A pihenést tervezd, ne szenvedd el.** Egy körbe kerül, ezért jobb akkor megtenni,
    amikor épp senki nem áll a nyakadon.
-9. **A megértés nem fényűzés.** Ha csak a hajót fejlesztitek, odaérni fogtok — de nem
+9. **A megfejtés nem fényűzés.** Ha csak a hajót fejlesztitek, odaérni fogtok — de nem
    lesz mit tenni.

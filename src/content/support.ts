@@ -42,7 +42,7 @@ export const SUPPORT_DEFS: SupportDef[] = [
     kind: 'dampen',
     name: { hu: 'Csendesítés', en: 'Dampen' },
     text: {
-      hu: 'Amíg odalent zajt csaptok, itt fent tompítjuk. −1 figyelem.',
+      hu: 'Amíg odalent zajt csaptok, itt fent tompítjuk. −1 zaj.',
       en: 'While you make the noise down there, we take it out of the air up here. −1 attention.',
     },
     cost: { id: 'information', amount: 4 },
@@ -51,7 +51,7 @@ export const SUPPORT_DEFS: SupportDef[] = [
     kind: 'power',
     name: { hu: 'Energiaátkötés', en: 'Reroute' },
     text: {
-      hu: 'A Rúnamagot átkötjük a partraszálló csapatra. +3 Fluxus.',
+      hu: 'A Rúnamagot átkötjük a partraszálló csapatra. +3 Töltet.',
       en: 'The rune core is rerouted to the landing party. +3 Flux.',
     },
     cost: { id: 'fuel', amount: 3 },

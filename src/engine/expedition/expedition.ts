@@ -1770,6 +1770,17 @@ function pledgeTarget(s: ExpeditionState, def: PledgeDef): number {
   }
 }
 
+/**
+ * The number a pledge WOULD ask for, if it were given right now.
+ *
+ * For the interface only: the buttons used to show a bare name — "Quiet", "The
+ * ground" — with what you were actually promising hidden in a tooltip. A promise
+ * you cannot read before you make it is not a promise.
+ */
+export function pledgePreview(s: ExpeditionState, kind: PledgeKind): number {
+  return pledgeTarget(s, pledgeDef(kind))
+}
+
 export function pledgeLabel(pledge: Pledge): Text {
   const def = pledgeDef(pledge.kind)
   const ask = def.ask(pledge.target)
@@ -3419,7 +3430,7 @@ export function endingProspects(s: ExpeditionState): {
     const at = want === 1 ? 3 : want === 2 ? 8 : 14
     const short = Math.max(0, at - s.understanding)
     return {
-      hu: `még ${short} megértés`,
+      hu: `még ${short} megfejtés`,
       en: `${short} more understanding`,
     }
   }

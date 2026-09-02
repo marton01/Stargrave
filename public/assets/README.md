@@ -53,7 +53,7 @@ the header to silence them.
 | ☐ | ✔ | `audio/rest.mp3` | Pihenés — egy lap örökre elveszik · Resting — a card is lost forever | ~0,5 s |
 | ☐ | ✔ | `audio/relic.mp3` | Relikvia felvéve, vagy a kijárat elérve · A relic picked up, or the exit reached | ~0,5 s |
 | ☐ | ✔ | `audio/week.mp3` | Eltelt egy hét (mély, halk gong) · A week passed (a deep, soft gong) | ~0,8 s |
-| ☐ | ✔ | `audio/research.mp3` | Kutatás kész, modul beépítve, megértés nőtt · Research done, module installed, understanding gained | ~0,6 s |
+| ☐ | ✔ | `audio/research.mp3` | Kutatás kész, modul beépítve, megfejtés nőtt · Research done, module installed, understanding gained | ~0,6 s |
 | ☐ | ✔ | `audio/puzzleSolved.mp3` | Feladvány megoldva (tiszta, felfelé tartó) · A puzzle solved (clean, ascending) | ~1 s |
 | ☐ | ✔ | `audio/missionWon.mp3` | Küldetés siker (visszafogott, nem fanfár) · Mission won (restrained, not a fanfare) | 2–4 s |
 | ☐ | ✔ | `audio/missionLost.mp3` | Visszavonulás, legénység elvesztése, morálösszeomlás · Withdrawal, a lost crew member, morale collapse | 2–4 s |
@@ -79,24 +79,25 @@ pixeles bélyegként — **és mostantól a csatatéren is**, korongba vágva, a
 színéből való gyűrűvel. Amelyikhez nincs fájl, ott a rajzolt figura áll a táblán, és az
 nem helykitöltő: pontosan azt rajzolja, amit a súgó legendája tanít. Mind be van kötve.
 
-Vagyis a `hero-cantor` és a `hero-surveyor` az egyetlen két hős, aki most is rajzolt
-alakként áll a csatában, míg a másik kettő portréval — ez a legláthatóbb hiányzó fájl a
-listán.
+**Mind a négy hősnek megvan a portréja**, tehát a táblán négy érme áll, mindenki a saját
+színű gyűrűjében. A rajzolt figurák nem tűntek el: a súgó legendája továbbra is azokat
+mutatja, és aki törli valamelyik fájlt, annak a helyén újra a figura áll.
 
 **EN:** These appear in the sidebar (heroes, enemies) and on the ship (crew) as a 44×44
 thumbnail — **and now on the battlefield as well**, cut into a coin inside a ring of the
 unit's own colour. Whatever has no file is drawn as its figure instead, and that is not a
 placeholder: it is exactly what the help legend teaches. All wired.
 
-So `hero-cantor` and `hero-surveyor` are the only two heroes still standing as drawings
-while the other two stand as portraits — the most visible missing file on this list.
+**All four heroes have their portrait now**, so the board carries four coins, each in its
+own colour of ring. The drawn figures have not gone anywhere: the help legend still
+teaches them, and deleting any one file puts that figure back on the board.
 
 | Kész | Be | Fájl | Mi legyen / What it should be |
 |---|---|---|---|
 | ☑ | ✔ | `portraits/hero-runesmith.webp` | Páncélos, súlyos alak; borostyán rúnafény a fémen · An armoured, heavy figure; amber rune light on metal |
 | ☑ | ✔ | `portraits/hero-echoreader.webp` | Törékeny, csuklyás alak; hideg ciánkék fény · A fragile, hooded figure; cold cyan light |
-| ☐ | ✔ | `portraits/hero-cantor.webp` | **Új.** A hangadó: idősebb, nyugodt arc, torok és állkapocs hangsúlyos; halvány zöldes fény, mint egy lámpás egy kápolnában. Nem harcos. · **New.** The one who sets the note: an older, calm face, throat and jaw emphasised; a faint green light, like a lamp in a chapel. Not a fighter. |
-| ☐ | ✔ | `portraits/hero-surveyor.webp` | **Új.** A távolságok embere: műszeres szemvédő vagy monokli, egyik szem eltakarva; hideg fehér fénypont a lencsén; keskeny, feszült alkat. · **New.** The man of distances: an instrumented eyepiece or monocle, one eye covered; a cold white point of light on the lens; a narrow, tense build. |
+| ☑ | ✔ | `portraits/hero-cantor.webp` | **Új.** A hangadó: idősebb, nyugodt arc, torok és állkapocs hangsúlyos; halvány zöldes fény, mint egy lámpás egy kápolnában. Nem harcos. · **New.** The one who sets the note: an older, calm face, throat and jaw emphasised; a faint green light, like a lamp in a chapel. Not a fighter. |
+| ☑ | ✔ | `portraits/hero-surveyor.webp` | **Új.** A távolságok embere: műszeres szemvédő vagy monokli, egyik szem eltakarva; hideg fehér fénypont a lencsén; keskeny, feszült alkat. · **New.** The man of distances: an instrumented eyepiece or monocle, one eye covered; a cold white point of light on the lens; a narrow, tense build. |
 | ☑ | ✔ | `portraits/enemy-ash-husk.webp` | Hamuból álló, összeomló váz · A collapsing husk made of ash |
 | ☑ | ✔ | `portraits/enemy-rune-sentinel.webp` | Álló, pajzsos gépi őrszem · A standing, shielded mechanical sentry |
 | ☑ | ✔ | `portraits/enemy-choir-wraith.webp` | Alaktalan, éneklő jelenés · A formless, singing apparition |

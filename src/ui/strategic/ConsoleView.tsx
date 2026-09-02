@@ -22,6 +22,7 @@ import {
   menteesOf,
   mentorLimit,
   pledgeLabel,
+  pledgePreview,
 } from '../../engine/expedition/expedition'
 import type { ExpeditionAction } from '../../engine/expedition/expedition'
 import { directiveAtDeadline, directiveLabel, party } from '../../engine/expedition/expedition'
@@ -234,6 +235,8 @@ function Perks({
         <h3>{t.perksHeading}</h3>
         <span className="panel-meta">{t.marksHeld(record.marks, s(MARK_NAMES[hero]))}</span>
       </header>
+      {/* "Mark" was a currency the interface named but never explained. */}
+      <p className="panel-intro">{t.perksIntro}</p>
 
       <div className="perk-list">
         {perksOf(hero).map((perk) => {
@@ -372,7 +375,7 @@ function relicEffectLine(id: string, s: (text: { hu: string; en: string }) => st
   const e = relic(id).effect
   const parts: string[] = []
   const add = (hu: string, en: string) => parts.push(s({ hu, en }))
-  if (e.flux) add(`Fluxus +${e.flux}`, `Flux +${e.flux}`)
+  if (e.flux) add(`Töltet +${e.flux}`, `Flux +${e.flux}`)
   if (e.heroHp) add(`Életerő +${e.heroHp}`, `Hit points +${e.heroHp}`)
   if (e.wards) add(`Hajótest-védelem +${e.wards}`, `Hull protection +${e.wards}`)
   if (e.sensorRange) add(`Érzékelők +${e.sensorRange} oszlop`, `Sensors +${e.sensorRange} columns`)
@@ -382,11 +385,11 @@ function relicEffectLine(id: string, s: (text: { hu: string; en: string }) => st
   }
   if (e.research) add(`Labor +${e.research} információ`, `Lab +${e.research} information`)
   if (e.repair) add(`Kohó +${e.repair} hajótest`, `Forge +${e.repair} hull`)
-  if (e.bondRange) add(`Kötés ${e.bondRange} mezőig`, `Bond up to ${e.bondRange} tiles`)
+  if (e.bondRange) add(`Kötelék ${e.bondRange} mezőig`, `Bond up to ${e.bondRange} tiles`)
   if (e.weekly) add(`Hetente +${e.weekly.amount}`, `+${e.weekly.amount} a week`)
   if (e.attention) {
     const n = e.attention
-    add(`Figyelem ${n > 0 ? '+' : '−'}${Math.abs(n)}/hét`, `Attention ${n > 0 ? '+' : '−'}${Math.abs(n)} a week`)
+    add(`Zaj ${n > 0 ? '+' : '−'}${Math.abs(n)}/hét`, `Attention ${n > 0 ? '+' : '−'}${Math.abs(n)} a week`)
   }
   return parts.join(' · ')
 }
@@ -636,20 +639,24 @@ function PledgePanel({
       ) : (
         <>
           <p className="panel-intro">{t.pledgeIntro}</p>
-          <div className="pledge-options">
+          <ul className="pledge-options">
             {PLEDGE_DEFS.map((def) => (
-              <button
-                key={def.kind}
-                className="button button-small"
-                data-action="makePledge"
-                data-pledge={def.kind}
-                title={s(def.said)}
-                onClick={() => dispatch({ k: 'makePledge', hero, kind: def.kind })}
-              >
-                {s(def.name)}
-              </button>
+              <li key={def.kind}>
+                <button
+                  className="button button-small"
+                  data-action="makePledge"
+                  data-pledge={def.kind}
+                  title={s(def.said)}
+                  onClick={() => dispatch({ k: 'makePledge', hero, kind: def.kind })}
+                >
+                  {s(def.name)}
+                </button>
+                {/* What you are actually promising. It used to be in a tooltip,
+                    which is the same as not being written down at all. */}
+                <span className="pledge-ask">{s(def.ask(pledgePreview(state, def.kind)))}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </>
       )}
     </section>
@@ -690,11 +697,12 @@ function AshorePanel({
         data-action="toggleAshore"
         data-hero={hero}
         disabled={locked || state.activeMission !== null}
-        title={locked ? t.ashoreLocked : undefined}
         onClick={() => dispatch({ k: 'toggleAshore', hero })}
       >
         {staying ? t.ashoreStaying : t.ashoreGoing}
       </button>
+      {/* Why the button is grey, in words on the screen rather than in a tooltip. */}
+      {locked && <p className="panel-note">{t.ashoreLocked}</p>}
       {staying && (
         <ul className="support-list">
           {SUPPORT_DEFS.map((def) => (

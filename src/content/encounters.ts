@@ -602,7 +602,7 @@ export const ENCOUNTERS: Encounter[] = [
       },
       {
         text: {
-          hu: 'Összevetjük az otthoni Kapuval. (Megértés 3+)',
+          hu: 'Összevetjük az otthoni Kapuval. (Megfejtés 3+)',
           en: 'We compare it with the Gate back home. (Understanding 3+)',
         },
         requires: { k: 'understandingAtLeast', value: 3 },
@@ -737,7 +737,7 @@ export const ENCOUNTERS: Encounter[] = [
       },
       {
         text: {
-          hu: 'Megkérdezzük. (Megértés 8+)',
+          hu: 'Megkérdezzük. (Megfejtés 8+)',
           en: 'We ask it. (Understanding 8+)',
         },
         requires: { k: 'understandingAtLeast', value: 8 },
@@ -1103,7 +1103,7 @@ export const ENCOUNTERS: Encounter[] = [
     choices: [
       {
         text: {
-          hu: 'Elmondjuk, mit láttunk. (8 Információ → megértés)',
+          hu: 'Elmondjuk, mit láttunk. (8 Információ → megfejtés)',
           en: 'We tell them what we have seen. (8 Information → understanding)',
         },
         requires: { k: 'resourceAtLeast', id: 'information', value: 8 },
@@ -1158,7 +1158,7 @@ export const ENCOUNTERS: Encounter[] = [
     choices: [
       {
         text: {
-          hu: 'Elmondjuk nekik, mit tudunk. (Megértés 3+)',
+          hu: 'Elmondjuk nekik, mit tudunk. (Megfejtés 3+)',
           en: 'We tell them what we know. (Understanding 3+)',
         },
         requires: { k: 'understandingAtLeast', value: 3 },

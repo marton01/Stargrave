@@ -49,7 +49,7 @@ export const HERO_CLASSES: Record<HeroClassId, HeroClass> = {
     name: { hu: 'Rítushívó', en: 'Cantor' },
     description: {
       hu:
-        'A hangadó. Támogató: gyógyítás, vért, Fluxus a csapatnak. Nem ő öl meg semmit — ' +
+        'A hangadó. Támogató: gyógyítás, vért, Töltet a csapatnak. Nem ő öl meg semmit — ' +
         'ő tartja állva a többieket, és ő az egyetlen, aki a rácson vissza tud adni életerőt.',
       en:
         'The one who sets the note. A support: healing, shields, Flux for the party. She kills ' +

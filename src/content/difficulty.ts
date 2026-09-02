@@ -83,14 +83,14 @@ export const DIALS: DialDef[] = [
       {
         value: 1.3,
         text: {
-          hu: 'Harmadával több. A Kötés és a területsebzés komolyan számítani fog.',
+          hu: 'Harmadával több. A Kötelék és a területsebzés komolyan számítani fog.',
           en: 'A third more. The Bond and area attacks start to matter a lot.',
         },
       },
       {
         value: 1.6,
         text: {
-          hu: 'Másfélszer annyi. Két hőssel ez nyílt terepen nem tartható — fedezékből kell játszani.',
+          hu: 'Másfélszer annyi. Nyílt terepen ez nem tartható — fedezékből kell játszani.',
           en: 'Half again as many. Two heroes cannot hold open ground against this; you play from cover.',
         },
       },
@@ -144,9 +144,9 @@ export const DIALS: DialDef[] = [
   },
   {
     id: 'flux',
-    name: { hu: 'Induló Fluxus', en: 'Starting Flux' },
+    name: { hu: 'Induló Töltet', en: 'Starting Flux' },
     about: {
-      hu: 'Mennyi Fluxussal indul a partraszálló csapat, a Rúnamagon felül.',
+      hu: 'Mennyi Töltettel indul a partraszálló csapat, a Rúnamagon felül.',
       en: 'How much Flux the landing party starts with, on top of the rune core.',
     },
     scope: 'nextLanding',
@@ -154,35 +154,35 @@ export const DIALS: DialDef[] = [
       {
         value: 3,
         text: {
-          hu: '+3. Az árcédulás lapfeleket szinte szabadon használhatod.',
+          hu: '+3. A Töltetbe kerülő lapfeleket (◈) szinte szabadon használhatod.',
           en: '+3. You can play the halves with a price tag almost freely.',
         },
       },
       {
         value: 1,
         text: {
-          hu: '+1. Eggyel több árcédulás lapfél játszható ki egy csatában.',
+          hu: '+1. Eggyel több Töltetbe kerülő lapfél (◈) játszható ki egy csatában.',
           en: '+1. One more half with a price tag per battle.',
         },
       },
       {
         value: 0,
         text: {
-          hu: 'Ahogy tervezve van: amit a Rúnamagra adtál, az a Fluxus.',
+          hu: 'Ahogy tervezve van: amit a Rúnamagra adtál, az a Töltet.',
           en: 'As designed: what you gave the rune core is what you get.',
         },
       },
       {
         value: -1,
         text: {
-          hu: '−1. Minden árcédulás lapfél kiválasztása fájni fog.',
+          hu: '−1. Minden Töltetbe kerülő lapfél (◈) kiválasztása fájni fog.',
           en: '−1. Choosing any half with a price tag will hurt.',
         },
       },
       {
         value: -2,
         text: {
-          hu: '−2. Szinte csak az ingyenes felekkel játszol, hacsak nem adsz sokat a Rúnamagra.',
+          hu: '−2. Szinte csak az ingyenes lapfelekkel játszol, hacsak nem adsz sokat a Rúnamagra.',
           en: '−2. Nearly all free halves, unless you pour power into the rune core.',
         },
       },
@@ -305,7 +305,7 @@ export const DIALS: DialDef[] = [
     name: { hu: 'A Hírnök', en: 'The Herald' },
     about: {
       hu:
-        'Milyen gyorsan gyűlik a figyelem, és ezzel milyen hamar indul el utánatok a Hírnök. ' +
+        'Milyen gyorsan gyűlik a zaj, és ezzel milyen hamar indul el utánatok a Hírnök. ' +
         'Az első fokozaton egyáltalán nincs Hírnök.',
       en:
         'How fast attention builds, and so how soon the Herald sets out after you. On the first ' +
@@ -316,7 +316,7 @@ export const DIALS: DialDef[] = [
       {
         value: 0,
         text: {
-          hu: 'Nincs Hírnök. A figyelem sem gyűlik: a Csillagsír nem veszi észre, hogy ott vagytok.',
+          hu: 'Nincs Hírnök. A zaj sem gyűlik: a Csillagsír nem veszi észre, hogy ott vagytok.',
           en: 'No Herald. Attention does not build either: the Stargrave never notices you.',
         },
       },

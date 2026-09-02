@@ -252,7 +252,7 @@ export function describeExpeditionEvent(event: ExpeditionEvent, lang: Lang): str
 
     case 'understandingGained':
       return hu
-        ? `Megértés +${event.amount} (összesen ${event.total}).`
+        ? `Megfejtés +${event.amount} (összesen ${event.total}).`
         : `Understanding +${event.amount} (total ${event.total}).`
 
     case 'mapRevealed':
@@ -284,12 +284,12 @@ export function describeExpeditionEvent(event: ExpeditionEvent, lang: Lang): str
 
     case 'attentionRose':
       return hu
-        ? `Zajt csaptunk: figyelem +${event.amount} (${event.total}).`
+        ? `Zajt csaptunk: zaj +${event.amount} (${event.total}).`
         : `We made noise: attention +${event.amount} (${event.total}).`
 
     case 'attentionFell':
       return hu
-        ? `Csendesebb hét: figyelem −${event.amount} (${event.total}).`
+        ? `Csendesebb hét: zaj −${event.amount} (${event.total}).`
         : `A quieter week: attention −${event.amount} (${event.total}).`
 
     case 'heraldWoke':

@@ -64,12 +64,15 @@ const DOMAIN_KEY: Record<Domain, UiKey> = {
   shared: 'domainShared',
 }
 
-/** Which hero holds a domain, for the filter's labels. */
-const DOMAIN_HERO: Record<Domain, 'runesmith' | 'echoreader' | null> = {
-  engineering: 'runesmith',
-  research: 'echoreader',
-  shared: null,
-}
+/**
+ * A domain is a half of the SHIP, not a hero.
+ *
+ * The filter used to label the two halves with a hero's name — "Runeweaver ·
+ * Engineering". With four people at the table that reads as though the other two
+ * had no share in the ship at all, which is the opposite of true: anybody may
+ * work either half, and the label was only ever a hint about who usually does.
+ * The hint is in `domainHint` now, where it can say so in a whole sentence.
+ */
 
 export function ShipView({
   state,
@@ -118,7 +121,7 @@ export function ShipView({
               data-domain={domain}
               onClick={() => setOnly(domain)}
             >
-              {s(HERO_CLASSES[DOMAIN_HERO[domain]!].name)} · {t[DOMAIN_KEY[domain]] as string}
+              {t[DOMAIN_KEY[domain]] as string}
             </button>
           ))}
         </div>

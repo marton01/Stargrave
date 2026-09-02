@@ -29,11 +29,11 @@ const HU = {
   helpSearchNone: 'Nincs találat',
   helpSearchElsewhere: 'Ezen a fülön nincs találat — a többi fülön a szám mutatja, hol van.',
   dialsTitle: 'Nehézség',
-  dialsHeading: 'Nehézség — tárcsákkal',
+  dialsHeading: 'Nehézség — külön-külön állítható',
   dialsIntro:
     'Nem egy szám, hanem több kis tárcsa: mindegyik a játék egy szorítását állítja, öt fokozatban. A harmadik mindenhol az, ahogy a játék tervezve van. Minden tárcsa alatt ott van, hogy a mostani fokozat mit jelent a gyakorlatban.',
-  dialsSavePreset: 'Mentés presetként',
-  dialsLoadPreset: 'Mentett preset betöltése',
+  dialsSavePreset: 'Legyen ez az alapbeállításom',
+  dialsLoadPreset: 'Az elmentett beállításom',
   dialsReset: 'Vissza a tervezettre',
   dialScopeLanding: 'a következő partraszállástól',
   dialScopeWeek: 'a következő héttől',
@@ -48,7 +48,7 @@ const HU = {
   wipeItemRooms: 'minden szoba, amit ez a böngésző ismer — és a játékoskulcsod is',
   wipeHint: 'Nincs visszavonás. Ha meg akarod tartani, előbb exportáld a mentést az Archívum képernyőjén.',
   wipeConfirm: 'Törlés és új játék',
-  bondActive: '⇄ Kötés: +1 sebzés',
+  bondActive: '⇄ Kötelék: +1 sebzés',
   handHide: 'Kéz elrejtése',
   handShow: 'Kéz megjelenítése',
   handToggleHint: 'A kártyapanel összecsukásával a csatatér megnő. A körhöz vissza kell nyitni.',
@@ -63,10 +63,10 @@ const HU = {
   endingUnseen: 'Még nem láttátok',
   endingsEarnedHeading: 'Kiérdemelt végkifejletek',
   endingsEarnedIntro:
-    'Ezeket nem a megértés száma nyitja, hanem az, amit az expedíció tett. A nevük és a ' +
+    'Ezeket nem a megfejtés száma nyitja, hanem az, amit az expedíció tett. A nevük és a ' +
     'feltételük itt látszik — a szövegük csak akkor, ha ott állsz előtte.',
   endingNeed: (tier: number) =>
-    tier === 0 ? 'megértés nem kell hozzá' : `${tier}. megértés-szint kell hozzá`,
+    tier === 0 ? 'megfejtés nem kell hozzá' : `${tier}. megfejtés-szint kell hozzá`,
   endingLastQuestion: 'Az utolsó kérdés — a Csillagsírban tehető fel',
   accountCosts: 'Amit kér',
   accountEffects: 'Amit ad',
@@ -76,7 +76,7 @@ const HU = {
   heartFinal: 'Ez az expedíció utolsó döntése. Nincs utána visszaút.',
   marketConfirm: (price: number) => `Megveszem — ${price} ✧`,
   summaryWeek: 'A hét vége',
-  summaryMission: 'Küldetés elszámolása',
+  summaryMission: 'Mi lett a partraszállásból',
   summaryEncounter: 'A döntés következménye',
   summaryMarket: 'Kereskedés vége',
   summaryWeeksPassed: (weeks: number) => `${weeks} hét telt el`,
@@ -97,10 +97,10 @@ const HU = {
   landingNormalHint: 'Ahogy tervezve van: a nehézség a térkép mélységéből és a Sötétedésből jön.',
   landingHardHint:
     'Egy szinttel nehezebb küldetések és 30%-kal több ellenfél. A hajó dolgai változatlanok.',
-  rescueWin: 'Elszámolás teljesítettként',
+  rescueWin: 'Legyen győzelem',
   rescueWinText:
     'A csata véget ér győzelemként: megkapod a küldetés teljes jutalmát, ereklyés küldetésnél az összes ereklyével. A legjobb forgatókönyv, harc nélkül.',
-  rescueLose: 'Feladás teljes veszteséggel',
+  rescueLose: 'Legyen vereség',
   rescueLoseText:
     'A csata véget ér vereségként, a teljes árral: a csapat elesik (mindenki 1 életerővel jön haza), egy hét elmegy, morál −2, és egy legénységtag meghal. Hajóra törésnél a hajótest is sérül. Ez a legrosszabb forgatókönyv, harc nélkül.',
   rescueSkip: 'Partraszállás kihagyása',
@@ -131,14 +131,17 @@ const HU = {
   lengthLong: 'Hosszú',
   lengthShortText: '8 rendszer, 20 hét. Egy hosszabb este.',
   lengthMediumText: '10 rendszer, 28 hét. Ez az alapeset.',
-  lengthLongText: '13 rendszer, 40 hét. Több estére, több megértésre.',
+  lengthLongText: '13 rendszer, 40 hét. Több estére, több megfejtésre.',
   launch: 'Indulás',
   archiveHeading: 'Az Archívum',
   archiveIntro:
-    'Minden expedíció — még a kudarcos is — hazaküldi az adatait a Kapun át. Ez nem erősödést old fel, hanem tartalmat: a világ gazdagodik, nem könnyebbé válik.',
+    'Az Archívum a Kapu innenső oldala: a hazatérők adatait ide gyűjtik. Minden expedíció — még a ' +
+    'kudarcos is — hazaküldi, amit megtudott, és abból pont lesz. A pontokból NEM erősebb hajót ' +
+    'lehet venni, hanem több tartalmat: új helyzeteket, új végkifejleteket. A világ gazdagodik, ' +
+    'nem könnyebbé válik.',
   archivePoints: 'Archívum-pont',
   expeditionsRun: 'Expedíciók',
-  bestUnderstanding: 'Legjobb megértés',
+  bestUnderstanding: 'Legjobb megfejtés',
   unlockHeading: 'Feloldható',
   unlockBuy: 'Feloldás',
   unlockOwned: 'Feloldva',
@@ -150,9 +153,12 @@ const HU = {
   importFailed: 'Ez a fájl nem olvasható mentés.',
   deleteSave: 'Mentés törlése',
   deleteSaveConfirm: 'Biztosan törlöd a mentést? Ez nem visszavonható.',
-  seed: 'Mag',
-  seedHint: 'Ugyanaz a mag ugyanazt az expedíciót adja. Egy lezárt futam magja az előzményekben van, egy kattintással beírható.',
-  seedReuse: (seed: number) => `Mag ${seed} beírása a mezőbe`,
+  seed: 'Kezdőszám',
+  seedHint:
+    'Ez a szám sorsolja ki az egész expedíciót: a térképet, a helyszíneket, a találkozásokat. ' +
+    'Ugyanaz a szám ugyanazt a galaxist adja — így egy jól sikerült futamot újra le lehet ' +
+    'játszani, vagy ugyanazt odaadni valaki másnak. Üresen hagyva kapsz egy véletlent.',
+  seedReuse: (seed: number) => `${seed} kezdőszám beírása a mezőbe`,
 
   // ------------------------------------------------------------------- ship
   shipHeading: 'A hajó',
@@ -173,7 +179,9 @@ const HU = {
     'Ez közös döntés — ez a játék legerősebb kooperatív eleme.',
   stationsHeading: 'Állomások',
   stationsIntro:
-    'Egy állomás akkor működik, ha energiája is van és legénység is áll rajta. Ez a kettős korlát adja a szűkösséget.',
+    'Az állomás a hajó egy-egy munkahelye: a kohó, a labor, a gyógyító. Akkor és csak akkor ' +
+    'dolgozik, ha KAP ENERGIÁT a reaktorból, ÉS ÁLL VALAKI a legénységből. Se elég energia ' +
+    'emberek nélkül, se elég ember energia nélkül — ez a két korlát adja a játék szűkösségét.',
   stationEmpty: 'Nincs beosztva senki',
   stationNoPower: 'Nincs energia',
   stationRunning: 'Működik',
@@ -188,24 +196,37 @@ const HU = {
   unassign: 'Leváltás',
   endWeek: 'A hét vége',
   endWeekBlocked: 'Előbb be kell fejezni, ami folyamatban van.',
-  fluxPreview: (n: number) => `A partraszálló csapat ${n} Fluxussal indul.`,
+  fluxPreview: (n: number) => `A partraszálló csapat ${n} Töltettel indul.`,
   fluxPreviewHint:
-    'A Rúnamagra adott energia lesz a Fluxus. Ez köti össze a hajót és a partraszállást.',
+    'A Rúnamagra adott energia lesz a Töltet. Ez köti össze a hajót és a partraszállást.',
   logHeading: 'Napló',
-  understanding: 'Megértés',
+  understanding: 'Megfejtés',
   understandingHint:
-    'A megértés nem ad harci előnyt. Mégis ez dönti el, mit tehetsz a galaxis szívében.',
+    'Mennyit fejtettetek meg abból, hogy MI TÖRTÉNT ITT — mitől halt ki egy egész galaxis. ' +
+    'Harcban semmit nem ér. A végén viszont csak ez számít: ez dönti el, hányféle vége lehet ' +
+    'az expedíciónak. Kevés megfejtéssel mindössze kettő marad — elmenekültök, vagy szétveritek ' +
+    'azt, amit nem értettetek meg.',
   tier0: 'Semmit nem értünk',
   tier1: 'Kezdjük érteni',
   tier2: 'Látjuk, mi történik',
   tier3: 'Értjük, miért',
+  /** Egy szó a fejlécbe a szám mellé — a hosszú mondat ott két sorba tört. */
+  tierName: (tier: number): string =>
+    tier >= 3 ? 'értjük' : tier === 2 ? 'látszik' : tier === 1 ? 'sejtés' : 'semmi',
+  darkeningHint:
+    'A galaxis kihűlése. Ahogy telnek a hetek, egyre magasabb szintre lép, és minden szint ' +
+    'ugyanazt a kettőt teszi: a reaktor kevesebb energiát ad, odalent pedig erősebbek az ' +
+    'ellenfelek. Megállítani nem lehet, csak elé dolgozni.',
 
   // --------------------------------------------------------------- research
   researchHeading: 'Kutatás',
   researchIntro:
-    'Egy Információ-készlet, két ág. A technológia erősebb hajót ad. A megértés nem ad semmit — csak a végjátékot.',
+    'Egy közös Információ-készlet, két irány, és nem lehet mindkettőt vinni. A TECHNOLÓGIA most ' +
+    'segít: erősebb hajót, több energiát, jobb felszerelést ad. A MEGFEJTÉS most semmit nem ad — ' +
+    'a végén viszont ez dönti el, hogy egyáltalán mit tudtok kezdeni azzal, amit a galaxis ' +
+    'szívében találtok.',
   branchTechnology: 'Technológia',
-  branchUnderstanding: 'Megértés',
+  branchUnderstanding: 'Megfejtés',
   researchActive: 'Folyamatban',
   researchWeeksLeft: (n: number) => `${n} hét`,
   researchStart: 'Indítás',
@@ -220,7 +241,9 @@ const HU = {
   // --------------------------------------------------------------- star map
   starMapHeading: 'Csillagtérkép',
   starMapIntro:
-    'Előre vezető utak. Amit választotok, az heteket kér — és a Kapu közben számol.',
+    'Innen vezetnek utak előre. A térkép OSZLOPOKBA van rendezve: balra a Kapu, jobbra a ' +
+    'galaxis szíve, és minden oszloppal mélyebbre juttok — nehezebb ellenfelek, jobb leletek. ' +
+    'Amit választotok, az heteket kér, és a Kapu közben számolja a magáét.',
   enginesColdWarning:
     'A hajtómű energia nélkül áll: így nem lehet útnak indulni. Adj neki legalább egy egységet a Hajó képernyőn.',
   setCourse: 'Irány',
@@ -253,7 +276,7 @@ const HU = {
   nodeEmptyText:
     'Nincs itt semmi — csak a hét, ami elmegy rá. Nem hiba a térképen: a mélyebb oszlopokban egyre több az üres tér, és ez maga a nyomás.',
   nodeHeartText:
-    'A galaxis szíve, a Csillagsír. Az út vége. Hogy ott mit tudsz tenni, azt a megértés dönti el, nem a felszerelés.',
+    'A galaxis szíve, a Csillagsír. Az út vége. Hogy ott mit tudsz tenni, azt a megfejtés dönti el, nem a felszerelés.',
 
   engageMission: 'Partraszállás',
   engagePuzzle: 'Megvizsgáljuk',
@@ -318,7 +341,7 @@ const HU = {
   puzzleAttemptsLeft: (n: number) => `Hátralévő próba: ${n}`,
   puzzleNoGuessing:
     'Minden feladvány levezethető logikával. Nem kell tippelni, és nincs benne nyelvi tartalom.',
-  runeDecodeName: 'Rúnadekódolás',
+  runeDecodeName: 'Rúnafejtés',
   runeDecodeHelp:
     'Ki kell találni a rúnasorrendet. Kattints egy mezőre a következő rúnáért (jobb klikk: visszafelé), majd Beadás. Utána két számot kapsz: mennyi rúna volt a helyén, és mennyi szerepel a sorozatban, de más helyen. Azt NEM mondja meg, melyik — csak azt, mennyi.',
   runeExact: 'a helyén',
@@ -343,7 +366,7 @@ const HU = {
   safeGroundName: 'Biztos talaj',
   safeGroundHelp:
     'A számok azt mutatják, hány szomszédos mező omlik be. Jelöld meg mindet, ami beomlik.',
-  powerRoutingName: 'Energia-útvonaltervezés',
+  powerRoutingName: 'Vezetékrendezés',
   powerRoutingHelp:
     'Forgasd a vezetékeket, amíg a reaktor eléri az összes csatlakozót. Két mező csak akkor kapcsolódik, ha mindkettő egymás felé mutat.',
   powerRoutingReactor: 'Reaktor',
@@ -369,16 +392,17 @@ const HU = {
   // ------------------------------------------------------------------ heart
   heartHeading: 'A Csillagsír',
   heartIntro:
-    'Itt van a galaxis szíve. Nem a fegyvereitek döntik el, mit tehettek — hanem az, mennyit értettetek meg.',
-  heartUnderstanding: (n: number) => `Megértés: ${n}`,
+    'Ez a galaxis szíve, a Csillagsír. Nem a fegyvereitek döntik el, mit tudtok tenni vele, hanem ' +
+    'az, hogy mennyit fejtettetek meg abból, mi történt az itt élőkkel. Amit nem értetek, azt ' +
+    'csak itt hagyni vagy szétverni tudjátok.',
+  heartUnderstanding: (n: number) => `Megfejtés: ${n}`,
   heartChoose: 'Ezt tesszük',
-  heartLocked: 'Ehhez nem értetek eleget.',
-
+  heartLocked: 'Ehhez túl keveset fejtettetek meg abból, mi történt itt.',
   // ------------------------------------------------------------------- over
   overVictory: 'Az expedíció véget ért',
   overLost: 'Az expedíció elveszett',
   overArchiveEarned: (n: number) => `Az Archívum ${n} ponttal gazdagodott.`,
-  overUnderstanding: (n: number) => `Megértés a végén: ${n}`,
+  overUnderstanding: (n: number) => `Megfejtés a végén: ${n}`,
   overWeeks: (n: number) => `${n} hét`,
   overReturn: 'Vissza az Archívumhoz',
   abandonExpedition: 'Expedíció leállítása',
@@ -386,7 +410,7 @@ const HU = {
 
   // ------------------------------------------------------ battle (tactical)
   round: 'Kör',
-  fluxShared: 'Fluxus (közös)',
+  fluxShared: 'Töltet — ebből fizetitek a lapok erős felét',
   phase: 'Fázis',
   phaseCardSelection: 'Lapválasztás',
   phaseResolution: 'Végrehajtás',
@@ -410,7 +434,7 @@ const HU = {
   ashoreIntro:
     'Nem muszáj mindenkinek lemenni. Aki fent marad, az a csata alatt a hajót viszi: körönként egy támogatás, a raktár terhére. Lent viszont eggyel kevesebben lesztek.',
   ashoreStaying: 'Fent maradok ✓',
-  ashoreGoing: 'Fent maradok',
+  ashoreGoing: 'Inkább fent maradok',
   ashoreLocked: 'Valakinek le kell mennie — legalább ketten mindig partra szállnak.',
   supportHeading: 'A hajóról',
   supportSpent: 'ebben a körben már volt',
@@ -421,16 +445,25 @@ const HU = {
   pledgeBy: (name: string, weeks: number): string => `${name} szava · ${weeks} hét`,
   prospectsHeading: 'Hogyan érhet véget',
   prospectsIntro:
-    'Ezért gyűjtitek a megértést. Amelyik zárva van, ott oda van írva, mi hiányzik hozzá — és ha csendben maradtok, a felső kettő marad.',
+    'Ezért éri meg megfejteni, mi történt itt: ez a lista mondja meg, hogyan érhet véget az ' +
+    'expedíció. Amelyik sor zárva van, oda ki van írva, mi hiányzik hozzá. Ha végig csendben ' +
+    'maradtok, csak a nyitva maradt kettő marad — elmenekültök, vagy szétveritek.',
   prospectOpen: 'nyitva',
-  understandingTierLine: (tier: number): string => `${tier}. szint`,
-  attentionCostLine: 'minden 2 megértés +1 figyelem',
+  understandingTierLine: (tier: number): string =>
+    tier >= 3
+      ? 'Értjük, miért'
+      : tier === 2
+        ? 'Látjuk, mi történik'
+        : tier === 1
+          ? 'Kezdjük érteni'
+          : 'Még semmit nem értünk',
+  attentionCostLine: 'amit megfejtetek, azt meg is hallják: 2 megfejtés 1 zajba kerül',
   figuresHeading: 'Akikkel találkoztatok',
   figuresMeta: 'ők emlékeznek rátok',
   figureWarm: 'jóban vagytok',
   figureCold: 'haragszik rátok',
-  readingYours: 'a te leolvasásod',
-  readingTheirs: 'az ő leolvasása',
+  readingYours: 'ezt csak te látod',
+  readingTheirs: 'ezt csak ő látja',
   readingIntro:
     'Ezt rajtad kívül senki nem látja az asztalnál. Nem titok — a te dolgod, hogy elmondd.',
   readingClosed: (name: string, count: number): string =>
@@ -541,9 +574,9 @@ const HU = {
   badgeInitiative: 'Kezdeményezés (jobbra fent, piros)',
   badgeInitiativeText:
     'Ugyanaz a szám három helyen: az ellenfél mezőjén (jobbra fent), az ellenfél neve mellett az oldalsávban, és a saját lapjaid BAL FELSŐ sarkában. Ez a kezdeményezés: aki kisebb, az lép előbb. A körödben a két kiválasztott lap közül az adja a tiédet, amelyiket kezdeményezésnek jelölöd — ezért nem mindegy, melyiket.',
-  badgeBond: 'Kötés (a hős kártyáján, zöld)',
+  badgeBond: 'Kötelék (a hős kártyáján, zöld)',
   badgeBondText:
-    'Ha van társad 2 mezőn belül, MINDKETTŐTÖK támadása +1-et sebez — hárman-négyen is, mindenkire külön. Ezen felül: ha ugyanabban a körben már megsebezte valaki ugyanazt az ellenfelet, a te találatod további +1-et visz (Összehangolás). Amikor célpontot választasz, a rács a célpont közepére kiírja, mennyit visz el a találat — abban a számban már minden benne van: Kötés, Összehangolás, Rúnajel, Vért, ledöntés.',
+    'Ha van társad 2 mezőn belül, MINDKETTŐTÖK támadása +1-et sebez — hárman-négyen is, mindenkire külön. Ezen felül: ha ugyanabban a körben már megsebezte valaki ugyanazt az ellenfelet, a te találatod további +1-et visz (Összehangolás). Amikor célpontot választasz, a rács a célpont közepére kiírja, mennyit visz el a találat — abban a számban már minden benne van: Kötelék, Összehangolás, Rúnajel, Vért, ledöntés.',
   badgeShield: 'Vért (balra fent, kék)',
   badgeShieldText: 'Ennyivel csökken a következő találat sebzése, aztán a Vért 1-gyel fogy.',
   badgeStatusDots: 'Állapotpontok (balra lent)',
@@ -556,27 +589,33 @@ const HU = {
     'A begyűjtendő ereklyék és a kijárat. Felderítő küldetéseken ezek a cél, nem az ellenség.',
 
   // -------------------------------------------------- consoles and marks
-  consolesHeading: 'Pultok',
+  consolesHeading: 'Kezelőpultok',
   consolesIntro:
-    'Két pult, két ember. Ami itt van, az nem közös: a jegyeket az szerzi, aki megszerezte, ' +
-    'az ereklyét az hordja, aki felvette, és a tanítványokat az képzi, aki elvállalta. ' +
-    'A reaktoron osztozzatok — ezen ne.',
-  consoleTabHint: 'Válaszd ki a saját pultodat. A másikat is látod, de ott ne nyomkodd.',
+    'Mindenkinek van egy saját pultja a hajón, és ami ott van, az NEM közös. A jegyeidet te ' +
+    'gyűjtöd és te költöd el, a parancsod a te határidőd, a tanítványaid a te embereid. A ' +
+    'többiek pultját is látod — de ott ne nyomkodj, az az ő dolguk.',
+  consoleTabHint: 'Itt válthatsz a pultok között. A sajátod az, amelyiken a te hősöd neve áll.',
   marksHeld: (n: number, name: string) => `${n} ${name}`,
-  marksEarned: (n: number) => `összesen ${n} szerezve`,
-  marksHow: 'Miből lesz jegy',
+  marksEarned: (n: number) => `eddig összesen ${n} gyűlt össze`,
+  marksHow: 'Miből gyűlik a jegyed',
   perksHeading: 'Amit megtanulhat',
+  perksIntro:
+    'A jegy a SAJÁT fejlődésed pontja: nem a hajóé és nem a többieké, más nem tudja elkölteni. ' +
+    'Azért kapod, amit a te hősöd csinál, és arra költöd, amit ő tanul meg — egy megtanult dolog ' +
+    'végleg az övé marad, az expedíció végéig.',
   perkBuy: (cost: number) => `Megtanulja — ${cost} jegy`,
   perkOwned: 'Megvan',
   perkNeeds: (name: string) => `Előbb: ${name}`,
   perkTooExpensive: 'Nincs elég jegy',
   relicsHeading: 'Ereklyék',
   relicsIntro:
-    'Az ereklye a raktárban nem tesz semmit. Csak az hat, amit valaki hord — és mindenki csak ' +
-    'annyit hordhat, amennyi helye van.',
-  relicSlots: (used: number, total: number) => `Ráhangolva: ${used} / ${total}`,
-  relicAttune: 'Ráhangolódom',
-  relicStow: 'Leveszem',
+    'Egy ereklye a raktárban NEM TESZ SEMMIT. Csak az hat, amit valaki magára vesz — ezt hívja a ' +
+    'játék ráhangolódásnak —, és mindenkinek csak egy-két helye van rá. Több ereklye van, mint ' +
+    'hely: az igazi kérdés nem az, hogy találtatok-e egyet, hanem hogy ezen a héten ki melyiket ' +
+    'hordja.',
+  relicSlots: (used: number, total: number) => `Magán hordja: ${used} / ${total}`,
+  relicAttune: 'Magamra veszem',
+  relicStow: 'Leteszem a raktárba',
   relicWornBy: (name: string) => `${name} hordja`,
   relicOnlyFor: (name: string) => `Csak ${name} tudja hordani`,
   relicNoSlot: 'Nincs több hely — előbb le kell venni valamit',
@@ -584,8 +623,9 @@ const HU = {
   relicWhisper: 'Az ára',
   menteesHeading: 'Tanítványok',
   menteesIntro:
-    'Akit elvállalsz, kétszer olyan gyorsan tanul a posztján. Ha kettő is képzett szintre ér, ' +
-    'minden megnyert partraszállás egy jegyet fizet neked a munkájuk után.',
+    'A legénység nem szám, hanem emberek. Akit a szárnyaid alá veszel, az kétszer olyan gyorsan ' +
+    'tanul a posztján, jobban is bírja a hajót — és ha képzett szintre ér, lehozhatod magaddal a ' +
+    'partraszállásra. Ha ott elesik, a legénységi listáról is lekerül.',
   menteeCount: (n: number, max: number) => `${n} / ${max} tanítvány`,
   menteeTake: 'Elvállalom',
   menteeRelease: 'Elengedem',
@@ -598,8 +638,9 @@ const HU = {
   // ------------------------------------------------------------ directives
   directivesHeading: 'Parancsok otthonról',
   directivesIntro:
-    'Határidős kérések a Kapu túloldaláról. Mindegyik az egyik pultra kerül — az a játékos ' +
-    'felel érte, és ő kapja a jegyeket, ha összejön. Ami lejár, az morálba kerül.',
+    'Kérések otthonról, határidővel: az Archívum a Kapu túloldaláról üzen, hogy mit várnak tőletek. ' +
+    'Mindegyik parancs EGY pultra kerül, és azé a játékosé, aki ott ül: ő felel érte, és ő kapja a ' +
+    'jegyeket, ha összejön. Ami lejár, az morálba kerül.',
   directiveDue: (week: number) => `határidő: ${week}. hét`,
   directiveLeft: (weeks: number) => `${weeks} hét van rá`,
   directiveOverdue: 'lejárt',
@@ -611,10 +652,12 @@ const HU = {
   directiveReward: 'Amit fizet',
 
   // ------------------------------------------------------- attention, Herald
-  attention: 'Figyelem',
+  attention: 'Zaj',
   attentionHint:
-    'Ennyire hangosan játszotok. A harc, az erővel nyitott szerkezetek és a felpörgetett hajtómű ' +
-    'gyűjtik; a csendes hetek, a Csendburok és néhány ereklye viszik le. Nyolcnál elindul a Hírnök.',
+    'Mennyire hallatszotok. Zajt csap a harc, az erővel nyitott szerkezet, a felpörgetett ' +
+    'hajtómű — és minden, amit megfejtetek: 2 megfejtés 1 zaj. Leviszi a csendes hét egy már ' +
+    'lezárt rendszerben, a Csendburok és néhány ereklye. Ha a zaj eléri a nyolcat, valami ' +
+    'elindul felétek a mélyből: a Hírnök.',
   heraldLabel: 'Hírnök',
   heraldAway: (columns: number) =>
     columns === 0 ? 'itt van' : `${columns} oszlopra`,
@@ -626,8 +669,9 @@ const HU = {
   // --------------------------------------------------------------- the Gate
   gateHeading: 'Vissza a Kapun',
   gateIntro:
-    'A Kapu még nyitva van, és van annyi üzemanyag, hogy meg lehessen fordulni. Ez nem vereség: ' +
-    'amit eddig összeszedtetek, átmegy, és az Archívum megkapja. Az expedíció itt véget ér.',
+    'A Kapu az egyetlen átjáró oda, ahonnan jöttetek — és csak egy ideig marad nyitva. Amíg ' +
+    'nyitva van, és van elég üzemanyag, bármikor meg lehet fordulni. Ez nem vereség: amit eddig ' +
+    'összeszedtetek, átmegy rajta, és az Archívum megkapja. Az expedíció viszont itt véget ér.',
   gateFuelCost: (fuel: number) => `${fuel} üzemanyag a hazaútra`,
   gateBanks: (points: number) => `Kb. ${points} archívum-pont`,
   gateGoHome: 'Hazatérés',
@@ -640,7 +684,7 @@ const HU = {
   heartReadButton: 'Elolvassuk a peremet',
   heartReadHint:
     'Egyszer, mielőtt bármit eldöntenétek: egy szerkezet a legnehezebb fokozaton. Ha megfejtitek, ' +
-    '+2 megértés — és az itt, ebben a pillanatban új végkifejletet nyithat. Ha nem, morálba kerül.',
+    '+2 megfejtés — és az itt, ebben a pillanatban új végkifejletet nyithat. Ha nem, morálba kerül.',
   heartReadDone: 'A peremet elolvastátok. Ez egyszeri volt.',
 
   // -------------------------------------------------------- the two commands
@@ -650,9 +694,9 @@ const HU = {
   domainResearch: 'Kutatás',
   domainShared: 'Közös',
   domainHint:
-    'A hajó két félre van osztva: a Rúnaszövő a gépészetért, a Múltidéző a kutatásért ' +
-    'felel. Ami közös, arról tényleg együtt kell döntenetek.',
-
+    'A hajó két félre van osztva, és mindkét fél valakinek a dolga: a GÉPÉSZET (hajótest, kohó, ' +
+    'hajtómű) és a KUTATÁS (labor, archívum, érzékelők). Ami közösnek van jelölve, arról tényleg ' +
+    'együtt kell döntenetek — a reaktor energiáját senki nem osztja fel egyedül.',
   // ------------------------------------------------------- modes and rooms
   modeSolo: 'Egyedül',
   modeSoloText:
@@ -726,23 +770,25 @@ const HU = {
   proposalAgree: 'Rábólintok',
   proposalRefuse: 'Ne most',
   proposalWithdraw: 'Visszavonom',
-  watchHeading: 'A heti őrséged',
+  watchHeading: 'A heti őrséged — mivel telik el a heted',
   watchIntro:
-    'Minden héten egy döntés, ami csak a tiéd. A hét végén lefut, aztán újra kérdez. Aki nem ad ki őrséget, az egyszerűen nem csinál semmit — nincs büntetés, csak kimaradsz belőle.',
+    'Minden héten egy döntés, ami csak a tiéd: mivel telik el a heted a hajón. A hét végén lefut, ' +
+    'aztán újra kérdez. Aki nem ad ki őrséget, az nem csinál semmit — nincs érte büntetés, csak ' +
+    'kimarad belőle.',
   watchSetLabel: 'kiadva',
   watchUnset: 'még nincs kiadva',
   watchPending: (n: number): string =>
-    n === 0 ? 'Mindenki kiadta a heti őrségét.' : `${n} pulton még nincs kiadva a heti őrség.`,
+    n === 0 ? 'Mindenki kiadta a heti őrségét.' : `${n} hősnek még nincs kiadva a heti őrsége.`,
   siteNow: (what: string) => `A helyszín: ${what} — a kör végén`,
   siteIn: (what: string, rounds: number) => `A helyszín: ${what} — ${rounds} kör múlva`,
   focusHint:
     'Ha ugyanabban a körben már megsebezte valaki ezt az ellenfelet, a te találatod +1-et sebez. A rácson kiírt szám ezt már tartalmazza.',
-  taskHeading: 'Zárósor',
+  taskHeading: 'Zárósor — egy zár, amit egyedül senki nem tud kinyitni',
   taskSeat: (slot: number) => `${slot}. szék`,
   taskYours: 'a tiéd',
   taskTheirs: 'az övé',
   taskNotYours: (who: string) => `Ezt ${who} tudja megnyomni — szólj neki.`,
-  taskNoClues: 'Neked most nem jutott leírás — te a rúnáidat nyomod, amikor mondják.',
+  taskNoClues: 'Neked most nem jutott leírás — a te dolgod a rúnáidat megnyomni, amikor a többiek mondják.',
   taskHidden: (n: number): string =>
     n === 1 ? '1 leírás, amit csak ő lát' : `${n} leírás, amit csak ő lát`,
   taskStrikes: (used: number, max: number) => `Hibák: ${used} / ${max}`,
@@ -959,6 +1005,18 @@ const EN: Catalog = {
   tier1: 'We are beginning to read',
   tier2: 'We can see what is happening',
   tier3: 'We understand why',
+  tierName: (tier: number): string =>
+    tier >= 3
+      ? 'we understand why'
+      : tier === 2
+        ? 'we can see what is happening'
+        : tier === 1
+          ? 'we are starting to see it'
+          : 'we understand nothing yet',
+  darkeningHint:
+    'The galaxy cooling. As the weeks pass it steps up, and every step does the same two things: ' +
+    'the reactor gives less power, and what you meet on the ground is stronger. It cannot be ' +
+    'stopped, only worked ahead of.',
 
   // --------------------------------------------------------------- research
   researchHeading: 'Research',
@@ -1328,6 +1386,10 @@ const EN: Catalog = {
   marksEarned: (n: number) => `${n} earned in all`,
   marksHow: 'How marks are earned',
   perksHeading: 'What they can learn',
+  perksIntro:
+    'A mark is YOUR own point of progress: not the ship’s and not anybody else’s, and nobody ' +
+    'else can spend it. You earn it for what your hero does, and you spend it on what your hero ' +
+    'learns — and what is learned stays theirs for the rest of the expedition.',
   perkBuy: (cost: number) => `Learn it — ${cost} marks`,
   perkOwned: 'Learned',
   perkNeeds: (name: string) => `First: ${name}`,

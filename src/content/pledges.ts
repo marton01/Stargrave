@@ -65,7 +65,7 @@ export const PLEDGE_DEFS: PledgeDef[] = [
     kind: 'quiet',
     name: { hu: 'Csend', en: 'Quiet' },
     ask: (n) => ({
-      hu: `${n} héten át nem csapunk zajt: a figyelem nem nőhet.`,
+      hu: `${n} héten át nem csapunk zajt: a zaj nem nőhet.`,
       en: `${n} weeks without a sound: attention must not rise.`,
     }),
     said: {
@@ -79,7 +79,7 @@ export const PLEDGE_DEFS: PledgeDef[] = [
     kind: 'learn',
     name: { hu: 'Megfejtés', en: 'Reading' },
     ask: (n) => ({
-      hu: `A határidőre legyen meg ${n} megértés.`,
+      hu: `A határidőre legyen meg ${n} megfejtés.`,
       en: `Reach ${n} understanding by the deadline.`,
     }),
     said: {

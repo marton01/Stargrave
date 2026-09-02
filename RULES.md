@@ -6,10 +6,13 @@
 >
 > **IMPORTANT:** the sections of `RULES.hu.md` (Hungarian) must appear in **the same
 > order** as here. The help picks which tab to open by position, because the titles
-> differ per language. The order is: 1. Overview, 2. The weekly turn, 3. Star map,
-> 4. Landings, 5. Puzzles, 6. Research, 7. The Stargrave, 8. The Archive,
-> 9. Consoles, 10. Attention and the Herald, 11. Orders from home,
-> 12. When does it end?, 13. Game modes, 14. Tips.
+> differ per language.
+>
+> The order is: 1. Overview, 2. Glossary, 3. The weekly turn, 4. Star map, 5.
+> Landings, 6. Puzzles, 7. Research and understanding, 8. The Stargrave, 9. The
+> Archive, 10. People, 11. Consoles, 12. Life aboard, 13. The heart, 14.
+> Attention and the Herald, 15. Orders from home, 16. When does it end?, 17.
+> Game modes, 18. Tips.
 >
 > The game pieces (units, terrain, badges) are not described here: the help **draws
 > them live** with the same components the grid uses, so they can never drift from
@@ -40,6 +43,70 @@ a single monitor, so the tension comes from planning together rather than from s
 The header always shows the six resources, the crew count, your understanding, and
 how many weeks remain before the Gate closes. The panel on the right is the **log**:
 everything that has happened, most recent first.
+
+## Glossary: what everything is called
+
+This game calls a few things by names of its own. None of them is complicated,
+and none of them can be guessed — so here they all are, a sentence each. If you
+get stuck anywhere, come back here.
+
+### The numbers in the header
+
+| What you see | What it is |
+|---|---|
+| **Fuel** | Every week under way burns some. Run out and the ship stops where it is. |
+| **Food** | The crew eat every week. Run out and they starve, and everything gets worse. |
+| **Hull** | The ship's hit points. At zero the expedition is over. |
+| **Morale** | How willingly the crew work. At zero they refuse the order, and that is the end. |
+| **Information** | Raw data. The raw material of research — it becomes understanding, or a better ship. |
+| **Credits** | Money. Markets take it. |
+| **Crew** | How many people are still alive aboard, besides the heroes. |
+| **Understanding** | **How much you have worked out about WHAT HAPPENED HERE** — what killed an entire galaxy. Worth nothing in a fight; at the end it decides how many ways the expedition can finish. |
+| **Attention** | **How easy you are to hear.** Noise comes from fighting, from forcing a mechanism, from running the engines hot — and from everything you understand. At eight, the Herald starts towards you. |
+| **Darkening** | The galaxy cooling. Every level gives the reactor less power and what you meet on the ground more. It cannot be stopped. |
+| **The Gate** | The only way home. It counts the weeks, and one day it shuts. |
+
+### Words this game invented
+
+- **Flux** — the landing party's shared power for one battle. You get as much as
+  you gave to the **Rune core** back on the ship. It pays for the card halves
+  marked **◈** — the big hits of a fight.
+- **Mark** — **your own** point of progress. Not the ship's and not anybody
+  else's: you earn it for what your hero does, and only you can spend it on what
+  your hero learns. Each hero has their own name for it (forge mark, echo mark,
+  note, survey mark) — it is the same thing.
+- **Console** — every player has a screen of their own on the ship. Your marks,
+  your order, your mentees, your watch are on it. You can see everybody else's,
+  but that is their business.
+- **Bond** — if an ally is standing **within 2 tiles**, both of you hit for one
+  more. That is why it pays to move together.
+- **Shield** — armour. The next hit takes this much less, then it drops by one.
+  It never expires on its own.
+- **Attuning** — a relic in the hold does nothing. Only what somebody is wearing
+  works, and each hero has room for only one or two.
+- **Lockline** — a lock nobody can open alone: its description is split between
+  the players, and each of you sees only your own piece.
+- **Mentee** — a crew member you have taken under your wing. They learn faster,
+  bear the ship better, and once trained you can take them down on a landing.
+- **The Herald** — not an enemy on the grid but something that sets out towards
+  you once you have been too loud. It is always getting closer.
+- **Column** — a vertical band of the star map. The Gate is on the left, the
+  heart of the galaxy on the right: every column is deeper in, with harder
+  enemies and better finds.
+- **Seed** — the number that deals out the whole expedition. The same number
+  gives the same galaxy.
+
+### What you are looking at on screen
+
+- **Node** — a point on the star map: a system you can travel to.
+- **Station** — a workplace on the ship (forge, lab, medbay). It only works when
+  it has power **and** somebody standing at it.
+- **Card half** — every card has a **top** and a **bottom** half, and each round
+  you use the top of one card and the bottom of the other.
+- **Initiative** — the number in the top-left corner of a card. Whoever plays the
+  lower one acts first.
+- **Discarded** — what you have already played. Resting gets it back, at the cost
+  of one card. **Lost for good** does not come back at all in that battle.
 
 ## The weekly turn
 

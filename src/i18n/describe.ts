@@ -57,7 +57,7 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
 
     case 'runeMarkReward':
       return hu
-        ? 'A Rúnajel visszaadta az energiát: +1 Fluxus.'
+        ? 'A Rúnajel visszaadta az energiát: +1 Töltet.'
         : 'The Rune Mark returned its energy: +1 Flux.'
 
     case 'trapTriggered':
@@ -105,17 +105,17 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
 
     case 'fluxGained':
       return hu
-        ? `+${event.amount} Fluxus (közös készlet: ${event.total}).`
+        ? `+${event.amount} Töltet (közös készlet: ${event.total}).`
         : `+${event.amount} Flux (shared pool: ${event.total}).`
 
     case 'fluxSpent':
       return hu
-        ? `${pick(event.card, lang)}: -${event.amount} Fluxus (marad ${event.remaining}).`
+        ? `${pick(event.card, lang)}: -${event.amount} Töltet (marad ${event.remaining}).`
         : `${pick(event.card, lang)}: -${event.amount} Flux (${event.remaining} left).`
 
     case 'fluxDrained':
       return hu
-        ? `${pick(event.unit, lang)} elszívott ${event.amount} Fluxust.`
+        ? `${pick(event.unit, lang)} elszívott ${event.amount} Töltetet.`
         : `${pick(event.unit, lang)} drained ${event.amount} Flux.`
 
     case 'cardRecovered':
@@ -282,7 +282,7 @@ export function siteName(kind: SiteEventKind, lang: Lang): string {
   const hu = lang === 'hu'
   switch (kind) {
     case 'surge':
-      return hu ? 'rúnalöket (+2 Fluxus)' : 'a rune surge (+2 Flux)'
+      return hu ? 'rúnalöket (+2 Töltet)' : 'a rune surge (+2 Flux)'
     case 'ashfall':
       return hu ? 'hamuhullás (a padló egy része lassít)' : 'ashfall (part of the floor slows you)'
     case 'reinforcement':

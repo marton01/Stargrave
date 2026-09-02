@@ -380,7 +380,7 @@ export const LOYALTY_BANDS: { min: number; name: Text; tone: 'good' | 'plain' | 
   { min: 9, name: { hu: 'elkötelezett', en: 'committed' }, tone: 'good' },
   { min: 7, name: { hu: 'rendben van', en: 'steady' }, tone: 'plain' },
   { min: 5, name: { hu: 'fáradt', en: 'tired' }, tone: 'plain' },
-  { min: 3, name: { hu: 'elhúzódott', en: 'withdrawn' }, tone: 'warn' },
+  { min: 3, name: { hu: 'visszahúzódott', en: 'withdrawn' }, tone: 'warn' },
   { min: 0, name: { hu: 'nem beszél senkivel', en: 'not speaking to anybody' }, tone: 'bad' },
 ]
 

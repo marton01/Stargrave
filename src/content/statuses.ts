@@ -32,7 +32,7 @@ export const STATUS_DESCRIPTIONS: Record<StatusKind, Text> = {
   runeMark: {
     hu:
       'A megjelöltre a hősök közelharci támadása +2-t sebez, és ha megjelölve hal meg, ' +
-      '+1 Fluxus jár. A Múltidéző rakja fel.',
+      '+1 Töltet jár. A Múltidéző rakja fel.',
     en:
       "Heroes' melee attacks deal +2 to the marked unit, and if it dies while marked you " +
       'gain +1 Flux. Applied by the Echo-reader.',
