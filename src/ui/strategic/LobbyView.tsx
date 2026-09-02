@@ -17,6 +17,7 @@ import type { HeroClassId } from '../../engine/types'
 import { formatRoomCode, freeSeats, keyTag, roomIsSeated } from '../../engine/session/room'
 import type { PlayerIdentity, RoomState } from '../../engine/session/room'
 import type { NetStatus } from '../../net/peer'
+import { buildLabel } from '../../version'
 import { useLang } from '../../i18n/LangContext'
 import {
   DEFAULT_BROKER,
@@ -282,6 +283,10 @@ function BrokerTrouble({ onPlayLocally }: { onPlayLocally: () => void }) {
     <div className="net-trouble">
       <p>{t.netBrokerDown(shown)}</p>
       <ConnectionProbe host={host} />
+      {/* In a bug report this is the first thing worth knowing. */}
+      <p className="panel-note">
+        {t.buildLabel} {buildLabel()}
+      </p>
 
       <label className="setting">
         {t.netBrokerHeading}

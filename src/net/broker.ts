@@ -219,8 +219,16 @@ export async function probeBroker(raw = brokerHost()): Promise<BrokerProbe> {
 
 const COOLDOWN_KEY = 'stargrave.netCooldown'
 
-/** Cloudflare's 1015 bans are measured in minutes; this errs on the side of quiet. */
-export const COOLDOWN_MS = 10 * 60 * 1000
+/**
+ * How long to leave the broker alone once it has stopped answering.
+ *
+ * Cloudflare's rate-limit bans run to about an hour, and every request made
+ * while one is in force can extend it. Half an hour is the compromise: long
+ * enough that most bans have expired by the time the game next knocks, short
+ * enough that nobody has given up on the evening. There is a button to override
+ * it for anybody who knows better.
+ */
+export const COOLDOWN_MS = 30 * 60 * 1000
 
 /** Milliseconds left before it is polite to try again, or zero. */
 export function cooldownLeft(): number {

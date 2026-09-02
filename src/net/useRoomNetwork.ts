@@ -87,8 +87,16 @@ export function useRoomNetwork({
    * retrying finds whoever is hosting now, even if that is a different person.
    */
   const [attempt, setAttempt] = useState(0)
-  /** Reconnection attempts before the game admits it cannot get through. */
-  const MAX_ATTEMPTS = 5
+  /**
+   * Reconnection attempts before the game admits it cannot get through.
+   *
+   * Deliberately small. Every attempt that fails against a rate-limited address
+   * refreshes the ban — the browser reports it as `Unexpected response code:
+   * 429` on the websocket handshake — so trying harder is precisely the wrong
+   * response to this failure. Three tries spans about seventeen seconds, which
+   * still covers the ordinary case this exists for: a host reloading their page.
+   */
+  const MAX_ATTEMPTS = 3
   const transport = useRef<Transport | null>(null)
   const lockstep = useRef(newLockstep())
   /** Every action, in order. The host's copy is the one that counts. */

@@ -123,6 +123,10 @@ const HU = {
 
   // --------------------------------------------------------- title / archive
   titleTagline: 'Egy galaxis, ami nem háborúban halt meg. Valami befejezte.',
+  buildLabel: 'Verzió:',
+  buildTitle:
+    'Melyik változat fut nálad. Hibabejelentésnél ezt írd meg — és ha valakinél régebbi dátum ' +
+    'áll itt, mint a többieknél, akkor nála a böngésző a régi oldalt tölti be: Ctrl+F5.',
   newExpedition: 'Új expedíció',
   continueExpedition: 'Folytatás',
   expeditionLength: 'Hossz',
@@ -1000,6 +1004,10 @@ const EN: Catalog = {
 
   // --------------------------------------------------------- title / archive
   titleTagline: 'A galaxy that did not die in a war. Something finished it.',
+  buildLabel: 'Build:',
+  buildTitle:
+    'Which build you are running. Quote it in a bug report — and if somebody has an older date ' +
+    'here than everybody else, their browser is serving them the old page: Ctrl+F5.',
   newExpedition: 'New expedition',
   continueExpedition: 'Continue',
   expeditionLength: 'Length',

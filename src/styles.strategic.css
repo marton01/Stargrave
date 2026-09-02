@@ -3208,3 +3208,17 @@
 .probe-bad {
   color: var(--danger);
 }
+
+/* Which build this is. Quiet, always there, and selectable — its whole job is to
+   be read off a screen and typed into a bug report. */
+.build-stamp {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+
+.build-stamp span {
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+}

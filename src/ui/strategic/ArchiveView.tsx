@@ -14,6 +14,7 @@ import {
   offeredUnlocks,
 } from '../../engine/expedition/archive'
 import { LENGTHS } from '../../engine/expedition/starmap'
+import { buildLabel } from '../../version'
 import { useLang } from '../../i18n/LangContext'
 import { HERO_CLASSES } from '../../content/heroes'
 import { HERO_ORDER, partyForSeats } from '../../engine/expedition/expedition'
@@ -121,6 +122,16 @@ export function ArchiveView({
       <header className="title-block">
         <h1>{t.appTitle}</h1>
         <p className="title-tagline">{t.titleTagline}</p>
+        {/* Which build this is.
+         *
+         * Small, and in the one place everybody passes through. It answers the
+         * question that cannot be answered from a screenshot — "are you actually
+         * running the fix?" — and it is the cache check: the bundle carries a
+         * content hash so a stale bundle is impossible, but a stale `index.html`
+         * pointing at an old one is not, and it shows up here as an old date. */}
+        <p className="build-stamp" title={t.buildTitle}>
+          {t.buildLabel} <span>{buildLabel()}</span>
+        </p>
       </header>
 
       <section className="panel launch-panel">
