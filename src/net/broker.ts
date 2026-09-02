@@ -119,3 +119,132 @@ export function brokerIsInsecureFromHttps(raw = brokerHost()): boolean {
   if (!options || options.secure) return false
   return typeof location !== 'undefined' && location.protocol === 'https:'
 }
+
+/** The url PeerJS would fetch an id from — plain https, no socket involved. */
+export function brokerHttpUrl(raw = brokerHost()): string {
+  const o = brokerOptions(raw)
+  if (!o) return `https://${DEFAULT_BROKER}/peerjs/id?key=peerjs`
+  return `${o.secure ? 'https' : 'http'}://${o.host}:${o.port}${o.path}peerjs/id?key=peerjs`
+}
+
+/** The url PeerJS actually opens its socket to. */
+export function brokerSocketUrl(raw = brokerHost()): string {
+  const o = brokerOptions(raw)
+  const id = `probe-${Math.random().toString(36).slice(2, 10)}`
+  const token = Math.random().toString(36).slice(2, 10)
+  const query = `peerjs?key=peerjs&id=${id}&token=${token}&version=1.5.5`
+  if (!o) return `wss://${DEFAULT_BROKER}/${query}`
+  return `${o.secure ? 'wss' : 'ws'}://${o.host}:${o.port}${o.path}${query}`
+}
+
+export type BrokerProbe = {
+  /** Can we fetch an id over ordinary https? */
+  http: boolean
+  /** Can we open the websocket the game actually needs? */
+  ws: boolean
+}
+
+/**
+ * Ask the two questions separately, because the answers are usually different.
+ *
+ * This exists because the first version of the diagnostic tested the wrong
+ * thing. It opened the broker's `/id` endpoint in a tab — ordinary https — and a
+ * player whose machine answers that perfectly well got a clean bill of health
+ * while the game still could not connect. Their sockets were being killed and
+ * nothing said so.
+ *
+ * https working and the websocket failing is not a vague "network problem": it
+ * is a short, specific list. Security software that inspects https (Kaspersky,
+ * ESET, Avast and friends) frequently breaks the `Upgrade` handshake; so do
+ * corporate and school proxies that were never taught about it; so do browser
+ * extensions with a websocket rule, and `peerjs.com` sits on more than one
+ * blocklist because peer-to-peer is what it is for. Knowing WHICH of the two
+ * layers failed is the difference between guessing and fixing.
+ */
+export async function probeBroker(raw = brokerHost()): Promise<BrokerProbe> {
+  const http = await fetch(brokerHttpUrl(raw), { cache: 'no-store' })
+    .then((response) => response.ok)
+    .catch(() => false)
+
+  const ws = await new Promise<boolean>((resolve) => {
+    let socket: WebSocket
+    try {
+      socket = new WebSocket(brokerSocketUrl(raw))
+    } catch {
+      resolve(false)
+      return
+    }
+    // A socket that neither opens nor errors is a failure too — that is exactly
+    // what a proxy holding the upgrade looks like.
+    const timer = setTimeout(() => {
+      try {
+        socket.close()
+      } catch {
+        // Already gone.
+      }
+      resolve(false)
+    }, 8000)
+    const settle = (ok: boolean) => {
+      clearTimeout(timer)
+      try {
+        socket.close()
+      } catch {
+        // Already gone.
+      }
+      resolve(ok)
+    }
+    socket.onopen = () => settle(true)
+    socket.onerror = () => settle(false)
+    socket.onclose = () => settle(false)
+  })
+
+  return { http, ws }
+}
+
+// ------------------------------------------------------------------ cooldown
+//
+// The failure this whole file was written for turned out to be self-inflicted.
+//
+// The public broker sits behind Cloudflare, and a browser that keeps asking gets
+// **Error 1015 — you are being rate limited**: the address is banned for a
+// while, and everybody behind it goes down together. This game earned exactly
+// that. A saved online room was dialled on every page load, from the title
+// screen, and a failure retried every two and a half seconds for ever. Some
+// players' households were banned; the ban then looked, from inside, like a
+// firewall blocking websockets — https still answered, the socket did not.
+//
+// Backing off is not enough on its own, because a reload resets the counter and
+// the hammering starts again — so the ban never gets a chance to expire. The
+// cooldown is what makes giving up mean something: it survives a reload.
+
+const COOLDOWN_KEY = 'stargrave.netCooldown'
+
+/** Cloudflare's 1015 bans are measured in minutes; this errs on the side of quiet. */
+export const COOLDOWN_MS = 10 * 60 * 1000
+
+/** Milliseconds left before it is polite to try again, or zero. */
+export function cooldownLeft(): number {
+  try {
+    const until = Number(localStorage.getItem(COOLDOWN_KEY) ?? 0)
+    if (!Number.isFinite(until)) return 0
+    return Math.max(0, until - Date.now())
+  } catch {
+    return 0
+  }
+}
+
+export function startCooldown(ms = COOLDOWN_MS): void {
+  try {
+    localStorage.setItem(COOLDOWN_KEY, String(Date.now() + ms))
+  } catch {
+    // Storage off: the backoff within this tab still holds.
+  }
+}
+
+export function clearCooldown(): void {
+  try {
+    localStorage.removeItem(COOLDOWN_KEY)
+  } catch {
+    // Nothing to clear.
+  }
+}

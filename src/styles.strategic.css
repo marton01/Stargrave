@@ -3174,3 +3174,37 @@
   flex-wrap: wrap;
   gap: 0.4rem;
 }
+
+/* Which layer failed. The whole point is that the two lines answer different
+   questions, so they are laid out as two answers rather than one verdict. */
+.probe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: flex-start;
+}
+
+.probe-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+  max-width: 30rem;
+}
+
+.probe-rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.probe-ok {
+  color: var(--green);
+}
+
+.probe-bad {
+  color: var(--danger);
+}

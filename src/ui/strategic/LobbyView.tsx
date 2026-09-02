@@ -10,7 +10,7 @@
 // A browser can be wiped; if the key was written down anywhere, the chair is
 // still yours when you come back.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { HERO_CLASSES } from '../../content/heroes'
 import { HERO_ORDER } from '../../engine/expedition/expedition'
 import type { HeroClassId } from '../../engine/types'
@@ -21,10 +21,13 @@ import { useLang } from '../../i18n/LangContext'
 import {
   DEFAULT_BROKER,
   brokerHost,
+  clearCooldown,
+  cooldownLeft,
   brokerIsInsecureFromHttps,
-  brokerOptions,
+  probeBroker,
   setBrokerHost,
 } from '../../net/broker'
+import type { BrokerProbe } from '../../net/broker'
 
 export function LobbyView({
   room,
@@ -60,7 +63,24 @@ export function LobbyView({
   const seated = roomIsSeated(room)
   // Nothing about the seating means anything until there is a line to the
   // others: a chair taken offline is taken in this browser and nowhere else.
+  /**
+   * Whether anything a player does here means anything yet.
+   *
+   * It used to be simply "is there a line", and that made a network failure into
+   * a locked door: a player whose browser cannot open a websocket could not take
+   * a chair in their OWN room, could not pick a hero, could not start — nothing,
+   * with no way forward at all.
+   *
+   * But the person who opened the room is the authority on it. They can sit
+   * down, choose, and set out with no connection whatsoever; the line is what
+   * lets OTHERS join them, and their copy is the one everybody else is sent when
+   * it does come up. Only a guest genuinely has to wait, because a seat a guest
+   * claims offline is claimed in that browser alone and the host's snapshot
+   * takes it away again a second later.
+   */
   const connected = status.k === 'live'
+  const isRoomOwner = room.hostKey === tag
+  const canAct = connected || isRoomOwner
 
   const copy = (text: string, what: 'code' | 'key') => {
     navigator.clipboard?.writeText(text).then(
@@ -83,6 +103,7 @@ export function LobbyView({
             failed" and the lobby used to say only "the line dropped", which
             sounds like the other player's fault and is not. */}
         {status.k === 'lost' && <BrokerTrouble onPlayLocally={onPlayLocally} />}
+        <Cooldown />
 
         <div className="lobby-code">
           <span className="lobby-code-label">{t.roomCode}</span>
@@ -134,7 +155,7 @@ export function LobbyView({
                     data-action="pickHero"
                     data-seat={seat.slot}
                     value={seat.heroClass}
-                    disabled={!connected || !(isMine || room.hostKey === tag)}
+                    disabled={!canAct || !(isMine || room.hostKey === tag)}
                     onChange={(event) => onPick(seat.slot, event.target.value as HeroClassId)}
                   >
                     {HERO_ORDER.map((id) => (
@@ -154,11 +175,11 @@ export function LobbyView({
                     className="button button-primary button-small"
                     data-action="sit"
                     data-seat={seat.slot}
-                    disabled={!connected}
-                    title={connected ? undefined : t.netOpening}
+                    disabled={!canAct}
+                    title={canAct ? undefined : t.netOpening}
                     onClick={() => onSit(seat.slot)}
                   >
-                    {connected ? t.seatSit : t.netOpening}
+                    {canAct ? t.seatSit : t.netOpening}
                   </button>
                 ) : isMine || room.hostKey === tag ? (
                   <button
@@ -204,7 +225,7 @@ export function LobbyView({
           <button
             className="button button-primary"
             data-action="beginExpedition"
-            disabled={!seated || !connected}
+            disabled={!seated || !canAct}
             title={seated ? undefined : t.lobbyWaiting}
             onClick={onBegin}
           >
@@ -250,10 +271,6 @@ function BrokerTrouble({ onPlayLocally }: { onPlayLocally: () => void }) {
   const [host, setHost] = useState(brokerHost())
   const [saved, setSaved] = useState(false)
   const shown = host.trim() || DEFAULT_BROKER
-  const options = brokerOptions(host)
-  const testUrl = options
-    ? `${options.secure ? 'https' : 'http'}://${options.host}:${options.port}${options.path}peerjs/id?key=peerjs`
-    : `https://${DEFAULT_BROKER}/peerjs/id?key=peerjs`
 
   const save = (next: string) => {
     setHost(next)
@@ -264,11 +281,7 @@ function BrokerTrouble({ onPlayLocally }: { onPlayLocally: () => void }) {
   return (
     <div className="net-trouble">
       <p>{t.netBrokerDown(shown)}</p>
-      <p>
-        <a href={testUrl} target="_blank" rel="noreferrer">
-          {t.netBrokerTest}
-        </a>
-      </p>
+      <ConnectionProbe host={host} />
 
       <label className="setting">
         {t.netBrokerHeading}
@@ -298,6 +311,108 @@ function BrokerTrouble({ onPlayLocally }: { onPlayLocally: () => void }) {
         </button>
       </div>
       <p className="panel-note">{t.netPlayLocallyHint}</p>
+    </div>
+  )
+}
+
+/**
+ * Which of the two layers is failing.
+ *
+ * The first version of this was a link to the broker's `/id` endpoint, and it
+ * was worse than nothing: that is ordinary https, the game needs a websocket,
+ * and a player whose sockets were being killed opened the link, got a perfectly
+ * good id back, and concluded the game was lying to them.
+ *
+ * So it tests both, separately, and says which one broke. https through and the
+ * socket blocked is not a vague network problem — it is a short list, and every
+ * item on it has a fix.
+ */
+function ConnectionProbe({ host }: { host: string }) {
+  const { t } = useLang()
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<BrokerProbe | null>(null)
+
+  const run = () => {
+    setBusy(true)
+    setResult(null)
+    void probeBroker(host).then((probe) => {
+      setResult(probe)
+      setBusy(false)
+    })
+  }
+
+  const verdict = !result
+    ? null
+    : result.http && result.ws
+      ? t.netProbeVerdictOk
+      : result.http && !result.ws
+        ? t.netProbeVerdictWs
+        : !result.http && result.ws
+          ? t.netProbeVerdictOdd
+          : t.netProbeVerdictAll
+
+  return (
+    <div className="probe">
+      <button className="button button-small" data-action="probeBroker" disabled={busy} onClick={run}>
+        {busy ? t.netBrokerTesting : t.netBrokerTest}
+      </button>
+      {result && (
+        <>
+          <ul className="probe-rows">
+            <li>
+              <span>{t.netProbeHttp}</span>
+              <strong className={result.http ? 'probe-ok' : 'probe-bad'}>
+                {result.http ? t.netProbeOk : t.netProbeFail}
+              </strong>
+            </li>
+            <li>
+              <span>{t.netProbeWs}</span>
+              <strong className={result.ws ? 'probe-ok' : 'probe-bad'}>
+                {result.ws ? t.netProbeOk : t.netProbeFail}
+              </strong>
+            </li>
+          </ul>
+          <p>{verdict}</p>
+        </>
+      )}
+    </div>
+  )
+}
+
+/**
+ * We are deliberately not trying, and for how much longer.
+ *
+ * The public broker bans an address that knocks too often — Cloudflare's Error
+ * 1015 — and this game used to knock every two and a half seconds for ever, from
+ * the title screen, on a room nobody had asked to rejoin. Some households earned
+ * a ban that way. Backing off only helps if it survives a reload, and a silence
+ * nobody explains looks exactly like a broken game, so it says so.
+ */
+function Cooldown() {
+  const { t } = useLang()
+  const [left, setLeft] = useState(cooldownLeft())
+
+  useEffect(() => {
+    if (left <= 0) return
+    const timer = window.setInterval(() => setLeft(cooldownLeft()), 5000)
+    return () => window.clearInterval(timer)
+  }, [left])
+
+  if (left <= 0) return null
+  return (
+    <div className="net-trouble">
+      <strong>{t.netCooldownHeading}</strong>
+      <p>{t.netCooldown(Math.ceil(left / 60000))}</p>
+      <button
+        className="button button-small"
+        data-action="skipCooldown"
+        onClick={() => {
+          clearCooldown()
+          setLeft(0)
+        }}
+      >
+        {t.netCooldownSkip}
+      </button>
     </div>
   )
 }

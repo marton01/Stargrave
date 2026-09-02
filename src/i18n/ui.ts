@@ -777,7 +777,46 @@ const HU = {
     'valami: reklámblokkoló vagy adatvédelmi kiegészítő, DNS-szűrő, céges/iskolai tűzfal, ' +
     'VPN vagy víruskereső. Próbáld ki: nyisd meg ezt a címet egy új fülön — ha nem ad vissza ' +
     'egy hosszú azonosítót, akkor nem a játékkal van baj.',
-  netBrokerTest: 'A jelzőszerver tesztje',
+  netBrokerTest: 'Kapcsolat ellenőrzése',
+  netBrokerTesting: 'mérés folyamatban…',
+  netProbeHttp: 'Sima HTTPS-kérés a szerverhez',
+  netProbeWs: 'WebSocket — a játéknak EZ kell',
+  netProbeOk: 'átmegy',
+  netProbeFail: 'nem megy át',
+  /**
+   * A négy lehetséges eredmény, mert mind a négy mást jelent, és mind a négyhez
+   * más a teendő. Az előző verzió csak a HTTPS-t nézte, és tiszta lapot adott
+   * olyanoknak, akiknek a socketjét ölte meg valami.
+   */
+  netProbeVerdictOk:
+    'A jelzőszerver elérhető, a WebSocket is nyílik. Ha a játék mégsem kapcsolódik, az már ' +
+    'nem a szerver: próbáld újratölteni az oldalt.',
+  netProbeVerdictWs:
+    'Itt a hiba: a sima HTTPS átmegy, a WebSocket viszont nem. Ez majdnem mindig valami helyi ' +
+    'dolog, ami belenéz a titkosított forgalomba, és nem érti a WebSocket-átkapcsolást: ' +
+    'víruskereső HTTPS-vizsgálata (Kaspersky, ESET, Avast, Bitdefender), céges vagy iskolai ' +
+    'proxy, VPN, vagy egy böngészőkiegészítő (uBlock, AdGuard, Brave pajzs) — a peerjs.com több ' +
+    'szűrőlistán rajta van. Próbáld ki inkognitóban, kiegészítők nélkül; ha ott megy, az egyik ' +
+    'kiegészítő a bűnös. Ha a víruskereső a ludas, a HTTPS-vizsgálatból ki lehet venni ezt a ' +
+    'címet. Ha egyik sem oldható meg, írjatok be másik jelzőszervert.',
+  netProbeVerdictAll:
+    'A szerver egyáltalán nem érhető el innen — se HTTPS, se WebSocket. A leggyakoribb ok, hogy ' +
+    'a jelzőszerver ÁTMENETILEG KITILTOTT titeket, mert túl sok kapcsolódás jött erről az ' +
+    'internetkapcsolatról (a böngészőben ilyenkor „Error 1015 — You are being rate limited" ' +
+    'látszik). Ez magától elmúlik, jellemzően fél–egy óra alatt: addig egyszerűen ne próbálkozzatok, ' +
+    'mert minden újabb kísérlet meghosszabbítja. Ha nem ez, akkor DNS-szűrés, tűzfal vagy ' +
+    'hálózati blokk — érdemes másik hálózatról (pl. mobilnetről) kipróbálni, vagy másik ' +
+    'jelzőszervert beírni.',
+  netCooldownHeading: 'Most pihentetjük a kapcsolatot',
+  netCooldown: (minutes: number): string =>
+    `A jelzőszerver kitiltotta ezt az internetkapcsolatot, mert túl sok kérés ment rá ` +
+    `(Cloudflare „Error 1015"). Ez magától elmúlik — a játék ${minutes} percig nem is próbálkozik, ` +
+    'mert minden újabb kopogtatás meghosszabbítaná a tiltást. Addig lehet egy gépen játszani, ' +
+    'vagy be lehet írni másik jelzőszervert.',
+  netCooldownSkip: 'Mégis próbáljuk most',
+  netProbeVerdictOdd:
+    'A WebSocket nyílik, a HTTPS-kérés viszont nem — ez szokatlan. Valószínűleg egy kiegészítő ' +
+    'szűri a kéréseket. A játék ettől még működhet.',
   netBrokerHeading: 'Jelzőszerver',
   netBrokerIntro:
     'Alapból a PeerJS ingyenes szervere. Ha valakinél a hálózat blokkolja, itt átírhatjátok ' +
@@ -1582,7 +1621,40 @@ const EN: Catalog = {
     'else, something on your side is blocking it: an ad-blocker or privacy extension, a DNS ' +
     'filter, a school or office firewall, a VPN, or antivirus web protection. Try opening this ' +
     'address in a new tab — if it does not return a long id, the problem is not the game.',
-  netBrokerTest: 'Test the signalling server',
+  netBrokerTest: 'Check the connection',
+  netBrokerTesting: 'measuring…',
+  netProbeHttp: 'Plain HTTPS request to the server',
+  netProbeWs: 'WebSocket — this is what the game needs',
+  netProbeOk: 'gets through',
+  netProbeFail: 'blocked',
+  netProbeVerdictOk:
+    'The signalling server is reachable and the socket opens. If the game still will not ' +
+    'connect, it is not the server: try reloading the page.',
+  netProbeVerdictWs:
+    'This is the fault: ordinary HTTPS gets through, the WebSocket does not. That is almost ' +
+    'always something local that inspects encrypted traffic and does not understand the ' +
+    'WebSocket upgrade: antivirus https scanning (Kaspersky, ESET, Avast, Bitdefender), a ' +
+    'corporate or school proxy, a VPN, or a browser extension (uBlock, AdGuard, Brave shields) ' +
+    '— peerjs.com is on more than one blocklist. Try a private window with extensions off; if ' +
+    'it works there, an extension is the culprit. If antivirus is doing it, this address can be ' +
+    'excluded from https scanning. If neither can be changed, use a different signalling server.',
+  netProbeVerdictAll:
+    'The server cannot be reached at all from here — neither HTTPS nor WebSocket. The commonest ' +
+    'reason is that the signalling server has TEMPORARILY BANNED you for too many connections ' +
+    'from this internet connection (the browser shows "Error 1015 — You are being rate limited"). ' +
+    'It clears on its own, usually within half an hour to an hour: simply stop trying until then, ' +
+    'because every further attempt extends it. Failing that it is DNS filtering, a firewall or a ' +
+    'network block — worth trying from another network, or using a different signalling server.',
+  netCooldownHeading: 'Letting the connection rest',
+  netCooldown: (minutes: number): string =>
+    'The signalling server has banned this internet connection for making too many requests ' +
+    `(Cloudflare "Error 1015"). It clears on its own — the game will not even try for ${minutes} ` +
+    'minutes, because every further knock would extend the ban. Play on one machine meanwhile, ' +
+    'or point the game at a different signalling server.',
+  netCooldownSkip: 'Try now anyway',
+  netProbeVerdictOdd:
+    'The WebSocket opens but the HTTPS request does not — which is unusual, and probably an ' +
+    'extension filtering requests. The game may well work anyway.',
   netBrokerHeading: 'Signalling server',
   netBrokerIntro:
     'PeerJS’s free server by default. If somebody’s network blocks it, point the game at ' +

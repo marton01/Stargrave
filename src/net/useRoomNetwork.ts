@@ -10,6 +10,7 @@
 // exactly one order of events in the world rather than four hopeful ones.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { cooldownLeft, startCooldown } from './broker'
 import { openRoom } from './peer'
 import type { NetStatus, Transport } from './peer'
 import { accept, newLockstep } from './protocol'
@@ -202,6 +203,14 @@ export function useRoomNetwork({
 
   // Open and close the connection with the room.
   useEffect(() => {
+    // Still serving a rate-limit cooldown. Dialling now would refresh the ban
+    // rather than wait it out — see broker.ts.
+    if (cooldownLeft() > 0) {
+      transport.current?.close()
+      transport.current = null
+      setStatus({ k: 'lost', reason: 'cooldown' })
+      return
+    }
     if (!room || room.mode !== 'online' || !active) {
       transport.current?.close()
       transport.current = null
@@ -228,7 +237,13 @@ export function useRoomNetwork({
       // Doubling, and then giving up, is both kinder and more honest: a line that
       // dropped comes back within a few seconds, and a line that was never there
       // stops pretending.
-      if (attempt >= MAX_ATTEMPTS) return
+      if (attempt >= MAX_ATTEMPTS) {
+        // Out of tries. Stop touching the broker for a while and say so: the
+        // public one bans an address that keeps knocking, and a reload would
+        // otherwise start the knocking over and keep the ban alive.
+        startCooldown()
+        return
+      }
       const wait = Math.min(2500 * 2 ** attempt, 40000)
       retry = window.setTimeout(() => {
         if (live) setAttempt((n) => n + 1)
@@ -309,11 +324,15 @@ export function useRoomNetwork({
       const pipe = transport.current
       const here = latest.current.room
       if (!here) return
-      // Sitting down in an online room before the connection is up would claim
-      // the chair in this browser's copy alone, and the host's snapshot would
-      // quietly take it away again a second later. Nothing at all is the honest
-      // answer; the lobby disables the buttons until there is a line.
-      if (here.mode === 'online' && !pipe) return
+      // A GUEST sitting down before the line is up claims the chair in its own
+      // browser alone, and the host's snapshot takes it away again a second
+      // later — so nothing at all is the honest answer there.
+      //
+      // The person who opened the room is a different case entirely: their copy
+      // IS the room. Making them wait for a websocket turned a network failure
+      // into a locked door — no chair, no hero, no start, in their own game.
+      // They may always act; the line only decides whether others can join.
+      if (here.mode === 'online' && !pipe && here.hostKey !== keyTag(identity.key)) return
       if (!pipe || pipe.role === 'host') {
         const updated = claimSeat(here, identity, slot)
         onRoom(updated)
@@ -330,7 +349,7 @@ export function useRoomNetwork({
       const pipe = transport.current
       const here = latest.current.room
       if (!here) return
-      if (here.mode === 'online' && !pipe) return
+      if (here.mode === 'online' && !pipe && here.hostKey !== keyTag(identity.key)) return
       if (!pipe || pipe.role === 'host') {
         const updated = releaseSeat(here, keyTag(identity.key), slot)
         onRoom(updated)
@@ -347,7 +366,7 @@ export function useRoomNetwork({
       const pipe = transport.current
       const here = latest.current.room
       if (!here) return
-      if (here.mode === 'online' && !pipe) return
+      if (here.mode === 'online' && !pipe && here.hostKey !== keyTag(identity.key)) return
       if (!pipe || pipe.role === 'host') {
         const updated = pickHero(here, keyTag(identity.key), slot, heroClass)
         onRoom(updated)
