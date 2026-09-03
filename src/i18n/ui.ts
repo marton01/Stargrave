@@ -797,10 +797,9 @@ const HU = {
    */
   netBrokerDown: (host: string): string =>
     `Nem érjük el a jelzőszervert (${host}). Ez az a szolgáltatás, ami összeismerteti ` +
-    'a két gépet — játékadat nem megy át rajta. Ha a többieknek megy, akkor nálad blokkolja ' +
-    'valami: reklámblokkoló vagy adatvédelmi kiegészítő, DNS-szűrő, céges/iskolai tűzfal, ' +
-    'VPN vagy víruskereső. Próbáld ki: nyisd meg ezt a címet egy új fülön — ha nem ad vissza ' +
-    'egy hosszú azonosítót, akkor nem a játékkal van baj.',
+    'a két gépet — játékadat nem megy át rajta, és a játék nélküle is elmegy egy gépen. ' +
+    'Nyomd meg lentebb a „Kapcsolat ellenőrzése" gombot: az megmondja, melyik réteg bukik el, ' +
+    'és mit érdemes tenni.',
   netBrokerTest: 'Kapcsolat ellenőrzése',
   netBrokerTesting: 'mérés folyamatban…',
   netProbeHttp: 'Sima HTTPS-kérés a szerverhez',
@@ -1671,11 +1670,10 @@ const EN: Catalog = {
   netRetrying: 'trying again…',
   netGaveUp: 'could not connect',
   netBrokerDown: (host: string): string =>
-    `Cannot reach the signalling server (${host}). That is the service that introduces the ` +
-    'two machines to each other — no game data passes through it. If it works for everybody ' +
-    'else, something on your side is blocking it: an ad-blocker or privacy extension, a DNS ' +
-    'filter, a school or office firewall, a VPN, or antivirus web protection. Try opening this ' +
-    'address in a new tab — if it does not return a long id, the problem is not the game.',
+    `The signalling server cannot be reached (${host}). It is the service that introduces two ` +
+    'machines to each other — no game data passes through it, and the game plays perfectly well ' +
+    'on one machine without it. Press "Check the connection" below: it says which layer is ' +
+    'failing and what to do about it.',
   netBrokerTest: 'Check the connection',
   netBrokerTesting: 'measuring…',
   netProbeHttp: 'Plain HTTPS request to the server',
