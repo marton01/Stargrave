@@ -135,6 +135,7 @@ function migrate(expedition: ExpeditionState): ExpeditionState {
     lastCouncil: expedition.lastCouncil ?? 0,
     figures: expedition.figures ?? {},
     pledge: expedition.pledge ?? null,
+    tutorial: expedition.tutorial ?? false,
     ashore: expedition.ashore ?? [],
     supportRound: expedition.supportRound ?? -1,
     crew,

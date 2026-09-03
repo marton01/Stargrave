@@ -44,6 +44,26 @@ The header always shows the six resources, the crew count, your understanding, a
 how many weeks remain before the Gate closes. The panel on the right is the **log**:
 everything that has happened, most recent first.
 
+## If you are starting now
+
+**The first question at the Gate is whether this is a real expedition or a PRACTICE RUN.**
+A table that has never finished one gets the practice run selected by default, and for
+good reason.
+
+A practice run is **the same game with every system in it** — the Herald counts, the
+orders arrive, the crew have opinions. One thing only is different: **none of it reaches
+the Archive.** No points, no endings, no unlocks, nothing added to the long memory. So
+every button in it is safe to press, and it can be **finished at any moment** — the header
+says `PRACTICE RUN` throughout.
+
+While you play it, a small panel in the corner **walks you through the screens**: what the
+ship is for, what the stations mean, which console is yours, how to read the star map,
+what Attention and the Herald are, and how to stop. Thirteen steps, about the length of a
+cup of tea. It **blocks nothing** — close it on any step, and the help (`?` or `F1`) has it
+again whenever you want.
+
+When you are done with it, start a **real expedition** — from then on everything counts.
+
 ## Glossary: what everything is called
 
 This game calls a few things by names of its own. None of them is complicated,
@@ -466,6 +486,27 @@ If somebody has **already wounded the same enemy this round**, your hit takes of
 one more. It does not stack from the same hero, and it **resets every round** — so
 it is a decision to strike now, together, rather than a mark that accumulates. With
 four heroes it is the most important thing to be saying out loud.
+
+### What the enemies do of their own accord
+
+On top of its intent, each of the four enemy types has a **standing habit**. It is not
+difficulty but **shape**: the same four figures ask a different question depending on what
+they do when they are hurt, what they walk towards, and what happens when one of them
+falls.
+
+| Habit | Whose | What it does |
+|---|---|---|
+| **in a pack** | Ash Husk | +1 damage while another enemy stands beside it. Alone, nothing. |
+| **skittish** | Rune Sentinel | At half its hit points it backs away instead of closing — and its shot still reaches you. |
+| **after the modules** | Rune Sentinel | In a boarding action, while a module is standing on the grid, it goes for that, not the heroes. |
+| **goes for the back** | Choir Wraith | It picks the FARTHEST hero, not the nearest: the artillery, not the wall. |
+| **vengeful** | Godmachine Shard | +1 damage for every one of its own kind already down. With two of them, which you kill first matters. |
+
+**All of it is visible.** Whenever a habit is doing something it says so on that enemy's
+row in the sidebar, with its number (*"vengeful +1"*), and hovering it explains what it
+means. That is not decoration: the most important rule in this game is that **the intent
+is visible at the start of the round**, and a habit that quietly moved a number would
+break exactly that.
 
 ## Puzzles
 

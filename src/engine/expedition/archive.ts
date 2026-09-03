@@ -8,6 +8,7 @@
 
 import type { Text } from '../types'
 import type { ArchiveState, ArchiveUnlockId, EndingId, ExpeditionState } from './types'
+import type { CrewMember } from '../../content/crew'
 
 export const ARCHIVE_VERSION = 1
 
@@ -214,6 +215,7 @@ export function newArchive(): ArchiveState {
     unlocked: [],
     marks: [],
     endingsSeen: [],
+    veterans: [],
     history: [],
     bestUnderstanding: 0,
     expeditionsRun: 0,
@@ -231,6 +233,13 @@ export function unlockDef(id: ArchiveUnlockId): ArchiveUnlock {
  * failed run — that is the promise the Archive makes: nothing is wasted.
  */
 export function bankExpedition(archive: ArchiveState, expedition: ExpeditionState): ArchiveState {
+  // A run for learning on counts nowhere: no points, no ending recorded, no
+  // unlock progress, nothing added to the long memory. This is the one guard
+  // that makes the tutorial safe to press every button in — and it is here, at
+  // the single door into the Archive, rather than at each of the things it
+  // would otherwise touch.
+  if (expedition.tutorial) return archive
+
   const outcome = expedition.outcome
   const label = outcome
     ? outcome.k === 'ending'
@@ -240,12 +249,36 @@ export function bankExpedition(archive: ArchiveState, expedition: ExpeditionStat
 
   const understandingPoints = Math.floor(expedition.understanding / 2)
 
+  /**
+   * Who is waiting when the next expedition sets out.
+   *
+   * Three cases, and they have to be told apart or the roster means nothing:
+   *
+   *   **An ending** — including turning back through the Gate — brings the
+   *   survivors home. They are the roster from now on.
+   *
+   *   **A loss** takes them with it. The hull at zero, the crew refusing the
+   *   order, the Gate shutting with the ship on the wrong side: the people on the
+   *   roster were the people ABOARD, so there is nobody left waiting. This is
+   *   what gives bringing them home its weight.
+   *
+   *   **Calling the run off** is not something that happens in the fiction at
+   *   all — it is a player putting the game down — so it changes nothing.
+   */
+  const roster =
+    outcome?.k === 'ending'
+      ? survivors(expedition)
+      : outcome?.k === 'lost' && outcome.reason !== 'abandoned'
+        ? []
+        : archive.veterans
+
   return {
     ...archive,
     version: ARCHIVE_VERSION,
     points: archive.points + expedition.archiveEarned + understandingPoints,
     // The long memory: whatever this run marked, later runs can answer.
     marks: [...new Set([...archive.marks, ...expedition.marks])],
+    veterans: roster,
     endingsSeen:
       outcome?.k === 'ending' && !archive.endingsSeen.includes(outcome.id)
         ? [...archive.endingsSeen, outcome.id]
@@ -275,6 +308,35 @@ export function canUnlock(archive: ArchiveState, id: ArchiveUnlockId): boolean {
   const def = unlockDef(id)
   if (def.offeredWhen && !def.offeredWhen(archive)) return false
   return archive.points >= def.cost
+}
+
+/**
+ * The crew who walked back through the Gate, stripped of this ship.
+ *
+ * Rank and traits are theirs and come along. Everything else is a fact about a
+ * voyage that is over: a station on a ship they have left, a mentor who was one
+ * of four particular heroes, pairings with people who may not be going again,
+ * and a loyalty that measured what that ship was like to live on. All of that
+ * starts again.
+ *
+ * Capped, because a roster that only grows would eventually mean a new
+ * expedition never meets anybody new — and meeting somebody new is half of what
+ * the crew are for.
+ */
+export const VETERANS_KEPT = 8
+
+export function survivors(expedition: ExpeditionState): CrewMember[] {
+  return expedition.crew
+    .filter((member) => member.alive)
+    .slice(0, VETERANS_KEPT)
+    .map((member) => ({
+      ...member,
+      station: null,
+      mentor: null,
+      bonds: [],
+      loyalty: 7,
+      weeksAboard: 0,
+    }))
 }
 
 export function purchaseUnlock(archive: ArchiveState, id: ArchiveUnlockId): ArchiveState {

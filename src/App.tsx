@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArchiveView } from './ui/strategic/ArchiveView'
+import { Guide } from './ui/Guide'
 import { bankExpedition, newArchive, purchaseUnlock } from './engine/expedition/archive'
 import {
   canAdvanceWeek,
@@ -59,7 +60,7 @@ import type { HelpTopic } from './ui/Help'
 import { LangProvider, useLang } from './i18n/LangContext'
 import { setSoundEnabled, soundEnabled } from './ui/assets'
 import { MissionView } from './ui/MissionView'
-import { DEFAULT_LEVEL, DIALS, dialValue } from './content/difficulty'
+import { DEFAULT_LEVEL, DIALS, defaultDials, dialValue } from './content/difficulty'
 import type { DialId } from './content/difficulty'
 import { randomSeed } from './engine/rng'
 import { RESOURCES, RESOURCE_ORDER } from './content/ship'
@@ -216,6 +217,30 @@ function Game() {
   const [showArchive, setShowArchive] = useState(() => !loadGame()?.expedition)
   /** Set when the host closed the room out from under us, so the archive can say so. */
   const [roomWasClosed, setRoomWasClosed] = useState(false)
+  /**
+   * Which step of the walk this player is on, or null for "not showing".
+   *
+   * Kept in this browser rather than in the game state, because it is one
+   * person's place in an explanation — not something the table shares. A
+   * tutorial expedition opens it; anybody can shut it and open it again.
+   */
+  const [guideStep, setGuideStep] = useState<number | null>(() => {
+    try {
+      const raw = localStorage.getItem('stargrave.guide')
+      return raw === null ? null : Number(raw)
+    } catch {
+      return null
+    }
+  })
+  const setGuide = useCallback((step: number | null) => {
+    setGuideStep(step)
+    try {
+      if (step === null) localStorage.removeItem('stargrave.guide')
+      else localStorage.setItem('stargrave.guide', String(step))
+    } catch {
+      // A browser with storage off still gets the walk, just not across reloads.
+    }
+  }, [])
   const [helpOpen, setHelpOpen] = useState(false)
   const [wipeOpen, setWipeOpen] = useState(false)
   const [dialsOpen, setDialsOpen] = useState(false)
@@ -524,6 +549,11 @@ function Game() {
     mode: GameMode,
     players: number,
     party: HeroClassId[],
+    /**
+     * A run for learning on. Every system is on; nothing it does counts. See
+     * `tutorial` on the expedition state and the guard in `bankExpedition`.
+     */
+    tutorial = false,
   ) => {
     // The seed is cut to what a room code can carry, so that the code somebody
     // reads down the phone rebuilds exactly this galaxy.
@@ -544,12 +574,17 @@ function Game() {
               previous.archive,
               // A saved preset is the terms this player likes; a new expedition
               // starts on them rather than making them dial it in again.
-              loadDialPreset() ?? undefined,
+              // A tutorial runs the game as designed: the point is to meet every
+              // system, not a softened version of some of them.
+              tutorial ? defaultDials() : (loadDialPreset() ?? undefined),
               party,
+              tutorial,
             ),
     }))
     setRooms(listRooms())
     setShowArchive(false)
+    // The walk opens with a tutorial and starts at the beginning.
+    if (tutorial) setGuide(0)
   }
 
   /**
@@ -793,7 +828,16 @@ function Game() {
           onDeleteSave={wipeEverything}
         />
         <a ref={downloadRef} hidden />
-        {helpOpen && <Help topic="overview" onClose={() => setHelpOpen(false)} />}
+        {helpOpen && (
+        <Help
+          topic="overview"
+          onClose={() => setHelpOpen(false)}
+          onWalk={() => {
+            setGuide(0)
+            setHelpOpen(false)
+          }}
+        />
+      )}
       </div>
     )
   }
@@ -938,6 +982,11 @@ function Game() {
                   </span>
                 )}
               </span>
+            </div>
+          )}
+          {expedition.tutorial && (
+            <div className="meter meter-tight meter-tutorial" title={t.tutorialBadgeHint}>
+              <span className="meter-label">{t.tutorialBadge}</span>
             </div>
           )}
           {expedition.darkening > 0 && (
@@ -1092,6 +1141,28 @@ function Game() {
               "Expedíció leállítása", so the only visible way out of a running
               game was the one that ended it — and a group that wanted to carry
               on next week had no way to say so. */}
+          {expedition.tutorial ? (
+            <button
+              className="button"
+              data-action="finishTutorial"
+              onClick={() => {
+                if (window.confirm(t.tutorialFinishConfirm)) {
+                  setGuide(null)
+                  setSession((current) => ({
+                    ...current,
+                    game: { ...current.game, expedition: null, room: null },
+                    undo: [],
+                    mark: null,
+                    summary: null,
+                  }))
+                  setRooms(listRooms())
+                  setShowArchive(true)
+                }
+              }}
+            >
+              {t.tutorialFinish}
+            </button>
+          ) : null}
           <button
             className="button"
             data-action="pauseExpedition"
@@ -1100,6 +1171,7 @@ function Game() {
           >
             {t.pauseExpedition}
           </button>
+          {!expedition.tutorial && (
           <button
             className="button button-quiet"
             data-action="abandon"
@@ -1110,7 +1182,22 @@ function Game() {
           >
             {t.abandonExpedition}
           </button>
+          )}
         </footer>
+      )}
+
+      {/* Not during a landing. The walk lives in the bottom-right corner, which
+          on the grid is where the hand of cards is — a panel that covers the
+          cards is not an explanation, it is an obstacle. Its steps are about the
+          ship's screens anyway, and it comes back when the party does. */}
+      {guideStep !== null && !inMission && (
+        <Guide
+          step={guideStep}
+          screen={screen}
+          onStep={setGuide}
+          onClose={() => setGuide(null)}
+          onGo={openScreen}
+        />
       )}
 
       {!inMission && (

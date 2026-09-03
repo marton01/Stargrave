@@ -15,6 +15,7 @@ import {
 } from '../../engine/expedition/archive'
 import { LENGTHS } from '../../engine/expedition/starmap'
 import { buildLabel } from '../../version'
+import { CREW_TRAITS, RANK_NAMES, SPECIALITY_NAMES, crewRank } from '../../content/crew'
 import { useLang } from '../../i18n/LangContext'
 import { HERO_CLASSES } from '../../content/heroes'
 import { HERO_ORDER, partyForSeats } from '../../engine/expedition/expedition'
@@ -82,6 +83,8 @@ export function ArchiveView({
     mode: GameMode,
     players: number,
     party: HeroClassId[],
+    /** A run for learning on, which counts nowhere. */
+    tutorial: boolean,
   ) => void
   onJoin: (code: string) => void
   /** Drop a room from this browser. See `forgetRoom`. */
@@ -102,6 +105,13 @@ export function ArchiveView({
   // How this table is going to play. Solo and local are the game as it was;
   // online opens a room whose code the others type in.
   const [mode, setMode] = useState<GameMode>('local')
+  /**
+   * A practice run, chosen before anything else.
+   *
+   * Defaults to on for a table that has never finished an expedition: the first
+   * thing a new group should meet is a game that cannot cost them anything.
+   */
+  const [tutorial, setTutorial] = useState(() => archive.history.length === 0)
   const [players, setPlayers] = useState(2)
   // Who plays whom, before there is a room to decide it in. Picking somebody
   // else's hero trades with them, so the list can never hold two of anybody.
@@ -144,6 +154,25 @@ export function ArchiveView({
         <header className="panel-head">
           <h2>{t.newExpedition}</h2>
         </header>
+
+        {/* The first fork, before anything else is asked: is this for real?
+            Nothing in the game said where a new group should start, and the
+            answer — "somewhere that cannot cost you anything" — has to be a
+            button rather than a paragraph in the rules. */}
+        <div className="mode-choices mode-choices-kind">
+          {([false, true] as const).map((option) => (
+            <button
+              key={String(option)}
+              className={`mode-card ${tutorial === option ? 'on' : ''}`}
+              data-action="setKind"
+              data-kind={option ? 'tutorial' : 'normal'}
+              onClick={() => setTutorial(option)}
+            >
+              <strong>{option ? t.modeTutorial : t.modeNormal}</strong>
+              <span>{option ? t.modeTutorialText : t.modeNormalText}</span>
+            </button>
+          ))}
+        </div>
 
         <div className="mode-choices">
           {GAME_MODES.map((option) => (
@@ -252,6 +281,7 @@ export function ArchiveView({
                 mode,
                 players,
                 party,
+                tutorial,
               )
             }}
           >
@@ -298,6 +328,30 @@ export function ArchiveView({
           </button>
           {joinError && <span className="bad">{t.joinBadCode}</span>}
         </div>
+
+        {/* Who is waiting. Without this the roster is a feature nobody can see:
+            a group would meet their own veterans on the next ship and have no
+            way of knowing why those six were not strangers. */}
+        {archive.veterans.length > 0 && (
+          <div className="veteran-list">
+            <h3>{t.veteransHeading}</h3>
+            <p className="panel-intro">{t.veteransIntro}</p>
+            <ul>
+              {archive.veterans.map((member) => (
+                <li key={member.id} className="veteran-row">
+                  <strong>{member.name}</strong>
+                  <span className="muted">
+                    {s(SPECIALITY_NAMES[member.speciality])} ·{' '}
+                    {s(RANK_NAMES[crewRank(member)])}
+                    {member.traits.length > 0
+                      ? ` · ${member.traits.map((id) => s(CREW_TRAITS[id].name)).join(', ')}`
+                      : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {rooms.length > 0 && (
           <div className="room-list">

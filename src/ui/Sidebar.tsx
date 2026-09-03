@@ -14,7 +14,8 @@ import {
 } from '../engine/followers'
 import { HERO_TONE } from './gridStyle'
 import type { FollowerOrder, HeroClassId } from '../engine/types'
-import { intentOf } from '../content/enemies'
+import { BEHAVIOUR_NAMES, BEHAVIOUR_TEXTS, intentOf } from '../content/enemies'
+import { activeBehaviours } from '../engine/enemyAi'
 import { STATUS_NAMES } from '../content/statuses'
 import { bondActive } from '../engine/combat'
 import { portrait } from './assets'
@@ -227,6 +228,22 @@ export function Sidebar({
                 ) : (
                   <div className="intent muted">{t.noIntentYet}</div>
                 )}
+                {/* What it is doing differently this round.
+                    The game's most important rule is that the intent is visible
+                    at the start of the round, so a habit that changes a number
+                    has to be readable here — otherwise it is the one thing on
+                    the board nobody can plan around. */}
+                {activeBehaviours(state, e).map((active) => (
+                  <div
+                    key={active.id}
+                    className="unit-behaviour"
+                    data-behaviour={active.id}
+                    title={s(BEHAVIOUR_TEXTS[active.id](active.amount))}
+                  >
+                    {s(BEHAVIOUR_NAMES[active.id])}
+                    {active.amount > 0 ? ` +${active.amount}` : ''}
+                  </div>
+                ))}
               </div>
             )
           })}

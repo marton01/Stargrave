@@ -250,6 +250,33 @@ export type Intent = {
   steps: EnemyStep[]
 }
 
+/**
+ * A standing habit, on top of the intents.
+ *
+ * Four enemy types across a campaign of eight to ten landings is thin, and the
+ * thinness showed in the only way difficulty could grow: more of them. New
+ * monsters are expensive — a shape, a name, a set of intents, art. A habit is
+ * cheap and does more, because it changes the SHAPE of the fight rather than its
+ * size: the same four figures ask a different question depending on what they
+ * do when they are hurt, what they walk towards, and what happens when one of
+ * them falls.
+ *
+ * The rule they must not break is the game's most important one: the intent is
+ * visible at the start of the round. So a habit that changes a number says so on
+ * the enemy's own row — see `activeBehaviours`.
+ */
+export type EnemyBehaviour =
+  /** Below half its hit points it backs away instead of closing. */
+  | 'skittish'
+  /** Goes for the ship's modules rather than the heroes, when any are standing. */
+  | 'saboteur'
+  /** Hits harder for every one of its own kind already fallen. */
+  | 'vengeful'
+  /** Walks towards the FARTHEST hero: the artillery, not the wall. */
+  | 'stalker'
+  /** Stronger while another enemy stands beside it, and ordinary alone. */
+  | 'pack'
+
 export type EnemyType = {
   id: string
   name: Text
@@ -257,6 +284,8 @@ export type EnemyType = {
   hp: number
   /** Which silhouette to draw. */
   shape: 'husk' | 'sentinel' | 'wraith' | 'shard'
+  /** Standing habits. See `EnemyBehaviour`. */
+  behaviours?: EnemyBehaviour[]
   intents: Intent[]
 }
 

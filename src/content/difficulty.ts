@@ -494,6 +494,32 @@ export function defaultDials(): Dials {
   return out
 }
 
+/**
+ * The dials for a table that has never played this before.
+ *
+ * Not "easy" — the landings are exactly as designed. What it does is put away
+ * the four systems that ask a group to hold something in their head BEFORE they
+ * know what the ship even does: the Herald counting their noise, orders arriving
+ * with deadlines, something happening aboard every third week — and the crew's
+ * own council, which rides on the same dial as the aboard events.
+ *
+ * Every one of those is a good part of the game and every one of them is a
+ * second thing to learn while learning the first. They come back on their own
+ * dial, and the launch screen says which ones and when.
+ *
+ * The reason this exists at all: a first group opening the game meets nineteen
+ * help tabs, eight stations, four heroes and fifty-four cards, and nothing tells
+ * them where to start. The dials could always have done this — you simply had to
+ * know that you needed to.
+ */
+export const FIRST_RUN_OFF: DialId[] = ['attention', 'directives', 'aboard']
+
+export function firstRunDials(): Dials {
+  const out = defaultDials()
+  for (const id of FIRST_RUN_OFF) out[id] = 1
+  return out
+}
+
 export function dialDef(id: DialId): DialDef {
   const found = DIALS.find((d) => d.id === id)
   if (!found) throw new Error(`No such difficulty dial: ${id}`)

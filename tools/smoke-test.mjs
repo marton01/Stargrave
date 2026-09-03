@@ -249,6 +249,11 @@ await shotOnce('01-archive')
 // SMOKE_SEED and move this number rather than dropping a coverage check.
 const seed = process.env.SMOKE_SEED ?? '8675309'
 botSeed = Number(seed) | 0
+// A real expedition, not the practice run — which is what a first-time archive
+// offers by default. The bot is here to exercise the game that counts.
+await tryAction('setKind')
+const normalKind = page.locator('[data-action="setKind"][data-kind="normal"]')
+if (await normalKind.count()) await normalKind.click()
 await page.locator('[data-action="setLength"][data-length="short"]').click()
 await page.locator('[data-action="seed"]').fill(seed)
 await tryAction('launchExpedition')

@@ -119,7 +119,16 @@ function preferredTab(topic: HelpTopic, titles: string[]): string | undefined {
   return titles[SECTION_FOR_TOPIC[topic]] ?? titles[0]
 }
 
-export function Help({ topic, onClose }: { topic: HelpTopic; onClose: () => void }) {
+export function Help({
+  topic,
+  onClose,
+  onWalk,
+}: {
+  topic: HelpTopic
+  onClose: () => void
+  /** Start the walk through the game again. Absent outside a running game. */
+  onWalk?: () => void
+}) {
   const { t, s, lang } = useLang()
   const parsed = useMemo(() => sections(RULES[lang]), [lang])
   const tabs = useMemo(() => [t.helpElementsTab, ...parsed.map((p) => p.title)], [parsed, t])
@@ -224,6 +233,13 @@ export function Help({ topic, onClose }: { topic: HelpTopic; onClose: () => void
         </div>
 
         <footer className="help-footer">
+          {/* The walk can always be had again. It is the one thing a player who
+              dismissed it on step two has no other way back to. */}
+          {onWalk && (
+            <button className="button button-small" data-action="guideReopen" onClick={onWalk}>
+              {t.guideReopen}
+            </button>
+          )}{' '}
           {t.helpFooter} <code>{lang === 'hu' ? 'RULES.hu.md' : 'RULES.md'}</code>{' '}
           {t.helpFooterTail} <kbd>Esc</kbd>
         </footer>

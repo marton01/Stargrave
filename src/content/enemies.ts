@@ -8,7 +8,7 @@
 // important rule in the game: planning is only planning if you know what is
 // coming.
 
-import type { EnemyType } from '../engine/types'
+import type { EnemyBehaviour, EnemyType, Text } from '../engine/types'
 import type { Rng } from '../engine/rng'
 
 export const ENEMY_TYPES: EnemyType[] = [
@@ -16,11 +16,16 @@ export const ENEMY_TYPES: EnemyType[] = [
     id: 'ash-husk',
     name: { hu: 'Hamvadó váz', en: 'Ash Husk' },
     description: {
-      hu: 'Közelharci horda. Egyedül nem félelmetes, négyesben az.',
-      en: 'A melee swarm. Not frightening alone; four of them are.',
+      hu:
+        'Közelharci horda. Egyedül nem félelmetes, négyesben az — és amíg egymás mellett állnak, ' +
+        'keményebben is üt.',
+      en:
+        'A melee swarm. Not frightening alone; four of them are — and it hits harder while they ' +
+        'are standing together.',
     },
     hp: 4,
     shape: 'husk',
+    behaviours: ['pack'],
     intents: [
       {
         id: 'husk-charge',
@@ -56,11 +61,16 @@ export const ENEMY_TYPES: EnemyType[] = [
     id: 'rune-sentinel',
     name: { hu: 'Rúnaőrző', en: 'Rune Sentinel' },
     description: {
-      hu: 'Távolról lő, és pajzsot ad a társainak. Először őt kell elhallgattatni.',
-      en: 'Shoots from a distance and shields its allies. Silence it first.',
+      hu:
+      'Távolról lő, és pajzsot ad a társainak. Először őt kell elhallgattatni — de ha megsebzed, ' +
+      'hátrál, és a lövése így is elér.',
+      en:
+      'Shoots from a distance and shields its allies. Silence it first — but wound it and it ' +
+      'backs away, and its shot still reaches you.',
     },
     hp: 7,
     shape: 'sentinel',
+    behaviours: ['skittish', 'saboteur'],
     intents: [
       {
         id: 'sentinel-shoot',
@@ -96,11 +106,16 @@ export const ENEMY_TYPES: EnemyType[] = [
     id: 'choir-wraith',
     name: { hu: 'Kórus-fantom', en: 'Choir Wraith' },
     description: {
-      hu: 'Gyors, és elszívja a Töltetet. Ha hagyod élni, kifogytok az erőből.',
-      en: 'Fast, and it drains Flux. Let it live and you will run out of power.',
+      hu:
+      'Gyors, és elszívja a Töltetet. Ha hagyod élni, kifogytok az erőből — és nem a falat ' +
+      'kerülgeti, hanem a leghátsó hőst keresi.',
+      en:
+      'Fast, and it drains Flux. Let it live and you will run out of power — and it does not ' +
+      'bother with the wall: it walks at whoever is standing furthest back.',
     },
     hp: 5,
     shape: 'wraith',
+    behaviours: ['stalker'],
     intents: [
       {
         id: 'wraith-strike',
@@ -144,11 +159,16 @@ export const ENEMY_TYPES: EnemyType[] = [
     id: 'godmachine-shard',
     name: { hu: 'Istengép-töredék', en: 'Godmachine Shard' },
     description: {
-      hu: 'Lassú, de hatalmas. Ne álljatok mellé többen egyszerre.',
-      en: 'Slow, but enormous. Do not both stand next to it at once.',
+      hu:
+      'Lassú, de hatalmas. Ne álljatok mellé többen egyszerre — és ha kettő van belőle, ' +
+      'gondold meg, melyiket ütöd le előbb: a másik megtorolja.',
+      en:
+      'Slow, but enormous. Do not stand next to it in a group — and with two of them, think ' +
+      'about which one you put down first: the other one answers for it.',
     },
     hp: 12,
     shape: 'shard',
+    behaviours: ['vengeful'],
     intents: [
       {
         id: 'shard-crush',
@@ -223,4 +243,41 @@ export function buildEncounter(rng: Rng, difficulty: number): string[] {
   if (difficulty >= 3) out.push('godmachine-shard')
 
   return rng.shuffle(out)
+}
+
+/**
+ * What a habit does, in one line each, for the sidebar and the help.
+ *
+ * `amount` is filled in by the caller where a habit has a number — see
+ * `activeBehaviours`.
+ */
+export const BEHAVIOUR_NAMES: Record<EnemyBehaviour, Text> = {
+  skittish: { hu: 'megretten', en: 'skittish' },
+  saboteur: { hu: 'a modulokat célozza', en: 'after the modules' },
+  vengeful: { hu: 'megtorlás', en: 'vengeful' },
+  stalker: { hu: 'a hátsó sort keresi', en: 'goes for the back' },
+  pack: { hu: 'falkában', en: 'in a pack' },
+}
+
+export const BEHAVIOUR_TEXTS: Record<EnemyBehaviour, (amount: number) => Text> = {
+  skittish: () => ({
+    hu: 'Megsebezve hátrál, nem közelít. A felénél kevesebb életerőnél kezd menekülni.',
+    en: 'Once hurt it backs away instead of closing. Below half its hit points it runs.',
+  }),
+  saboteur: () => ({
+    hu: 'Amíg áll a rácson a hajó egy modulja, nem a hősökre megy, hanem arra.',
+    en: 'While a module of the ship is standing on the grid, it goes for that, not the heroes.',
+  }),
+  vengeful: (amount) => ({
+    hu: `Minden elesett fajtársáért +1 sebzés. Most +${amount}.`,
+    en: `+1 damage for every one of its own kind already down. Now +${amount}.`,
+  }),
+  stalker: () => ({
+    hu: 'A LEGTÁVOLABBI hőst keresi, nem a legközelebbit: a tüzérséget, nem a falat.',
+    en: 'It walks at the FARTHEST hero, not the nearest: the artillery, not the wall.',
+  }),
+  pack: () => ({
+    hu: 'Amíg másik ellenfél áll mellette, +1 sebzés. Egyedül nem.',
+    en: 'While another enemy stands beside it, +1 damage. Alone, nothing.',
+  }),
 }

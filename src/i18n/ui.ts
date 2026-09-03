@@ -204,6 +204,26 @@ const HU = {
   fluxPreview: (n: number) => `A partraszálló csapat ${n} Töltettel indul.`,
   fluxPreviewHint:
     'A Rúnamagra adott energia lesz a Töltet. Ez köti össze a hajót és a partraszállást.',
+  guideStepOf: (n: number, total: number): string => `${n}. / ${total}`,
+  guideNext: 'Tovább',
+  guideBack: 'Vissza',
+  guideDone: 'Megvan, bezárom',
+  guideGo: 'Nyisd meg ezt a képernyőt',
+  guideCloseHint: 'Bezárás. A fejléc ? gombjával (F1) bármikor újra elolvasható az egész.',
+  guideReopen: 'Végigvezetés újra',
+  tutorialBadge: 'TANULÓJÁTÉK',
+  tutorialBadgeHint:
+    'Ez egy tanulójáték: minden rendszer működik benne, de semmi nem számít bele az Archívumba — ' +
+    'se pont, se végkifejlet, se feloldás. Bármikor befejezhető, következmény nélkül.',
+  tutorialFinish: 'Tanulójáték befejezése',
+  tutorialFinishConfirm:
+    'Befejezed a tanulójátékot? Nem kerül be semmi az Archívumba — ahogy eddig sem került.',
+  modeNormal: 'Sima expedíció',
+  modeNormalText: 'A rendes játék. Minden számít: a pontok, a végkifejletek, a feloldások.',
+  modeTutorial: 'Tanulójáték',
+  modeTutorialText:
+    'Ugyanaz a játék, minden rendszerével — de SEMMI nem számít bele az Archívumba, és bármikor ' +
+    'befejezhető. Egy panel végigvezet a képernyőkön, és elmondja, mi mire jó. Ezzel érdemes kezdeni.',
   logHeading: 'Napló',
   understanding: 'Megfejtés',
   understandingHint:
@@ -735,6 +755,12 @@ const HU = {
   roomCode: 'Szobakód',
   joinRoom: 'Belépek',
   joinBadCode: 'Ez nem érvényes kód — nézd meg még egyszer.',
+  veteransHeading: 'Akik hazaértek',
+  veteransIntro:
+    'Ők a legutóbbi expedíció túlélői, és a KÖVETKEZŐN is ott lesznek — a rangjukkal és a ' +
+    'jellemvonásaikkal együtt. A hajónak minden szakmából kell egy ember, tehát ahol nincs ' +
+    'hazatérő, oda új kerül. Ha egy expedíció elveszik (hajótest, morál, vagy bezárul a Kapu), ' +
+    'akkor a rajta lévők is: nem vár többé senki.',
   roomsKnown: 'Folytatható expedíciók',
   roomsKnownIntro:
     'Minden félbehagyott expedíció itt marad — az egyedül játszottak is —, és bármikor ' +
@@ -1123,6 +1149,27 @@ const EN: Catalog = {
   fluxPreview: (n: number) => `The landing party will start with ${n} Flux.`,
   fluxPreviewHint:
     'Whatever you give the rune core becomes the Flux. That is what ties the ship to the landing.',
+  guideStepOf: (n: number, total: number): string => `${n} / ${total}`,
+  guideNext: 'Next',
+  guideBack: 'Back',
+  guideDone: 'Got it, close',
+  guideGo: 'Open that screen',
+  guideCloseHint: 'Close. The ? in the header (F1) has all of it whenever you want.',
+  guideReopen: 'Walk me through it again',
+  tutorialBadge: 'PRACTICE RUN',
+  tutorialBadgeHint:
+    'This is a practice run: every system works, and none of it reaches the Archive — no points, ' +
+    'no endings, no unlocks. It can be finished at any moment, at no cost.',
+  tutorialFinish: 'Finish the practice run',
+  tutorialFinishConfirm:
+    'Finish the practice run? Nothing goes into the Archive — as nothing has so far.',
+  modeNormal: 'A real expedition',
+  modeNormalText: 'The game proper. Everything counts: the points, the endings, the unlocks.',
+  modeTutorial: 'Practice run',
+  modeTutorialText:
+    'The same game with every system in it — but NOTHING reaches the Archive, and it can be ' +
+    'finished at any time. A panel walks you through the screens and says what each is for. ' +
+    'This is where to start.',
   logHeading: 'Log',
   understanding: 'Understanding',
   understandingHint:
@@ -1637,6 +1684,12 @@ const EN: Catalog = {
   roomCode: 'Room code',
   joinRoom: 'Join',
   joinBadCode: 'That is not a valid code — have another look.',
+  veteransHeading: 'The ones who came home',
+  veteransIntro:
+    'These are the survivors of the last expedition, and they will be on the NEXT one — with ' +
+    'their rank and their traits. The ship needs one of each speciality, so wherever nobody came ' +
+    'home a new hand signs on. If an expedition is lost — hull, morale, or the Gate shutting — ' +
+    'the people aboard are lost with it, and nobody is waiting.',
   roomsKnown: 'Games you can carry on with',
   roomsKnownIntro:
     'Every expedition you stopped is kept here — the solo ones too — and carries on from ' +

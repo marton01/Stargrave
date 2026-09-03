@@ -626,6 +626,15 @@ export type ExpeditionState = {
    * only place in this game where two groups of players are doing different
    * things in the same minute. At least two always land.
    */
+  /**
+   * A run for learning on, which counts nowhere.
+   *
+   * Every system is switched on — the point is to meet all of them — but nothing
+   * it does reaches the Archive: no points, no endings recorded, no unlocks, no
+   * long memory. It can be finished at any moment without cost, which is the
+   * whole reason somebody will dare to press the buttons.
+   */
+  tutorial: boolean
   ashore: HeroClassId[]
   /** The battle round the ship's support was last spent on. */
   supportRound: number
@@ -689,6 +698,21 @@ export type ArchiveState = {
      */
     seed?: number
   }[]
+  /**
+   * The people who came home, waiting for the next expedition.
+   *
+   * The one thing the meta-layer was missing. A run spends twenty weeks giving
+   * these people names, ranks, traits, somebody to look after them and a place
+   * on the ship — the epilogue reads out what became of each of them — and then
+   * they were gone, and the next expedition began with the same six strangers.
+   *
+   * Stored on the Archive rather than on the run, because the Archive is what
+   * survives: it is the record on the near side of the Gate. They come back with
+   * their rank and their traits and nothing else — no postings, no mentor, no
+   * pairings, and loyalty reset, because those are facts about a ship they are
+   * no longer on.
+   */
+  veterans: CrewMember[]
   bestUnderstanding: number
   expeditionsRun: number
 }

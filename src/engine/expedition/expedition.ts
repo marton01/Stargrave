@@ -26,7 +26,7 @@ import {
   traitValue,
   traitsActive,
 } from '../../content/crew'
-import type { CrewMember, CrewTraitId } from '../../content/crew'
+import type { CrewMember, CrewSpeciality, CrewTraitId } from '../../content/crew'
 import { BASE_MENTEES, heroPerk, perkAvailable, perksOf } from '../../content/advance'
 import type { PerkEffect } from '../../content/advance'
 import { RELICS, relic, relicFits } from '../../content/relics'
@@ -1959,6 +1959,8 @@ export function startExpedition(
   startDials?: unknown,
   /** Which classes land. Two by default — see `partyForSeats`. */
   withParty: HeroClassId[] = DEFAULT_PARTY,
+  /** A run for learning on, which counts nowhere. See `tutorial` on the state. */
+  tutorial = false,
 ): ExpeditionState {
   const rng = createRng(seed)
   const puzzleKinds = puzzleKindsFrom(archive)
@@ -1976,14 +1978,44 @@ export function startExpedition(
   power.forge = 1
   power.runeCore = 2
 
-  const crew = [
-    generateCrewMember(rng, 'crew-0', 'engineer'),
-    generateCrewMember(rng, 'crew-1', 'scientist'),
-    generateCrewMember(rng, 'crew-2', 'guard'),
-    generateCrewMember(rng, 'crew-3', 'medic'),
-    generateCrewMember(rng, 'crew-4', 'navigator'),
-    generateCrewMember(rng, 'crew-5'),
-  ]
+  /**
+   * The crew: whoever came home last time, and new hands for the rest.
+   *
+   * This is what turns the Archive from a scoreboard into a memory. A run spends
+   * twenty weeks giving these people ranks, traits and somebody to look after
+   * them, and until now they vanished at the Gate and the next expedition began
+   * with the same six strangers.
+   *
+   * The ship still needs one of each speciality to be worth flying, so the
+   * roster is filled in speciality order: a veteran of that trade if there is
+   * one, and a new hand if not. Which also means signing up is not a punishment
+   * for the newcomers — there is always a place for them.
+   */
+  const returning = [...(archive.veterans ?? [])]
+  const takeVeteran = (speciality?: CrewSpeciality): CrewMember | null => {
+    const at = speciality
+      ? returning.findIndex((c) => c.speciality === speciality)
+      : returning.length > 0
+        ? 0
+        : -1
+    if (at < 0) return null
+    return returning.splice(at, 1)[0] ?? null
+  }
+  const crew = (
+    [
+      ['crew-0', 'engineer'],
+      ['crew-1', 'scientist'],
+      ['crew-2', 'guard'],
+      ['crew-3', 'medic'],
+      ['crew-4', 'navigator'],
+      ['crew-5', undefined],
+    ] as [string, CrewSpeciality | undefined][]
+  ).map(([id, speciality]) => {
+    const veteran = takeVeteran(speciality)
+    // The id has to be this run's, because everything else — postings, mentors,
+    // debts, pairings — points at people by id.
+    return veteran ? { ...veteran, id } : generateCrewMember(rng, id, speciality)
+  })
   // Who gets on and who does not. Done here rather than per person, because a
   // pairing is a fact about two people and has to be written on both of them.
   bindCrew(rng, crew)
@@ -2068,6 +2100,7 @@ export function startExpedition(
     lastCouncil: 0,
     figures: {},
     pledge: null,
+    tutorial,
     ashore: [],
     supportRound: -1,
     // The deeper encounters are an Archive unlock; carried as a flag so that

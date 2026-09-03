@@ -3256,3 +3256,104 @@
   background: var(--bg-2);
   color: var(--text);
 }
+
+/* The walk through the game. A corner of the screen, never a gate: with four
+   people at one table, a tutorial that blocks the buttons leaves three of them
+   watching a fourth follow instructions. */
+.guide {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  width: min(24rem, calc(100vw - 2rem));
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  background: var(--bg-3);
+  border: 1px solid var(--rune);
+  border-radius: 4px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+
+.guide h3 {
+  margin: 0;
+  color: var(--rune);
+  font-size: 1rem;
+}
+
+.guide p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.guide-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.guide-count {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.guide-close {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.2rem;
+}
+
+.guide-close:hover {
+  color: var(--danger);
+}
+
+.guide-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+/* A run that counts nowhere says so, permanently, in the header. */
+.meter-tutorial .meter-label {
+  color: var(--echo);
+  border: 1px solid var(--echo);
+  border-radius: 3px;
+  padding: 0.1rem 0.35rem;
+  letter-spacing: 0.1em;
+}
+
+/* The first fork on the launch screen: practice, or for real. */
+.mode-choices-kind {
+  margin-bottom: 0.8rem;
+}
+
+/* The people waiting for the next expedition. Names first: that is the point. */
+.veteran-list {
+  margin-top: 1.2rem;
+}
+
+.veteran-list ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.veteran-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  font-size: 0.9rem;
+  border-left: 2px solid var(--green);
+  padding-left: 0.6rem;
+}

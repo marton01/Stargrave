@@ -1518,3 +1518,15 @@ kbd {
 .app-home:focus-visible {
   color: var(--rune);
 }
+
+/* What an enemy is doing differently this round. Next to its intent, because the
+   intent being readable a round ahead is the rule the whole game plans around. */
+.unit-behaviour {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  color: var(--danger);
+  border-left: 2px solid var(--danger);
+  padding-left: 0.4rem;
+  cursor: help;
+}

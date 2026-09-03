@@ -48,6 +48,25 @@ A fejléc mindig mutatja a hat erőforrást, a legénység létszámát, a megfe
 hány hét van még a Kapu bezárultáig. A jobb oldali sávban a **napló**: minden, ami
 történt, visszafelé.
 
+## Ha most kezdjük
+
+**A Kapunál az első kérdés az, hogy sima expedíció vagy TANULÓJÁTÉK.** Új asztalnál a
+tanulójáték van alapból kiválasztva, és jó okkal.
+
+A tanulójáték **ugyanaz a játék, minden rendszerével** — a Hírnök is számol, a parancsok
+is jönnek, a legénységnek is van véleménye. Egyetlen dolog más benne: **semmi nem számít
+bele az Archívumba.** Se pont, se végkifejlet, se feloldás, se a hosszú emlékezet. Ezért
+bátran meg lehet nyomni benne mindent, és **bármikor be lehet fejezni** — a fejlécben
+végig ott áll, hogy `TANULÓJÁTÉK`.
+
+Közben egy kis panel a sarokban **végigvezet a képernyőkön**: mire jó a hajó, mit
+jelentenek az állomások, mi a saját pultod, hogyan olvasd a csillagtérképet, mi a Zaj és
+a Hírnök, és hogyan lehet abbahagyni. Tizenhárom lépés, egy tea alatt megvan. **Nem
+blokkol semmit** — bármelyik lépésen becsukható, és a súgóban (`?` vagy `F1`) bármikor
+újra elővehető.
+
+Ha végeztél vele, indíts egy **sima expedíciót** — onnantól minden számít.
+
 ## Szótár: mi micsoda
 
 Ez a játék néhány dolgot a saját nevén hív. Egyik sem bonyolult, de egyiket sem
@@ -468,6 +487,25 @@ Ha ugyanabban a körben **már megsebezte valaki ugyanazt az ellenfelet**, a te
 találatod +1-et visz. Nem halmozódik ugyanattól a hőstől, és **minden kör elején
 nullázódik** — tehát az „üssük most, együtt" döntés, nem egy gyűjtögetett jelölés.
 Négy hőssel ez a legfontosabb beszédtéma a csatában.
+
+### Amit az ellenfelek maguktól tesznek
+
+A négy ellenféltípusnak a szándékán felül van egy **állandó szokása** is. Ez nem
+nehézség, hanem **forma**: ugyanaz a négy alak más kérdést tesz fel attól függően, mit
+csinál, ha megsebzik, mit keres a pályán, és mi történik, ha egy társa elesik.
+
+| Szokás | Kinél | Mit tesz |
+|---|---|---|
+| **falkában** | Hamvadó váz | Amíg másik ellenfél áll mellette, +1 sebzés. Egyedül nem. |
+| **megretten** | Rúnaőrző | Az életereje felénél hátrálni kezd, nem közelít — a lövése viszont így is elér. |
+| **a modulokat célozza** | Rúnaőrző | Ha a hajót támadják, és áll a rácson egy modul, arra megy, nem a hősökre. |
+| **a hátsó sort keresi** | Kórus-fantom | A LEGTÁVOLABBI hőst választja, nem a legközelebbit: a tüzérséget, nem a falat. |
+| **megtorlás** | Istengép-töredék | Minden elesett fajtársáért +1 sebzés. Kettőnél nem mindegy, melyiket ütöd le előbb. |
+
+**Mindegyik látszik.** Ha egy szokás épp működik, ott áll az ellenfél sorában az
+oldalsávban, a számmal együtt (*„megtorlás +1"*), és fölé állva megmondja, mit jelent.
+Ez nem díszítés: a játék legfontosabb szabálya az, hogy **a szándék a kör elején
+látható** — egy szokás, ami csendben módosít egy számot, pont azt rontaná el.
 
 ## Feladványok
 
