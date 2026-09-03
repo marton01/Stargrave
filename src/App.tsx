@@ -27,6 +27,7 @@ import {
   loadGame,
   loadRoomGame,
   parseSave,
+  renameSavedRoom,
   saveDialPreset,
   saveFileName,
   saveGame,
@@ -487,6 +488,11 @@ function Game() {
     // A room is also filed under its own code, so the same people can come back
     // to it next week — and so anybody at the table can re-host it.
     saveRoomGame(game)
+    // And the list of games to carry on with is read from that index, so it has
+    // to be re-read here. It was refreshed only when a room was opened or left,
+    // which meant stopping for the night sent you to a title screen that had not
+    // heard about the run you had just put down.
+    setRooms(listRooms())
   }, [game])
 
   useEffect(() => {
@@ -725,6 +731,7 @@ function Game() {
             setRooms(listRooms())
             setShowArchive(true)
           }}
+          onRename={net.rename}
           onClose={() => {
             // Tell the room first, then treat ourselves exactly like a guest who
             // was told: one path, so the host cannot end up in a state no guest
@@ -760,6 +767,16 @@ function Game() {
         <ArchiveView
           archive={game.archive}
           hasRunningExpedition={!!expedition}
+          onRenameRoom={(code, name) => {
+            renameSavedRoom(code, name)
+            setRooms(listRooms())
+            // If it is the run we are holding, keep the copy in hand in step.
+            setGame((previous) =>
+              previous.room?.code === code
+                ? { ...previous, room: { ...previous.room, name: name.trim().slice(0, 40) } }
+                : previous,
+            )
+          }}
           onForgetRoom={(code) => {
             forgetRoom(code)
             setRooms(listRooms())
@@ -1070,9 +1087,23 @@ function Game() {
             ))}
           </div>
 
+          {/* Two very different things used to be one button. Stopping for the
+              night and giving the expedition up were both reached through
+              "Expedíció leállítása", so the only visible way out of a running
+              game was the one that ended it — and a group that wanted to carry
+              on next week had no way to say so. */}
           <button
             className="button"
+            data-action="pauseExpedition"
+            title={t.pauseHint}
+            onClick={() => setShowArchive(true)}
+          >
+            {t.pauseExpedition}
+          </button>
+          <button
+            className="button button-quiet"
             data-action="abandon"
+            title={t.abandonHint}
             onClick={() => {
               if (window.confirm(t.abandonConfirm)) dispatch({ k: 'abandon' })
             }}

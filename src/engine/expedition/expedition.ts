@@ -18,10 +18,13 @@ import {
   LOYALTY_BREAKS,
   LOYALTY_RECOVERS,
   crewRank,
-  loyaltyBand,
   generateCrewMember,
+  loyaltyBand,
   rankBonus,
   traitBonus,
+  traitFits,
+  traitValue,
+  traitsActive,
 } from '../../content/crew'
 import type { CrewMember, CrewTraitId } from '../../content/crew'
 import { BASE_MENTEES, heroPerk, perkAvailable, perksOf } from '../../content/advance'
@@ -421,10 +424,10 @@ export function crewStrengthAt(
   /** The rest of the crew, when it is known: who is standing next to them. */
   crew: readonly CrewMember[] = [],
 ): number {
-  const home = c.speciality === STATIONS[station].speciality
-  const traits = home
-    ? c.traits.reduce((n, t) => n + (CREW_TRAITS[t].station ?? 0), 0)
-    : 0
+  // One gate for every trait, good and bad: you are only yourself at the job you
+  // are for. `traitsActive` also honours the one trait that is at home anywhere.
+  const home = traitsActive(c, station)
+  const traits = home ? traitValue(c, 'station', crew) : 0
   // Who else is on this station. Two people who work well together get more
   // done; two who cannot stand each other get less. This is what turns posting
   // the crew from arithmetic into a puzzle — and the puzzle changes shape every
@@ -475,7 +478,10 @@ export function labOutput(s: ExpeditionState): number {
   return (
     s.power.lab +
     Math.floor(stationStrength(s, 'lab') / 2) +
-    Math.max(0, traitBonus(crewAt(s, 'lab'), 'research')) +
+    // Home postings only. A meticulous guard used to produce exactly as much
+    // Information here as a scientist did, because the trait went round the
+    // speciality instead of through it.
+    Math.max(0, traitBonus(crewAt(s, 'lab'), 'research', s.crew)) +
     shipBonus(s, 'research')
   )
 }
@@ -1322,14 +1328,22 @@ function crewWorkWeek(s: ExpeditionState): void {
     const station = member.station
     if (!station || !stationActive(s, station as StationId)) continue
     const before = crewRank(member)
-    member.xp += (member.mentor ? 2 : 1) + (member.mentor ? shipBonus(s, 'crewXp') : 0)
+    const learns = traitsActive(member) ? traitValue(member, 'learn', s.crew) : 0
+    member.xp += Math.max(
+      0,
+      (member.mentor ? 2 : 1) + (member.mentor ? shipBonus(s, 'crewXp') : 0) + learns,
+    )
     const after = crewRank(member)
     if (after === before) continue
     log(s, { k: 'crewPromoted', name: member.name, rank: after })
     // The master rank comes with something learned, so a long posting leaves a
     // mark on the person rather than only on a number.
     if (after === 3) {
-      const options = LEARNABLE_TRAITS.filter((id) => !member.traits.includes(id))
+      // Not just "one they have not got": one that can be true of them at the
+      // same time as what they already are. A master who learned to be a veteran
+      // while still being the young one was the same contradiction the generator
+      // used to hand out.
+      const options = LEARNABLE_TRAITS.filter((id) => traitFits(id, member.traits, member.speciality))
       const learned = rngFor(s).pick(options)
       if (learned) {
         member.traits.push(learned)
@@ -1399,10 +1413,9 @@ export function loyaltyTarget(s: ExpeditionState, member: CrewMember): number {
   // Work that was noticed. A rank is the ship saying "you are good at this".
   target += crewRank(member) - 1
   // Who they are.
-  for (const trait of member.traits) {
-    if (trait === 'devout' || trait === 'brave') target += 1
-    if (trait === 'sceptical' || trait === 'restless') target -= 1
-  }
+  // Their own traits, from the one table rather than a second list here — and
+  // only while they are standing where they belong, like everything else.
+  if (traitsActive(member)) target += traitValue(member, 'loyalty', s.crew)
   // Nobody is at ease this far out.
   target -= Math.floor(s.darkening / 2)
   // And what the ship is wearing and what its heroes have learned.
@@ -2257,7 +2270,7 @@ function weeklyResources(s: ExpeditionState): void {
 export function moraleTarget(s: ExpeditionState): number {
   const crewCount = livingCrew(s).length
   let target = 7
-  target += Math.max(-2, Math.min(2, traitBonus(livingCrew(s), 'morale')))
+  target += Math.max(-2, Math.min(2, traitBonus(livingCrew(s), 'morale', s.crew)))
   target += sanctumOutput(s)
   target += shipBonus(s, 'moraleTarget')
   if (s.power.lifeSupport < lifeSupportNeeded(crewCount)) target -= 3

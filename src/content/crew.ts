@@ -4,6 +4,8 @@
 // the same in Hungarian and English and never need translating. Everything the
 // player reads *about* a crew member is bilingual.
 
+import { STATIONS } from './ship'
+import type { StationId } from './ship'
 import type { Rng } from '../engine/rng'
 import type { HeroClassId, Text } from '../engine/types'
 
@@ -33,8 +35,6 @@ export type CrewTrait = {
   description: Text
   /** Weekly morale contribution while this member is aboard. */
   morale?: number
-  /** Extra Information per week while assigned to the Lab. */
-  research?: number
   /**
    * Extra output on the station their speciality is at home on — and only there.
    *
@@ -43,8 +43,33 @@ export type CrewTrait = {
    * this field says so in its own description.
    */
   station?: number
-  /** Bonus when the ship works on alien technology. */
-  alienTech?: number
+  /** Where this person's own loyalty sits. */
+  loyalty?: number
+  /** Work-weeks earned per week, above or below the usual one. */
+  learn?: number
+  /**
+   * Information, but only through the Lab — so this belongs to a scientist and
+   * nobody else. See `TRAIT_SPECIALITIES`.
+   */
+  research?: number
+  /** The station bonus applies only while nobody else is standing there. */
+  alone?: true
+  /** Counts as being at home on every station, not only their own. */
+  anywhere?: true
+}
+
+/**
+ * Which specialities a trait may be dealt to.
+ *
+ * Absent means anybody. This exists because of one dead trait: `research` only
+ * ever reaches the ship through the Lab, so a *meticulous guard* carried a line
+ * of description that could never do anything — and a *sceptical guard* carried
+ * one that was purely a penalty. A trait that cannot matter for the person
+ * holding it is worse than no trait: it reads as a difference between two crew
+ * members that is not there.
+ */
+export const TRAIT_SPECIALITIES: Partial<Record<CrewTraitId, CrewSpeciality[]>> = {
+  sceptical: ['scientist'],
 }
 
 export const CREW_TRAITS: Record<CrewTraitId, CrewTrait> = {
@@ -52,85 +77,114 @@ export const CREW_TRAITS: Record<CrewTraitId, CrewTrait> = {
     id: 'brave',
     name: { hu: 'bátor', en: 'brave' },
     description: {
-      hu: 'Nem inog meg. A hajó morálja jobban áll, amíg fedélzeten van.',
-      en: 'Does not waver. Ship morale holds better while they are aboard.',
+      hu:
+        'Nem inog meg, és a többiek tudják róla. A saját állomásán állva a hajó morálja ' +
+        '1-gyel jobban áll, és ő maga is nehezebben tántorodik el.',
+      en:
+        'Does not waver, and the others know it. Standing at their own station, ship morale ' +
+        'holds 1 higher, and they are harder to lose.',
     },
     morale: 1,
+    loyalty: 1,
   },
   sceptical: {
     id: 'sceptical',
     name: { hu: 'kétkedő', en: 'sceptical' },
     description: {
-      hu: 'Mindent kétszer ellenőriz. Több Információ, kevesebb morál.',
-      en: 'Checks everything twice. More Information, less morale.',
+      hu:
+        'Mindent kétszer ellenőriz. A Laborban vagy az Archívumban +1 Információt hoz, ' +
+        'de rontja a hangulatot, és őt magát is nehezebb megtartani.',
+      en:
+        'Checks everything twice. In the Lab or the Archive that is +1 Information, and it ' +
+        'costs mood — and they are harder to keep.',
     },
-    morale: -1,
     research: 1,
+    morale: -1,
+    loyalty: -1,
   },
   alienBorn: {
     id: 'alienBorn',
     name: { hu: 'idegen származású', en: 'of alien descent' },
     description: {
-      hu: 'Ismerős neki, ami mindenki másnak érthetetlen. Jobban boldogul az idegen technológiával.',
-      en: 'Familiar with what everyone else finds unreadable. Bonus with alien technology.',
+      hu:
+        'Ismerős neki, ami mindenki másnak érthetetlen — bármelyik műszer előtt. ' +
+        'MINDEN állomáson úgy számít, mintha a sajátján állna.',
+      en:
+        'Familiar with what everyone else finds unreadable, at any instrument. Counts as being ' +
+        'at home on EVERY station, not only their own.',
     },
-    alienTech: 1,
+    anywhere: true,
   },
   veteran: {
     id: 'veteran',
     name: { hu: 'veterán', en: 'veteran' },
     description: {
-      hu: 'Már volt a Kapun túl. A saját állomásán érezhetően hatékonyabb.',
-      en: 'Has been beyond the Gate before. Noticeably more effective on their own station.',
+      hu: 'Már volt a Kapun túl. A saját állomásán +1 erő — de nincs már sok, amit tanulhatna.',
+      en:
+        'Has been beyond the Gate before. +1 strength on their own station — but there is not ' +
+        'much left for them to learn.',
     },
     station: 1,
+    learn: -1,
   },
   young: {
     id: 'young',
     name: { hu: 'fiatal', en: 'young' },
     description: {
       hu:
-        'Először látja a csillagokat innen. Lelkes, de még tanul: a saját szakmája állomásán ' +
-        'egyelőre kevesebbet ér.',
+        'Először látja a csillagokat innen. Lelkes — a saját állomásán +1 morál —, de még ' +
+        'tanul: ott most 1-gyel kevesebbet ér, cserébe hetente egy héttel többet halad.',
       en:
-        'Seeing the stars from here for the first time. Eager, but still learning: worth less for ' +
-        'now on the station of their own speciality.',
+        'Seeing the stars from here for the first time. Eager — +1 morale on their own station ' +
+        '— but still learning: 1 less strength there, and a week of experience faster.',
     },
     morale: 1,
     station: -1,
+    learn: 1,
   },
   devout: {
     id: 'devout',
     name: { hu: 'hitvalló', en: 'devout' },
     description: {
-      hu: 'A Szentélyben tartja a hajót együtt. Erős morál, de nehezen fogadja az idegen technológiát.',
-      en: 'Holds the ship together in the Sanctum. Strong morale, uneasy with alien technology.',
+      hu:
+        'A saját állomásán állva együtt tartja a hajót: +2 morál, és őt magát is nehéz ' +
+        'elveszíteni. A műszerekben viszont nem hisz — lassabban tanul.',
+      en:
+        'Standing at their own station they hold the ship together: +2 morale, and they are ' +
+        'hard to lose. They do not believe in the instruments, though: slower to learn.',
     },
     morale: 2,
-    alienTech: -1,
+    loyalty: 1,
+    learn: -1,
   },
   restless: {
     id: 'restless',
     name: { hu: 'nyugtalan', en: 'restless' },
     description: {
       hu:
-        'Nem tud egy helyben maradni. A saját szakmája állomásán gyorsabb munka, de a hajó ' +
-        'morálja romlik tőle.',
+        'Nem tud egy helyben maradni. A saját állomásán +1 erő, de rontja a hajó morálját, ' +
+        'és őt magát is nehezebb megtartani.',
       en:
-        'Cannot sit still. Faster work on the station of their own speciality, and worse ship ' +
-        'morale for it.',
+        'Cannot sit still. +1 strength on their own station, worse ship morale for it, and ' +
+        'harder to keep.',
     },
-    morale: -1,
     station: 1,
+    morale: -1,
+    loyalty: -1,
   },
   meticulous: {
     id: 'meticulous',
     name: { hu: 'pedáns', en: 'meticulous' },
     description: {
-      hu: 'Lassan, de hibátlanul dolgozik. Több Információ.',
-      en: 'Works slowly and without error. More Information.',
+      hu:
+        'Lassan, de hibátlanul dolgozik — és ehhez csend kell. A saját állomásán +1 erő, ' +
+        'de CSAK akkor, ha egyedül áll ott.',
+      en:
+        'Slow and flawless, and it needs quiet. +1 strength on their own station — but ONLY ' +
+        'while nobody else is standing there.',
     },
-    research: 1,
+    station: 1,
+    alone: true,
   },
 }
 
@@ -252,6 +306,57 @@ export function rankBonus(member: CrewMember): number {
   return crewRank(member) >= 2 ? 2 : 0
 }
 
+/**
+ * Traits that cannot describe the same person.
+ *
+ * Nothing stopped these from being dealt together, so the crew list could offer
+ * you somebody who was "young, veteran" — seeing the stars for the first time,
+ * having been beyond the Gate before — or "devout, sceptical", who both holds
+ * the ship together in the Sanctum and checks everything twice. Read as a
+ * character, that is nonsense. Read as numbers it is worse than nonsense: three
+ * of these five pairs cancel each other exactly, so the trait line was decoration
+ * on a person with no traits at all.
+ *
+ * Only genuine contradictions belong here. A brave pedant is a person; a
+ * restless veteran is a person. With eight traits and five forbidden pairs, one
+ * draw in six has to be re-dealt, which is a price worth paying.
+ */
+export const TRAIT_CONFLICTS: [CrewTraitId, CrewTraitId][] = [
+  // "First time seeing the stars" against "has been beyond the Gate before".
+  // Their station effects are −1 and +1: dealt together they are nothing.
+  ['young', 'veteran'],
+  // Both move station strength, in opposite directions, for opposite reasons.
+  ['young', 'restless'],
+  // Faith that holds the ship together against doubt that checks it twice.
+  ['devout', 'sceptical'],
+  // At home with alien technology against recoiling from it: alienTech +1 and −1.
+  ['devout', 'alienBorn'],
+  // "Slow but flawless" against "cannot sit still".
+  ['restless', 'meticulous'],
+]
+
+/** Can these two describe the same person? */
+export function traitsConflict(a: CrewTraitId, b: CrewTraitId): boolean {
+  return TRAIT_CONFLICTS.some(
+    ([one, other]) => (one === a && other === b) || (one === b && other === a),
+  )
+}
+
+/** Can this trait be added to somebody who already has these? */
+export function traitFits(
+  trait: CrewTraitId,
+  existing: CrewTraitId[],
+  speciality?: CrewSpeciality,
+): boolean {
+  if (existing.includes(trait)) return false
+  if (existing.some((had) => traitsConflict(had, trait))) return false
+  // A trait that could never do anything for this person is worse than none: it
+  // reads as a difference between two crew members that is not there.
+  const only = TRAIT_SPECIALITIES[trait]
+  if (only && speciality && !only.includes(speciality)) return false
+  return true
+}
+
 /** The traits a promotion may hand out: nothing that makes a person worse. */
 export const LEARNABLE_TRAITS: CrewTraitId[] = [
   'brave',
@@ -279,11 +384,20 @@ const SPECIALITIES: CrewSpeciality[] = ['engineer', 'scientist', 'guard', 'medic
 const TRAIT_IDS = Object.keys(CREW_TRAITS) as CrewTraitId[]
 
 export function generateCrewMember(rng: Rng, id: string, speciality?: CrewSpeciality): CrewMember {
-  const traits = rng.shuffle(TRAIT_IDS).slice(0, rng.next() < 0.35 ? 2 : 1)
+  // Deal from a shuffled deck, but only keep what can be true of one person at
+  // once — see `TRAIT_CONFLICTS`. Taking the first that fits rather than
+  // re-drawing the whole hand keeps this a single pass and cannot loop.
+  const wanted = rng.next() < 0.35 ? 2 : 1
+  const job = speciality ?? rng.pick(SPECIALITIES) ?? 'engineer'
+  const traits: CrewTraitId[] = []
+  for (const trait of rng.shuffle(TRAIT_IDS)) {
+    if (traits.length >= wanted) break
+    if (traitFits(trait, traits, job)) traits.push(trait)
+  }
   return {
     id,
     name: generateCrewName(rng),
-    speciality: speciality ?? rng.pick(SPECIALITIES) ?? 'engineer',
+    speciality: job,
     traits,
     station: null,
     alive: true,
@@ -360,17 +474,63 @@ export function generateStartingCrew(rng: Rng): CrewMember[] {
   return roster.map((speciality, i) => generateCrewMember(rng, `crew-${i}`, speciality))
 }
 
-/** Sum a numeric trait field over a set of crew members. */
+/**
+ * Is this person standing where they belong?
+ *
+ * THE one gate. Every trait, good and bad, is worth nothing unless its owner is
+ * doing the job they are for. Before this, some traits were gated on the home
+ * station and some were not, which is how a *meticulous guard* produced exactly
+ * as much Information in the Lab as a scientist did: the guard's speciality was
+ * worth half a point after the halving, and the trait was worth a whole one, so
+ * the trait quietly replaced the speciality instead of sharpening it.
+ *
+ * It also gives posting the crew real teeth. Somebody left unassigned is nobody
+ * in particular — their courage, their doubt and their faith all wait until they
+ * are given a chair that suits them.
+ */
+export function traitsActive(
+  member: CrewMember,
+  station: string | null = member.station,
+): boolean {
+  if (!station || !(station in STATIONS)) return false
+  if (member.traits.some((id) => CREW_TRAITS[id].anywhere)) return true
+  return member.speciality === STATIONS[station as StationId].speciality
+}
+
+/**
+ * Sum a numeric trait field over a set of crew members — home postings only.
+ *
+ * `alone` traits ask a question about the rest of the crew, so the roster has to
+ * come along: the pedant needs the station to themselves.
+ */
 export function traitBonus(
   crew: readonly CrewMember[],
-  field: 'morale' | 'research' | 'station' | 'alienTech',
+  field: 'morale' | 'research' | 'station' | 'loyalty' | 'learn',
+  everyone: readonly CrewMember[] = crew,
 ): number {
   return crew
-    .filter((c) => c.alive)
-    .reduce(
-      (sum, c) => sum + c.traits.reduce((n, t) => n + (CREW_TRAITS[t][field] ?? 0), 0),
-      0,
-    )
+    .filter((c) => c.alive && traitsActive(c))
+    .reduce((sum, c) => sum + traitValue(c, field, everyone), 0)
+}
+
+/** What one person's traits are worth in one field, with the conditions applied. */
+export function traitValue(
+  member: CrewMember,
+  field: 'morale' | 'research' | 'station' | 'loyalty' | 'learn',
+  everyone: readonly CrewMember[] = [],
+): number {
+  let total = 0
+  for (const id of member.traits) {
+    const trait = CREW_TRAITS[id]
+    const value = trait[field] ?? 0
+    if (value === 0) continue
+    // "Slow and flawless, and it needs quiet": only while nobody else is here.
+    if (trait.alone && everyone.some((c) => c.alive && c.id !== member.id && c.station === member.station)) {
+      continue
+    }
+    total += value
+  }
+  return total
 }
 
 // ---------------------------------------------------------------- loyalty

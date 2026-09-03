@@ -60,6 +60,16 @@ export type Seat = {
 export type RoomState = {
   code: string
   mode: GameMode
+  /**
+   * What the table calls this expedition.
+   *
+   * Empty by default, and then the code stands in for it. It exists because the
+   * list of games you can carry on with was a list of eight-character codes —
+   * fine for finding a room somebody read out to you, useless for answering
+   * "which one of these is the run we were in the middle of?" A solo player has
+   * no reason to know their own code at all.
+   */
+  name: string
   /** The tag of whoever opened the room. They settle disputes and free seats. */
   hostKey: string
   seats: Seat[]
@@ -213,6 +223,7 @@ export function newRoom(
   mode: GameMode,
   party: HeroClassId[],
   host: PlayerIdentity,
+  name = '',
 ): RoomState {
   const seats: Seat[] = party.map((heroClass, i) => ({
     slot: i + 1,
@@ -223,6 +234,7 @@ export function newRoom(
   const room: RoomState = {
     code: roomCode(setup),
     mode,
+    name,
     hostKey: keyTag(host.key),
     seats,
   }
@@ -402,4 +414,22 @@ export function seatNames(room: RoomState | null | undefined): Partial<Record<He
     if (name) out[seat.heroClass] = name
   }
   return out
+}
+
+/** The longest a table's own name for a run may be. */
+export const ROOM_NAME_MAX = 40
+
+/** Rename the run. Trimmed and capped, because it is shown in a list. */
+export function renameRoom(room: RoomState, name: string): RoomState {
+  return { ...room, name: name.trim().slice(0, ROOM_NAME_MAX) }
+}
+
+/**
+ * What to call this run on screen.
+ *
+ * The name if there is one, and the code if not — never nothing, and never a
+ * bare code where a name would have fitted.
+ */
+export function roomLabel(room: Pick<RoomState, 'code' | 'name'>): string {
+  return room.name.trim() || formatRoomCode(room.code)
 }

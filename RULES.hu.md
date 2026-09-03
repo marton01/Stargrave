@@ -167,12 +167,29 @@ Minden legénységtagnak van szakterülete, és **a hozzá tartozó állomáson 
 hatékonyabb** — máshol csak életben tartja az állomást. A legénységi kártyán ott áll,
 melyik állomás az otthona.
 
-**Egy szabály, ami az egész beosztási táblázatot egyszerűvé teszi:** az állomás-erősségre
-ható jellemvonások (veterán, nyugtalan, fiatal) **csak a saját szakmája állomásán
-számítanak**. Egy veterán mérnök nem lesz jobb tudós a Laborban, mint egy tudós, és egy
-nyugtalan mérnök nem emeli a morál-célt a Szentélyben. A többi jellemvonás (bátor,
-kétkedő, hitvalló, idegen származású…) a morált, a kutatást vagy az idegen technológiát
-befolyásolja, függetlenül attól, hol áll.
+**Egy szabály, ami az egész beosztási táblázatot egyszerűvé teszi:** a jellemvonások —
+**mind, a jó és a rossz is** — csak akkor élnek, ha az illető **a saját szakmája
+állomásán áll**. Egy veterán mérnök nem lesz jobb tudós a Laborban, mint egy tudós; egy
+nyugtalan mérnök nem rontja a morált a Szentélyben; és aki nincs beosztva sehová, annak a
+bátorsága sem ér semmit. Ez teszi a beosztást döntéssé: **egy ember akkor lesz önmaga, ha
+azt csinálja, amire való.**
+
+Egyetlen kivétel van, és az maga a vonás: aki **idegen származású**, az *minden*
+állomáson úgy számít, mintha a sajátján állna. Ő a joker.
+
+| Jellemvonás | Mit tesz (mind csak otthon) |
+|---|---|
+| **veterán** | +1 állomás-erő, de már nincs sok tanulnivalója (lassabban gyűjt munkahetet) |
+| **pedáns** | +1 állomás-erő, **de csak ha egyedül áll az állomáson** |
+| **nyugtalan** | +1 állomás-erő, −1 morál, és őt magát nehezebb megtartani |
+| **fiatal** | −1 állomás-erő, +1 morál, gyorsabban tanul |
+| **bátor** | +1 morál, és őt magát könnyebb megtartani |
+| **hitvalló** | +2 morál, könnyebb megtartani, de lassabban tanul |
+| **kétkedő** | +1 Információ a Laborban, −1 morál, nehezebb megtartani — **csak tudós kaphatja** |
+| **idegen származású** | minden állomáson otthon van |
+
+A kétkedő azért csak tudósoké, mert az egyetlen, aminek a haszna egy konkrét állomáshoz
+kötődik. Egy kétkedő őr csak a hátrányt hordozná.
 
 Minden állomás alatt ki van írva, **miből jön a száma**: ki áll rajta, a szakmája-e, és
 mit ad hozzá a rangja meg a jellemvonása. Nem kell táblázatot vezetni hozzá.
@@ -830,7 +847,8 @@ mindig van idő közbelépni. Ami mozgatja:
 - **Mentor: +3.** Ez a legerősebb egyetlen tétel a listán — és ez az, amit ti
   választotok. Akire figyel valaki, az marad.
 - **Rang.** A képzett +1, a mester +2. A hajó azzal mondja meg, hogy jó valamiben.
-- **Jellemvonás.** A hívő és a bátor +1, a kétkedő és a nyugtalan −1.
+- **Jellemvonás.** A hitvalló és a bátor +1, a kétkedő és a nyugtalan −1 — de csak akkor,
+  ha az illető a saját szakmája állomásán áll.
 - **Sötétedés.** Minden második szint −1. Itt kint senki nincs békében.
 
 ### Amikor valaki elhatározza magát
@@ -1164,6 +1182,25 @@ visszacsatlakoznak.
 - **Az Archívum mindenkinél a sajátja.** Egy szobában a *házigazda* Archívuma dönti
   el, milyen feloldásokkal indul az expedíció, de a végén **mindenki a saját
   Archívumába könyveli el**, amit átélt — mindenki ott volt.
+
+### Félbehagyni és folytatni
+
+Egy expedíciót **bármikor le lehet tenni**. A futó játékban a **„Félbehagyjuk mára"**
+gombbal mentek vissza a kezdőképernyőre — vagy egyszerűen kattints a bal felső
+**CSILLAGSÍR** feliratra. Semmi nem vész el: a hét, a hősök, a legénység, a raktár, a
+napló mind ott marad.
+
+A kezdőképernyőn a **„Folytatható expedíciók"** listából folytathatjátok, pontosan onnan,
+ahol abbahagytátok. **Ez minden módra vonatkozik**, az egyedül játszottakra is — nem csak
+az online szobákra.
+
+- **Adj nevet neki.** A lobbyban vagy a lista **Átnevezés** gombjával. Név nélkül a
+  szobakód áll ott, ami két félbehagyott futam között semmit nem mond.
+- **Több expedíció is állhat félbe egyszerre.** Mindegyik a saját kódja alatt marad meg.
+- **Online szobánál** kell valaki, aki bent van, hogy a többiek vissza tudjanak lépni. Ha
+  mindenki kilépett, egyvalaki nyissa ki újra a kóddal.
+- **Az „Expedíció leállítása" MÁS.** Az véget vet a futamnak: ami megvan, bekerül az
+  Archívumba, de folytatni többé nem lehet.
 
 ## Tippek
 

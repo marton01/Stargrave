@@ -162,12 +162,29 @@ Every crew member has a speciality and is **considerably more effective on the m
 station** — anywhere else they only keep the station alive. Their card says which station
 is home for them.
 
-**One rule that makes the whole posting table simple:** the traits that affect station
-strength (veteran, restless, young) **only count on the station of their own speciality**.
-A veteran engineer is not a better scientist in the Lab than a scientist, and a restless
-engineer does not raise the morale target in the Sanctum. The other traits (brave,
-sceptical, devout, of alien descent…) affect morale, research or alien technology wherever
-they stand.
+**One rule that makes the whole posting table simple:** traits — **all of them, the good
+and the bad** — only count while their owner is standing **on the station of their own
+speciality**. A veteran engineer is not a better scientist in the Lab than a scientist; a
+restless engineer does not spoil morale in the Sanctum; and somebody left unassigned gets
+nothing from their courage. This is what makes posting a decision: **a person is only
+themselves at the job they are for.**
+
+There is exactly one exception, and it is the trait itself: somebody **of alien descent**
+counts as at home on *every* station. They are the joker.
+
+| Trait | What it does (home postings only) |
+|---|---|
+| **veteran** | +1 station strength, but little left to learn (slower to earn work-weeks) |
+| **meticulous** | +1 station strength, **but only while alone on the station** |
+| **restless** | +1 station strength, −1 morale, and harder to keep |
+| **young** | −1 station strength, +1 morale, faster to learn |
+| **brave** | +1 morale, and easier to keep |
+| **devout** | +2 morale, easier to keep, slower to learn |
+| **sceptical** | +1 Information in the Lab, −1 morale, harder to keep — **scientists only** |
+| **of alien descent** | at home on every station |
+
+The sceptic is a scientist's alone because it is the one trait whose benefit runs through a
+particular station. A sceptical guard would carry the penalty and nothing else.
 
 Under every station the interface prints **what its number is made of**: who is on it,
 whether it is their speciality, and what their rank and traits add. You do not have to
@@ -1177,6 +1194,24 @@ becomes the host** and seeds it from their own saved copy. The others reconnect.
 - **Everybody keeps their own Archive.** In a room the *host's* Archive decides
   what unlocks the expedition starts with, but at the end **everybody banks what
   they lived through into their own** — all of you were there.
+
+### Stopping, and carrying on
+
+An expedition can be **put down at any time**. In a running game, **"Stop for today"**
+takes you back to the title screen — or simply click **STARGRAVE** in the top left.
+Nothing is lost: the week, the heroes, the crew, the hold and the log all stay as they
+were.
+
+Pick it up again from **"Games you can carry on with"** on the title screen, from exactly
+where you left it. **This is true of every mode**, solo included — not only online rooms.
+
+- **Give it a name.** In the lobby, or with **Rename** in the list. Without one the room
+  code stands there, which tells you nothing when two runs are waiting.
+- **Several expeditions can be waiting at once.** Each is kept under its own code.
+- **An online room** needs somebody in it for the others to get back in. If everybody
+  left, one of you opens it again with the code.
+- **"Call off the expedition" is something else.** That ends the run: what you have
+  reaches the Archive, but it cannot be carried on.
 
 ## Tips
 

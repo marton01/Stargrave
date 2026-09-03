@@ -20,6 +20,7 @@ import {
   keyTag,
   pickHero,
   releaseSeat,
+  renameRoom,
   renameSeat,
   seatByTag,
 } from '../engine/session/room'
@@ -45,6 +46,8 @@ export type RoomNetwork = {
   gaveUp: boolean
   /** Host only: end the room for everybody in it. */
   close: () => void
+  /** Give the run a name the whole table sees. */
+  rename: (name: string) => void
 }
 
 export function useRoomNetwork({
@@ -169,6 +172,13 @@ export function useRoomNetwork({
             const tag = tags.current.get(from)
             if (!tag || !here.room) return
             const updated = pickHero(here.room, tag, message.slot, message.heroClass)
+            onRoom(updated)
+            pipe.broadcast({ k: 'room', room: updated })
+            return
+          }
+          case 'rename': {
+            if (!here.room) return
+            const updated = renameRoom(here.room, message.name)
             onRoom(updated)
             pipe.broadcast({ k: 'room', room: updated })
             return
@@ -377,6 +387,25 @@ export function useRoomNetwork({
     [identity, onRoom],
   )
 
+  /** Give the run a name the whole table sees. */
+  const rename = useCallback(
+    (name: string) => {
+      const pipe = transport.current
+      const here = latest.current.room
+      if (!here) return
+      // Offline there is no host to ask, and online the host owns the room state:
+      // a guest sends the wish and waits for the copy that comes back.
+      if (!pipe || pipe.role === 'host') {
+        const updated = renameRoom(here, name)
+        onRoom(updated)
+        pipe?.broadcast({ k: 'room', room: updated })
+        return
+      }
+      pipe.send('host', { k: 'rename', name })
+    },
+    [onRoom],
+  )
+
   const pick = useCallback(
     (slot: number, heroClass: HeroClassId) => {
       const pipe = transport.current
@@ -427,6 +456,7 @@ export function useRoomNetwork({
     pick,
     begin,
     close,
+    rename,
     gaveUp: attempt >= MAX_ATTEMPTS,
   }
 }

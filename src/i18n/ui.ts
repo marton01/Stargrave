@@ -410,7 +410,13 @@ const HU = {
   overUnderstanding: (n: number) => `Megfejtés a végén: ${n}`,
   overWeeks: (n: number) => `${n} hét`,
   overReturn: 'Vissza az Archívumhoz',
+  pauseExpedition: 'Félbehagyjuk mára',
+  pauseHint:
+    'Az expedíció ott marad, ahol van. A kezdőképernyőn a listából bármikor folytatjátok — ' +
+    'ugyanattól a héttől, ugyanazokkal a hősökkel. Semmi nem vész el.',
   abandonExpedition: 'Expedíció leállítása',
+  abandonHint:
+    'Ez VÉGET vet az expedíciónak: ami megvan, bekerül az Archívumba, de folytatni többé nem lehet. Ha csak abbahagynátok mára, a másik gomb kell.',
   abandonConfirm: 'Biztosan leállítod? Ami megvan, az bekerül az Archívumba.',
 
   // ------------------------------------------------------ battle (tactical)
@@ -729,11 +735,11 @@ const HU = {
   roomCode: 'Szobakód',
   joinRoom: 'Belépek',
   joinBadCode: 'Ez nem érvényes kód — nézd meg még egyszer.',
-  roomsKnown: 'Szobák, amiket ez a böngésző ismer',
+  roomsKnown: 'Folytatható expedíciók',
   roomsKnownIntro:
-    'Ha kiléptél egy szobából, NEM veszett el semmi: itt marad, és a „Vissza ide" gombbal ' +
-    'bármikor visszaléphetsz ugyanazzal a hőssel. Ehhez viszont valakinek bent kell lennie a ' +
-    'szobában — ha mindenki kilépett, előbb valaki nyissa ki újra.',
+    'Minden félbehagyott expedíció itt marad — az egyedül játszottak is —, és bármikor ' +
+    'ugyanonnan folytatható: ugyanaz a hét, ugyanazok a hősök. Online szobánál ehhez kell ' +
+    'valaki, aki bent van; ha mindenki kilépett, egyvalaki nyissa ki újra.',
   roomForget: 'Törlés',
   roomForgetTitle: 'Kiveszi a szobát ebből a listából. A többiek gépén megmarad.',
   roomForgetConfirm: (code: string): string =>
@@ -741,6 +747,17 @@ const HU = {
   roomRowMeta: (players: number, week: number): string =>
     week > 0 ? `${players} fő · ${week}. hét` : `${players} fő · még el sem indult`,
   roomRejoin: 'Vissza ide',
+  roomResume: 'Folytatás',
+  roomRename: 'Átnevezés',
+  roomRenamePrompt: 'Minek hívjátok ezt az expedíciót?',
+  roomRowKind: (mode: string, players: number): string =>
+    mode === 'solo'
+      ? 'egyedül'
+      : mode === 'local'
+        ? `egy gépen, ${players} játékos`
+        : `online, ${players} játékos`,
+  roomRowWeek: (week: number): string => `${week}. hét`,
+  roomRowNotStarted: 'még el sem indult',
 
   // --------------------------------------------------------------- the lobby
   lobbyHeading: 'A szoba',
@@ -756,6 +773,8 @@ const HU = {
   seatFree: 'Felszabadítom',
   seatTaken: 'foglalt',
   seatNoneYours: 'Még nem ülsz sehol. Válassz egy széket — a hősödet csak onnan tudod mozgatni.',
+  roomName: 'Az expedíció neve',
+  roomNamePlaceholder: 'pl. Csütörtök esti',
   yourName: 'A neved',
   yourNamePlaceholder: 'ahogy a többiek látnak',
   playerKeyHeading: 'A játékoskulcsod',
@@ -1304,7 +1323,14 @@ const EN: Catalog = {
   overUnderstanding: (n: number) => `Understanding at the end: ${n}`,
   overWeeks: (n: number) => `${n} weeks`,
   overReturn: 'Back to the Archive',
+  pauseExpedition: 'Stop for today',
+  pauseHint:
+    'The expedition stays exactly where it is. Carry on from the list on the title screen ' +
+    'whenever you like — same week, same heroes. Nothing is lost.',
   abandonExpedition: 'Call off the expedition',
+  abandonHint:
+    'This ENDS the expedition: what you have reaches the Archive, but it cannot be carried on. ' +
+    'To simply stop for today, use the other button.',
   abandonConfirm: 'Call it off? What you have goes into the Archive.',
 
   // ------------------------------------------------------ battle (tactical)
@@ -1611,11 +1637,11 @@ const EN: Catalog = {
   roomCode: 'Room code',
   joinRoom: 'Join',
   joinBadCode: 'That is not a valid code — have another look.',
-  roomsKnown: 'Rooms this browser knows',
+  roomsKnown: 'Games you can carry on with',
   roomsKnownIntro:
-    'Leaving a room loses NOTHING: it stays here, and "Back in" takes you to the same chair. ' +
-    'Somebody has to be in the room for that, though — if everybody left, one of you opens it ' +
-    'again first.',
+    'Every expedition you stopped is kept here — the solo ones too — and carries on from ' +
+    'exactly where it was: same week, same heroes. An online room needs somebody in it for ' +
+    'that; if everybody left, one of you opens it again.',
   roomForget: 'Remove',
   roomForgetTitle: 'Takes the room out of this list. It stays on everybody else’s machine.',
   roomForgetConfirm: (code: string): string =>
@@ -1623,6 +1649,17 @@ const EN: Catalog = {
   roomRowMeta: (players: number, week: number): string =>
     week > 0 ? `${players} players · week ${week}` : `${players} players · not started yet`,
   roomRejoin: 'Back to it',
+  roomResume: 'Carry on',
+  roomRename: 'Rename',
+  roomRenamePrompt: 'What do you call this expedition?',
+  roomRowKind: (mode: string, players: number): string =>
+    mode === 'solo'
+      ? 'on your own'
+      : mode === 'local'
+        ? `one machine, ${players} players`
+        : `online, ${players} players`,
+  roomRowWeek: (week: number): string => `week ${week}`,
+  roomRowNotStarted: 'not started yet',
 
   // --------------------------------------------------------------- the lobby
   lobbyHeading: 'The room',
@@ -1638,6 +1675,8 @@ const EN: Catalog = {
   seatFree: 'Free it',
   seatTaken: 'taken',
   seatNoneYours: 'You are not sitting anywhere yet. Take a chair — it is the only way to move your hero.',
+  roomName: 'What this run is called',
+  roomNamePlaceholder: 'Thursday evenings, say',
   yourName: 'Your name',
   yourNamePlaceholder: 'what the others see',
   playerKeyHeading: 'Your player key',

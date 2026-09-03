@@ -51,6 +51,8 @@ export type NetMessage =
    * table.
    */
   | { k: 'closed' }
+  /** Guest → host: call this run something. The host owns the room state. */
+  | { k: 'rename'; name: string }
   /** Host → all: this action, at this position in the order. */
   | { k: 'action'; step: number; action: ExpeditionAction }
   /**

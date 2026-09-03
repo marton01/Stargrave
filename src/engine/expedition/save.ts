@@ -15,7 +15,7 @@ import { normaliseDials } from '../../content/difficulty'
 import type { Dials } from '../../content/difficulty'
 import type { ArchiveState, ExpeditionState, GameState } from './types'
 import type { PlayerIdentity, RoomState } from '../session/room'
-import { newPlayerKey } from '../session/room'
+import { ROOM_NAME_MAX, newPlayerKey } from '../session/room'
 
 export const SAVE_VERSION = 1
 const STORAGE_KEY = 'stargrave.save'
@@ -254,9 +254,13 @@ export type RoomRecord = {
   code: string
   mode: string
   players: number
+  /** What the table calls it. Empty means the code stands in. */
+  name: string
   /** Week the local copy reached, for the "carry on" list. */
   week: number
   savedAt: string
+  /** Is there a run in progress in it, or is it only a room? */
+  started: boolean
 }
 
 /**
@@ -313,8 +317,10 @@ export function saveRoomGame(state: GameState): void {
       code: room.code,
       mode: room.mode,
       players: room.seats.length,
+      name: room.name ?? '',
       week: state.expedition?.week ?? 0,
       savedAt: file.savedAt,
+      started: state.expedition !== null && !state.expedition.outcome,
     })
   } catch {
     // Nothing to do about it.
@@ -332,10 +338,25 @@ export function loadRoomGame(
     if (!parsed?.room) return null
     return {
       expedition: parsed.expedition ? migrate(parsed.expedition) : null,
-      room: parsed.room,
+      room: parsed.room ? { ...parsed.room, name: parsed.room.name ?? '' } : parsed.room,
     }
   } catch {
     return null
+  }
+}
+
+/** An index entry from before names existed still has to list. */
+function fillRoom(record: Partial<RoomRecord>): RoomRecord {
+  return {
+    code: String(record.code ?? ''),
+    mode: String(record.mode ?? 'solo'),
+    players: Number(record.players ?? 1),
+    name: typeof record.name === 'string' ? record.name : '',
+    week: Number(record.week ?? 0),
+    savedAt: String(record.savedAt ?? ''),
+    // Absent means it was written before this field existed; those entries were
+    // only ever written for a game in progress.
+    started: record.started ?? true,
   }
 }
 
@@ -343,8 +364,8 @@ export function listRooms(): RoomRecord[] {
   try {
     const raw = localStorage.getItem(ROOM_INDEX)
     if (!raw) return []
-    const parsed = JSON.parse(raw) as RoomRecord[]
-    return Array.isArray(parsed) ? parsed : []
+    const parsed = JSON.parse(raw) as Partial<RoomRecord>[]
+    return Array.isArray(parsed) ? parsed.map(fillRoom).filter((r) => r.code) : []
   } catch {
     return []
   }
@@ -355,6 +376,33 @@ function rememberRoom(record: RoomRecord): void {
   rooms.unshift(record)
   try {
     localStorage.setItem(ROOM_INDEX, JSON.stringify(rooms.slice(0, 12)))
+  } catch {
+    // Nothing to do about it.
+  }
+}
+
+/**
+ * Rename a saved run from outside it.
+ *
+ * The lobby is where a table names its room — but a solo game never sees a
+ * lobby, and the whole point of the name is to tell one saved run from another
+ * on the title screen. So it is editable from the list as well, and that has to
+ * reach both places the name lives: the index the list reads, and the saved room
+ * itself, which is what comes back when you carry on.
+ */
+export function renameSavedRoom(code: string, name: string): void {
+  const trimmed = name.trim().slice(0, ROOM_NAME_MAX)
+  try {
+    const raw = localStorage.getItem(ROOM_PREFIX + code)
+    if (raw) {
+      const file = JSON.parse(raw) as SaveFile
+      if (file.room) {
+        file.room = { ...file.room, name: trimmed }
+        localStorage.setItem(ROOM_PREFIX + code, JSON.stringify(file))
+      }
+    }
+    const rooms = listRooms().map((r) => (r.code === code ? { ...r, name: trimmed } : r))
+    localStorage.setItem(ROOM_INDEX, JSON.stringify(rooms))
   } catch {
     // Nothing to do about it.
   }

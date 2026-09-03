@@ -66,6 +66,7 @@ export function ArchiveView({
   onStart,
   onJoin,
   onForgetRoom,
+  onRenameRoom,
   rooms,
   onContinue,
   onUnlock,
@@ -85,6 +86,8 @@ export function ArchiveView({
   onJoin: (code: string) => void
   /** Drop a room from this browser. See `forgetRoom`. */
   onForgetRoom: (code: string) => void
+  /** Give a saved run a name, from outside it. */
+  onRenameRoom: (code: string, name: string) => void
   rooms: RoomRecord[]
   onContinue: () => void
   onUnlock: (id: ArchiveUnlockId) => void
@@ -305,9 +308,14 @@ export function ArchiveView({
             <p className="panel-intro">{t.roomsKnownIntro}</p>
             {rooms.map((record) => (
               <div key={record.code} className="room-row">
-                <strong>{formatRoomCode(record.code)}</strong>
+                {/* The name if the table gave it one, and the code underneath —
+                    a list of eight-character codes answered "which one is this?"
+                    for nobody, least of all a solo player. */}
+                <strong>{record.name.trim() || formatRoomCode(record.code)}</strong>
                 <span className="muted">
-                  {t.roomRowMeta(record.players, record.week)}
+                  {t.roomRowKind(record.mode, record.players)}
+                  {record.started ? ` · ${t.roomRowWeek(record.week)}` : ` · ${t.roomRowNotStarted}`}
+                  {record.name.trim() ? ` · ${formatRoomCode(record.code)}` : ''}
                 </span>
                 <button
                   className="button button-small"
@@ -315,7 +323,20 @@ export function ArchiveView({
                   data-room={record.code}
                   onClick={() => onJoin(record.code)}
                 >
-                  {t.roomRejoin}
+                  {record.started ? t.roomResume : t.roomRejoin}
+                </button>
+                {/* A solo game never sees a lobby, and the name is exactly what
+                    tells one saved run from another here. */}
+                <button
+                  className="button button-small"
+                  data-action="renameRoom"
+                  data-room={record.code}
+                  onClick={() => {
+                    const next = prompt(t.roomRenamePrompt, record.name)
+                    if (next !== null) onRenameRoom(record.code, next)
+                  }}
+                >
+                  {t.roomRename}
                 </button>
                 <button
                   className="button button-small button-quiet"

@@ -14,7 +14,13 @@ import { useEffect, useState } from 'react'
 import { HERO_CLASSES } from '../../content/heroes'
 import { HERO_ORDER } from '../../engine/expedition/expedition'
 import type { HeroClassId } from '../../engine/types'
-import { formatRoomCode, freeSeats, keyTag, roomIsSeated } from '../../engine/session/room'
+import {
+  ROOM_NAME_MAX,
+  formatRoomCode,
+  freeSeats,
+  keyTag,
+  roomIsSeated,
+} from '../../engine/session/room'
 import type { PlayerIdentity, RoomState } from '../../engine/session/room'
 import type { NetStatus } from '../../net/peer'
 import { buildLabel } from '../../version'
@@ -44,6 +50,7 @@ export function LobbyView({
   onPlayLocally,
   onLeave,
   onClose,
+  onRename,
 }: {
   room: RoomState
   identity: PlayerIdentity
@@ -59,6 +66,8 @@ export function LobbyView({
   onLeave: () => void
   /** Host only: end the room for everybody in it. */
   onClose: () => void
+  /** Give the run a name the whole table sees. */
+  onRename: (name: string) => void
 }) {
   const { t, s } = useLang()
   const tag = keyTag(identity.key)
@@ -126,6 +135,22 @@ export function LobbyView({
           <h3>{t.seatsHeading}</h3>
           <span className="panel-meta">{t.seatsFree(freeSeats(room).length)}</span>
         </header>
+
+        {/* What this run is called. It is the first thing the list of games you
+            can carry on with will show, and without it that list is a column of
+            eight-character codes. */}
+        <label className="setting lobby-name">
+          {t.roomName}
+          <input
+            type="text"
+            data-action="renameRoom"
+            value={room.name}
+            placeholder={t.roomNamePlaceholder}
+            onChange={(event) => onRename(event.target.value)}
+            maxLength={ROOM_NAME_MAX}
+            size={22}
+          />
+        </label>
 
         <label className="setting lobby-name">
           {t.yourName}

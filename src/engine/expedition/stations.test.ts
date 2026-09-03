@@ -188,12 +188,17 @@ describe('the whole speciality × station table', () => {
   })
 
   it('never lets a trait help somebody on a station that is not theirs', () => {
+    // With exactly one exception, declared in the trait itself: `alienBorn` is
+    // the person who is at home at any instrument, and that IS the trait. It is
+    // the deliberate hole in the rule rather than a leak in it — which is why it
+    // is named here, and why nothing else may join it without this test failing.
     for (const station of STATION_ORDER) {
       const wanted = STATIONS[station].speciality
       for (const speciality of SPECIALITIES) {
         if (speciality === wanted) continue
         const plain = crewStrengthAt(staffedWith(station, speciality, []).crew[0]!, station)
         for (const traits of TRAIT_SETS) {
+          if (traits.includes('alienBorn')) continue
           const withTraits = crewStrengthAt(
             staffedWith(station, speciality, traits).crew[0]!,
             station,
@@ -203,6 +208,22 @@ describe('the whole speciality × station table', () => {
             `${station}: [${traits.join(', ')}] changed a ${speciality}'s strength`,
           ).toBe(plain)
         }
+      }
+    }
+  })
+
+  it('lets the one who is at home anywhere be at home anywhere', () => {
+    // The exception, stated as its own promise so it cannot quietly stop working.
+    for (const station of STATION_ORDER) {
+      const wanted = STATIONS[station].speciality
+      for (const speciality of SPECIALITIES) {
+        if (speciality === wanted) continue
+        const plain = crewStrengthAt(staffedWith(station, speciality, []).crew[0]!, station)
+        const alien = crewStrengthAt(
+          staffedWith(station, speciality, ['alienBorn']).crew[0]!,
+          station,
+        )
+        expect(alien, `${station}: an alien-born ${speciality}`).toBeGreaterThan(plain)
       }
     }
   })
