@@ -144,7 +144,7 @@ export const ENEMY_TYPES: EnemyType[] = [
     id: 'godmachine-shard',
     name: { hu: 'Istengép-töredék', en: 'Godmachine Shard' },
     description: {
-      hu: 'Lassú, de hatalmas. Ne álljatok mellé egyszerre mindketten.',
+      hu: 'Lassú, de hatalmas. Ne álljatok mellé többen egyszerre.',
       en: 'Slow, but enormous. Do not both stand next to it at once.',
     },
     hp: 12,

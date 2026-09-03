@@ -48,6 +48,7 @@ export function ConsoleView({
   state,
   dispatch,
   mine,
+  names,
 }: {
   state: ExpeditionState
   dispatch: (action: ExpeditionAction) => void
@@ -58,6 +59,15 @@ export function ConsoleView({
    * `engine/expedition/insight.ts` for why that matters.
    */
   mine?: HeroClassId[]
+  /**
+   * Who is sitting in each chair, by the name they gave themselves.
+   *
+   * The consoles are the one screen that is explicitly not shared — "this is
+   * yours, that is theirs" — and it was labelling the chairs with the hero
+   * classes only, which is exactly the thing everybody at the table already
+   * knows. What they do not know at a glance is which of THEM is which.
+   */
+  names?: Partial<Record<HeroClassId, string>>
 }) {
   const { t, s } = useLang()
   // One tab per seat at the table, in seat order.
@@ -82,6 +92,7 @@ export function ConsoleView({
             onClick={() => setWho(hero)}
           >
             {s(HERO_CLASSES[hero].name)}
+            {names?.[hero] && <span className="console-tab-who">{names[hero]}</span>}
             <span className="console-tab-marks">
               {state.heroRecords[hero].marks} {s(MARK_NAMES[hero])}
             </span>

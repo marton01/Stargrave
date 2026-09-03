@@ -333,7 +333,7 @@ export const STATIONS: Record<StationId, StationDef> = {
     id: 'armoury',
     name: { hu: 'Fegyverzet', en: 'Armoury' },
     effect: {
-      hu: 'A partraszálló csapat +1 Töltettel indul, ha a Rúnamag is kap energiát — testőrrel +2.',
+      hu: 'A partraszálló csapat +1 Töltettel indul, ha a Rúnamag is kap energiát — ha őr áll rajta, +2.',
       en: 'The landing party starts with +1 Flux if the rune core has power — with a guard here, +2.',
     },
     domain: 'engineering',
@@ -496,7 +496,7 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     id: 'relicCradle',
     name: { hu: 'Ereklyeágy', en: 'Relic cradle' },
     description: {
-      hu: 'Tartó, ami elbírja, amit találtatok. Mindkét hős egy plusz ereklyét hordhat ráhangolva.',
+      hu: 'Tartó, ami elbírja, amit találtatok. Minden hős egy plusz ereklyét hordhat ráhangolva.',
       en: 'A mount that can hold what you found. Each hero may wear one more relic attuned.',
     },
     attunements: 1,

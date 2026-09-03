@@ -28,6 +28,7 @@ import {
   roomCode,
   roomIsSeated,
   seatsAllowed,
+  seatNames,
   seatsOf,
 } from './room'
 import { HERO_ORDER, partyForSeats } from '../expedition/expedition'
@@ -263,5 +264,30 @@ describe('choosing who to play', () => {
     }
     const classes = room.seats.map((s) => s.heroClass)
     expect(new Set(classes).size).toBe(classes.length)
+  })
+})
+
+describe('who is in which chair', () => {
+  const setup: RoomSetup = { seed: 909, length: 'medium', players: 4 }
+
+  it('answers with the name a player gave themselves', () => {
+    const room = newRoom(setup, 'online', partyForSeats(4), person('Marci'))
+    expect(seatNames(room)[room.seats[0]!.heroClass]).toBe('Marci')
+  })
+
+  it('leaves a blank name out rather than passing an empty string on', () => {
+    // The interface falls back to the hero's own name, and an empty string would
+    // replace that with nothing at all.
+    const room = newRoom(setup, 'online', partyForSeats(4), person('   '))
+    expect(seatNames(room)[room.seats[0]!.heroClass]).toBeUndefined()
+  })
+
+  it('names only the chairs somebody is actually sitting in', () => {
+    const room = newRoom(setup, 'online', partyForSeats(4), person('Marci'))
+    expect(Object.keys(seatNames(room))).toHaveLength(1)
+  })
+
+  it('is empty for no room at all, rather than throwing', () => {
+    expect(seatNames(null)).toEqual({})
   })
 })

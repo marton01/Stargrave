@@ -164,8 +164,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     name: { hu: 'Ereklyeágy', en: 'Relic cradle' },
     description: {
       hu:
-        'Tartó, ami elbírja azt, amit találtatok. Mindkét hős egy plusz ereklyét hordhat ' +
-        'ráhangolva — vagyis kettő helyett négy szólhat bele a hétbe.',
+        'Tartó, ami elbírja azt, amit találtatok. Minden hős egy plusz ereklyét hordhat ' +
+        'ráhangolva — vagyis kétszer annyi ereklye szólhat bele a hétbe.',
       en:
         'A mount that can hold what you found. Each hero may wear one more relic attuned — four ' +
         'relics speaking into the week instead of two.',

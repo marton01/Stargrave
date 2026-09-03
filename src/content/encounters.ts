@@ -637,7 +637,7 @@ export const ENCOUNTERS: Encounter[] = [
         costs: [{ k: 'resource', id: 'credits', amount: 12 }],
         effects: [{ k: 'revealMap', columns: 1 }],
         result: {
-          hu: 'Elállnak, és mellékesen elárulják, mi van előttünk. Ennyit legalább megért.',
+          hu: 'Elállnak, és mellékesen elárulják, mi van előttünk. Legalább ennyi hasznunk volt belőle.',
           en: 'They move aside, and mention in passing what lies ahead. That much it was worth.',
         },
       },
@@ -1916,7 +1916,7 @@ export const CARRIED_ENCOUNTERS: Encounter[] = [
         costs: [],
         effects: [{ k: 'resource', id: 'information', amount: 4 }],
         result: {
-          hu: 'Lemérünk mindent, amit lehet, és tovább megyünk. Nyitva marad.',
+          hu: 'Lemérünk mindent, amit lehet, és továbbmegyünk. Nyitva marad.',
           en: 'We measure everything we can and move on. It stays open.',
         },
       },

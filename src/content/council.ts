@@ -331,7 +331,7 @@ export const COUNCIL_MOTIONS: Encounter[] = [
 /** What the vote is called on the panel, given how many are behind it. */
 export function councilTally(supporters: number, total: number): Text {
   return {
-    hu: `${supporters} a ${total} főből.`,
+    hu: `A ${total} főből ${supporters}.`,
     en: `${supporters} of ${total}.`,
   }
 }

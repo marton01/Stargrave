@@ -1499,3 +1499,22 @@ kbd {
   font-size: 0.82rem;
   color: var(--text-soft);
 }
+
+/* The title, doubling as the way home. It has to look exactly like the heading
+   it replaced — the affordance is the cursor and the hover, not a button shape. */
+.app-home {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.app-home:hover,
+.app-home:focus-visible {
+  color: var(--rune);
+}

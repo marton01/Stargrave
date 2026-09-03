@@ -21,6 +21,7 @@ import type { ExpeditionAction } from './engine/expedition/expedition'
 import {
   clearSave,
   ensurePlayer,
+  forgetRoom,
   listRooms,
   loadDialPreset,
   loadGame,
@@ -38,6 +39,7 @@ import {
   newRoom,
   parseRoomCode,
   roomCode as makeRoomCode,
+  seatNames,
 } from './engine/session/room'
 import type { GameMode, PlayerIdentity, RoomState } from './engine/session/room'
 import { blockedBy, mayAct } from './engine/session/permissions'
@@ -211,6 +213,8 @@ function Game() {
   /** Why the last click did nothing, when it did nothing. Clears itself. */
   const [refused, setRefused] = useState<string | null>(null)
   const [showArchive, setShowArchive] = useState(() => !loadGame()?.expedition)
+  /** Set when the host closed the room out from under us, so the archive can say so. */
+  const [roomWasClosed, setRoomWasClosed] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [wipeOpen, setWipeOpen] = useState(false)
   const [dialsOpen, setDialsOpen] = useState(false)
@@ -219,6 +223,12 @@ function Game() {
   const [hasPreset, setHasPreset] = useState(() => loadDialPreset() !== null)
   const [sound, setSound] = useState(() => soundEnabled())
   const downloadRef = useRef<HTMLAnchorElement | null>(null)
+  /**
+   * The room code, readable from a callback that must not depend on the render
+   * it was made in — `onClosed` is handed to the network once and lives as long
+   * as the connection does.
+   */
+  const roomCodeRef = useRef<string | null>(null)
 
   /**
    * Apply an action to the game here, on this machine.
@@ -268,6 +278,33 @@ function Game() {
     setShowArchive(false)
   }, [])
 
+  /**
+   * The host closed the room. Go home, and take it off the list.
+   *
+   * Not a save that is lost: the expedition dies with the room because the room
+   * WAS the expedition — it is the host's copy that is authoritative, and there
+   * is no longer a host.
+   */
+  const roomClosed = useCallback(() => {
+    const code = roomCodeRef.current
+    if (code) forgetRoom(code)
+    setSession((current) => ({
+      ...current,
+      game: { ...current.game, room: null, expedition: null },
+      undo: [],
+      mark: null,
+      summary: null,
+    }))
+    setRooms(listRooms())
+    setShowArchive(true)
+    setRoomWasClosed(true)
+  }, [])
+
+  // Keep the ref in step with the room, for the callbacks that outlive a render.
+  useEffect(() => {
+    roomCodeRef.current = game.room?.code ?? null
+  }, [game.room])
+
   const net = useRoomNetwork({
     room: game.room,
     // Only dial when this player is actually at the table. See `active`.
@@ -275,6 +312,7 @@ function Game() {
     identity,
     expedition: game.expedition,
     onApply: applyAction,
+    onClosed: roomClosed,
     onRoom: setRoom,
     onExpedition: setExpedition,
   })
@@ -293,6 +331,16 @@ function Game() {
    * from somebody who can lean over and read it would be theatre. In an online
    * room it is whichever chairs this player's key has claimed.
    */
+  /**
+   * Who is in each chair, by the name they gave themselves in the lobby.
+   *
+   * Naming yourself already worked — what was missing is that the name was never
+   * seen again after the lobby, which is the only place it does not matter. Now
+   * it goes wherever the interface says "this one is yours and that one is
+   * theirs": the consoles, the action bar, the party list.
+   */
+  const heroNames = useMemo(() => seatNames(game.room), [game.room])
+
   const mySeats = useMemo(() => {
     const room = game.room
     if (!room) return [1, 2, 3, 4]
@@ -677,6 +725,13 @@ function Game() {
             setRooms(listRooms())
             setShowArchive(true)
           }}
+          onClose={() => {
+            // Tell the room first, then treat ourselves exactly like a guest who
+            // was told: one path, so the host cannot end up in a state no guest
+            // can be in.
+            net.close()
+            roomClosed()
+          }}
         />
         {helpOpen && <Help topic="overview" onClose={() => setHelpOpen(false)} />}
       </div>
@@ -694,9 +749,21 @@ function Game() {
           sound={sound}
           onToggleSound={toggleSound}
         />
+        {roomWasClosed && (
+          <p className="app-notice" data-notice="roomClosed">
+            {t.roomClosedNotice}
+            <button className="button button-small" onClick={() => setRoomWasClosed(false)}>
+              {t.summaryClose}
+            </button>
+          </p>
+        )}
         <ArchiveView
           archive={game.archive}
           hasRunningExpedition={!!expedition}
+          onForgetRoom={(code) => {
+            forgetRoom(code)
+            setRooms(listRooms())
+          }}
           rooms={rooms}
           onJoin={joinRoom}
           onStart={startNew}
@@ -762,7 +829,19 @@ function Game() {
     >
       <header className="topbar">
         <div className="topbar-left">
-          <h1>{t.appTitle}</h1>
+          {/* The title is the way back. Every application in the world puts home
+              under its own logo, and this one did not — the only route to the
+              Archive from inside a run was a button on a different screen. */}
+          <h1>
+            <button
+              className="app-home"
+              data-action="goHome"
+              title={t.homeTitle}
+              onClick={() => setShowArchive(true)}
+            >
+              {t.appTitle}
+            </button>
+          </h1>
           <span className="subtitle">
             {t.week} {expedition.week} · {t.gateLeft} {t.gateWeeks(expedition.gateWeeksLeft)}
           </span>
@@ -939,6 +1018,7 @@ function Game() {
             state={expedition}
             dispatch={dispatch}
             mine={game.room?.mode === 'online' ? myHeroes : []}
+            names={heroNames}
           />
         )}
         {screen === 'gate' && <GateView state={expedition} dispatch={dispatch} />}

@@ -14,7 +14,7 @@ import { describePrompt } from '../i18n/describe'
 import { intentOf } from '../content/enemies'
 import { livingHeroes } from '../engine/state'
 import { useLang } from '../i18n/LangContext'
-import type { BattleState, Hero } from '../engine/types'
+import type { BattleState, Hero, HeroClassId } from '../engine/types'
 
 /** Renders **bold** segments of an interface string. */
 function Rich({ text }: { text: string }) {
@@ -29,12 +29,19 @@ function Rich({ text }: { text: string }) {
 export function ActionBar({
   state,
   dispatch,
+  names,
 }: {
   state: BattleState
   dispatch: (action: Action) => void
+  /** Who is in each chair, when they have said. See `seatNames`. */
+  names?: Partial<Record<HeroClassId, string>>
 }) {
-  if (state.phase === 'cardSelection') return <SelectionBar state={state} dispatch={dispatch} />
-  if (state.phase === 'resolution') return <ResolutionBar state={state} dispatch={dispatch} />
+  if (state.phase === 'cardSelection') {
+    return <SelectionBar state={state} dispatch={dispatch} names={names} />
+  }
+  if (state.phase === 'resolution') {
+    return <ResolutionBar state={state} dispatch={dispatch} names={names} />
+  }
   return null
 }
 
@@ -43,9 +50,11 @@ export function ActionBar({
 function SelectionBar({
   state,
   dispatch,
+  names,
 }: {
   state: BattleState
   dispatch: (action: Action) => void
+  names?: Partial<Record<HeroClassId, string>>
 }) {
   const { t, s } = useLang()
   const [restMode, setRestMode] = useState(false)
@@ -63,7 +72,7 @@ function SelectionBar({
 
   return (
     <div className="action-bar" data-mode={showRest ? 'rest' : 'select'}>
-      <PlayerLabel hero={hero} />
+      <PlayerLabel hero={hero} names={names} />
 
       {showRest ? (
         <>
@@ -176,9 +185,11 @@ function SelectionBar({
 function ResolutionBar({
   state,
   dispatch,
+  names,
 }: {
   state: BattleState
   dispatch: (action: Action) => void
+  names?: Partial<Record<HeroClassId, string>>
 }) {
   const { t, s, lang } = useLang()
   const unit = activeUnit(state)
@@ -214,7 +225,7 @@ function ResolutionBar({
   if (state.pending?.kind === 'card') {
     return (
       <div className="action-bar" data-mode="pickCard">
-        <PlayerLabel hero={hero} />
+        <PlayerLabel hero={hero} names={names} />
         <p className="instruction highlight">{describePrompt(state.pending.prompt, lang)}</p>
         <div className="card-row">
           {state.pending.options.map((cardId) => (
@@ -233,7 +244,7 @@ function ResolutionBar({
   if (!turn.topCard) {
     return (
       <div className="action-bar" data-mode="assignTop">
-        <PlayerLabel hero={hero} />
+        <PlayerLabel hero={hero} names={names} />
         <p className="instruction">
           <Rich text={t.whichTopHalf} />
         </p>
@@ -260,7 +271,7 @@ function ResolutionBar({
 
   return (
     <div className="action-bar" data-mode="playHalves">
-      <PlayerLabel hero={hero} />
+      <PlayerLabel hero={hero} names={names} />
 
       {state.pending ? (
         <p className="instruction highlight">
@@ -329,13 +340,20 @@ function ResolutionBar({
   )
 }
 
-function PlayerLabel({ hero }: { hero: Hero }) {
+function PlayerLabel({
+  hero,
+  names,
+}: {
+  hero: Hero
+  names?: Partial<Record<HeroClassId, string>>
+}) {
   const { t, s } = useLang()
   return (
     <div
       className={`player-label ${hero.heroClass === 'runesmith' ? 'tone-rune' : 'tone-echo'}`}
     >
-      {t.playerLabel(hero.playerSlot)} — {s(hero.name)}
+      {/* The person, when they have said who they are; the seat number otherwise. */}
+      {names?.[hero.heroClass] ?? t.playerLabel(hero.playerSlot)} — {s(hero.name)}
     </div>
   )
 }

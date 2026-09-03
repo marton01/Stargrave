@@ -3222,3 +3222,37 @@
   font-variant-numeric: tabular-nums;
   user-select: all;
 }
+
+/* Who is in this chair, next to which hero they run. */
+.console-tab-who {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text);
+  opacity: 0.85;
+}
+
+/* A destructive action that must never be the eye's first stop in its row. */
+.button-quiet {
+  color: var(--text-faint);
+  border-color: var(--line-soft);
+}
+
+.button-quiet:hover,
+.button-quiet:focus-visible {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Something happened that the player did not do and needs to know about. */
+.app-notice {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+  margin: 0 auto 1rem;
+  max-width: 60rem;
+  padding: 0.7rem 1rem;
+  border-left: 3px solid var(--rune);
+  background: var(--bg-2);
+  color: var(--text);
+}

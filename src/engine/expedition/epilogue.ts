@@ -86,7 +86,7 @@ function cameHome(member: CrewMember): Text {
   }
   if (member.loyalty <= 3) {
     return {
-      hu: `Hazaért, és a kikötőben szó nélkül lelépett. ${band.name.hu} volt már hetek óta.`,
+      hu: `Hazaért, és a kikötőben szó nélkül lelépett. A listán hetek óta ez állt mellette: „${band.name.hu}".`,
       en: `They got home and walked off at the dock without a word. ${band.name.en} for weeks by then.`,
     }
   }

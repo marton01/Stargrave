@@ -44,7 +44,7 @@ export const CARDS: Card[] = [
       effects: [{ k: 'attack', power: 2, range: 1 }],
     },
     bottom: {
-      text: { hu: 'Vért 2 magadra és a legközelebbi társadra', en: 'Shield 2 to yourself and your partner' },
+      text: { hu: 'Vért 2 magadra és a legközelebbi társadra', en: 'Shield 2 to yourself and your nearest ally' },
       effects: [{ k: 'shield', power: 2, alsoPartner: true }],
     },
   },
@@ -419,7 +419,7 @@ export const CARDS: Card[] = [
     symbols: ['insight'],
     top: {
       text: {
-        hu: 'Támadás 2, hatótáv 3, és a cél Ledöntve.',
+        hu: 'Támadás 2, hatótáv 3, és a cél Ledöntött lesz.',
         en: 'Attack 2, range 3, and the target is Prone.',
       },
       effects: [{ k: 'attack', power: 2, range: 3, status: { kind: 'prone', rounds: 1 } }],
@@ -441,7 +441,7 @@ export const CARDS: Card[] = [
     symbols: ['insight'],
     top: {
       text: {
-        hu: 'Gyengítés minden ellenségre 3 hatótávon belül. A támadásaik -1-et sebeznek.',
+        hu: 'Gyengítés minden ellenségre 3 hatótávon belül. A támadásaik 1-gyel kevesebbet sebeznek.',
         en: 'Weaken every enemy within range 3. Their attacks deal 1 less damage.',
       },
       effects: [
@@ -672,7 +672,7 @@ export const CARDS: Card[] = [
     symbols: ['insight'],
     top: {
       text: {
-        hu: 'Területsebzés 1 magad körül, sugár 2. A találtak megvakulnak.',
+        hu: 'Területsebzés 1 magad körül, sugár 2. Akiket eltalál, azok megvakulnak.',
         en: 'Area attack 1 around yourself, radius 2. Everything hit is blinded.',
       },
       effects: [
@@ -860,7 +860,7 @@ export const CARDS: Card[] = [
     symbols: ['force'],
     top: {
       text: {
-        hu: 'Támadás 2, hatótáv 3, hátralökés 1',
+        hu: 'Támadás 2, hatótáv 3, Hátralökés 1',
         en: 'Attack 2, range 3, knockback 1',
       },
       effects: [{ k: 'attack', power: 2, range: 3, knockback: 1 }],
@@ -933,7 +933,7 @@ export const CARDS: Card[] = [
     symbols: ['force'],
     top: {
       text: {
-        hu: 'Támadás 3, hatótáv 3. A cél földre kerül.',
+        hu: 'Támadás 3, hatótáv 3, és a cél Ledöntött lesz.',
         en: 'Attack 3, range 3. The target is knocked prone.',
       },
       effects: [{ k: 'attack', power: 3, range: 3, status: { kind: 'prone', rounds: 1 } }],
@@ -1072,7 +1072,7 @@ export const CARDS: Card[] = [
     symbols: ['force'],
     top: {
       text: {
-        hu: 'Támadás 3, hatótáv 1, hátralökés 1',
+        hu: 'Támadás 3, hatótáv 1, Hátralökés 1',
         en: 'Attack 3, range 1, knockback 1',
       },
       effects: [{ k: 'attack', power: 3, range: 1, knockback: 1 }],
@@ -1096,7 +1096,7 @@ export const CARDS: Card[] = [
     symbols: ['insight'],
     top: {
       text: {
-        hu: 'Területsebzés 2, hatótáv 4, sugár 1. A találtak Rúnajel alá kerülnek.',
+        hu: 'Területsebzés 2, hatótáv 4, sugár 1. Akiket eltalál, azokra Rúnajel kerül.',
         en: 'Area attack 2, range 4, radius 1. Everything hit is Rune Marked.',
       },
       flux: 1,

@@ -69,7 +69,7 @@ export const DIALS: DialDef[] = [
       {
         value: 0.75,
         text: {
-          hu: 'Negyeddel kevesebb. Marad harc, de ritkán kerülsz körbe.',
+          hu: 'Negyeddel kevesebb. Marad harc, de ritkán kerítenek be.',
           en: 'A quarter fewer. Still a fight, but you are rarely surrounded.',
         },
       },
@@ -251,7 +251,7 @@ export const DIALS: DialDef[] = [
       { value: 2, text: { hu: '+2 próba. Egy elrontott tipp nem tragédia.', en: '+2 tries. One bad guess is not fatal.' } },
       { value: 0, text: { hu: 'Ahogy tervezve van: a feladvány nehézsége adja.', en: 'As designed: the puzzle’s difficulty decides.' } },
       { value: -1, text: { hu: '−1 próba. Végig kell gondolni, mielőtt beadod.', en: '−1 try. Think it through before you submit.' } },
-      { value: -2, text: { hu: '−2 próba. Egy elrontott tipp gyakran a küldetés.', en: '−2 tries. One bad guess often is the mission.' } },
+      { value: -2, text: { hu: '−2 próba. Egy elrontott tipp gyakran az egész küldetésbe kerül.', en: '−2 tries. One bad guess often is the mission.' } },
     ],
   },
   {
@@ -384,7 +384,7 @@ export const DIALS: DialDef[] = [
       {
         value: 2,
         text: {
-          hu: 'Ahogy tervezve van: kettő fut, egy-egy mindkét pulton.',
+          hu: 'Ahogy tervezve van: kettő fut egyszerre, két különböző pulton.',
           en: 'As designed: two run, one on each console.',
         },
       },

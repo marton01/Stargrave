@@ -94,7 +94,7 @@ export const WATCH_DUTIES: WatchDuty[] = [
     description: {
       hu:
         'Kikapcsol mindent, és csak hallgat. +1 megfejtés — de amit hall, azt a legénység is ' +
-        'megérzi: 1 morál.',
+        'megérzi: −1 morál.',
       en:
         'She switches everything off and only listens. +1 understanding — but the crew feels what ' +
         'she hears: 1 morale.',
@@ -140,7 +140,7 @@ export const WATCH_DUTIES: WatchDuty[] = [
     description: {
       hu:
         'A tanítványaival tölti a hetet: mindegyikük +2 munkahetet szerez. A Szentélyben viszont ' +
-        'nem ő van — 1 morál.',
+        'nem ő van — −1 morál.',
       en:
         'She spends the week with her mentees: each of them gains 2 weeks of work. But she is not ' +
         'in the Sanctum that week — 1 morale.',

@@ -554,7 +554,7 @@ hanem az, amit tettetek:
 | **Hazatérés** | Bármikor útközben: megfordulni a Kapu felé, amíg van rá üzemanyag |
 | **A Hírnök hallgatása** | Megállítani a Hírnököt, és 1. megfejtés-szinttel megérkezni |
 | **Örökség** | Három ereklye a fedélzeten, 1. megfejtés-szinttel |
-| **Az őrség átvétele** | Öt élő legénységgel, 8+ morállal, 2. megfejtés-szinttel megérkezni |
+| **Az őrség átvétele** | Öt élő legénységi taggal, 8+ morállal, 2. megfejtés-szinttel megérkezni |
 
 Az **Archívum** kilistázza mind a kilencet a feltételükkel — a nevét és a
 feltételét előre látod, a szövegét csak akkor, ha ott állsz előtte. A tizedik, **A
@@ -699,7 +699,7 @@ elkölteni a jegyeit, és nem lehet elvinni a tanítványát.
 
 ### Jegyek: kétféle, mert kétféle munka
 
-Mindkét hős a **saját** fejlesztési pontját gyűjti, és nem ugyanazért:
+Minden hős a **saját** fejlesztési pontját gyűjti, és nem ugyanazért:
 
 | | Rúnaszövő — *szövőjegy* | Múltidéző — *visszhangjegy* |
 |---|---|---|
@@ -710,7 +710,7 @@ Mindkét hős a **saját** fejlesztési pontját gyűjti, és nem ugyanazért:
 | Két képzett tanítvány munkája, partraszálláskor | +1 | +1 |
 | A Hírnök elhallgattatása | +3 | +3 |
 
-A hajó épsége az ő számlája; a megfejtés az övé. Ez nem díszítés: attól, hogy más
+A hajó épségét neki írják jóvá; a megfejtést szintén. Ez nem díszítés: attól, hogy más
 dologért fizet a játék, **más irányba is fogsz nyomni** a közös döntésekben.
 
 A jegyekből a pult saját listájáról lehet vásárolni. A két lista szándékosan nem
@@ -1178,7 +1178,7 @@ visszacsatlakoznak.
 5. **Az Érzékelők nem luxus.** Vakon választani utat drágább, mint egy egység energia.
 6. **A Rúnaőrzőt öld meg elsőnek** a csatákban: Vértet ad mindenkinek, és attól lassú
    lesz minden.
-7. **Maradjatok 2 mezőn belül** a Kötelék bónuszért — de ne álljatok mindketten
+7. **Maradjatok 2 mezőn belül** a Kötelék miatt — de ne álljatok többen
    ugyanannak az ellenségnek a szomszédjába, ha területsebzést jelentett be.
 8. **A pihenést tervezd, ne szenvedd el.** Egy körbe kerül, ezért jobb akkor megtenni,
    amikor épp senki nem áll a nyakadon.

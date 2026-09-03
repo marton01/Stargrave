@@ -87,15 +87,15 @@ export const MARK_SOURCES: Record<HeroClassId, Text> = {
   runesmith: {
     hu:
       'Minden megnyert partraszállásért 1. Egy hajóra törésért, amiben egyetlen modul sem ' +
-      'pusztult el, +2 — a hajó épsége az ő számlája.',
+      'pusztult el, +2 — mert a hajó épségéért ő felel.',
     en:
       'One for every landing won. Two more for a boarding action in which not one module was ' +
       'destroyed — the ship’s integrity is on his account.',
   },
   echoreader: {
     hu:
-      'Minden megnyert partraszállásért 1. Minden megfejtett szerkezetért +2 — a megfejtés az ő ' +
-      'számlája.',
+      'Minden megnyert partraszállásért 1. Minden megfejtett szerkezetért +2 — mert a megfejtés ' +
+      'az ő dolga.',
     en:
       'One for every landing won. Two more for every mechanism solved — understanding is on her ' +
       'account.',
@@ -103,7 +103,7 @@ export const MARK_SOURCES: Record<HeroClassId, Text> = {
   cantor: {
     hu:
       'Minden megnyert partraszállásért 1. Minden olyanért, amiből mindenki a saját lábán jött ' +
-      'vissza, +2 — a legénység épsége az ő számlája.',
+      'vissza, +2 — mert a legénység épségéért ő felel.',
     en:
       'One for every landing won. Two more for every one that everybody walked away from on their ' +
       'own feet — the party coming back whole is on her account.',
@@ -111,7 +111,7 @@ export const MARK_SOURCES: Record<HeroClassId, Text> = {
   surveyor: {
     hu:
       'Minden megnyert partraszállásért 1. Minden héten, amikor az Érzékelők felfedtek valamit ' +
-      'előre, +1 — az előrelátás az ő számlája.',
+      'előre, +1 — mert előre látni az ő dolga.',
     en:
       'One for every landing won. One more for every week the Sensors revealed something ahead — ' +
       'seeing the road first is on his account.',
@@ -156,7 +156,7 @@ export const HERO_PERKS: HeroPerk[] = [
     heroClass: 'runesmith',
     name: { hu: 'Sáncvonal', en: 'Rampart' },
     description: {
-      hu: 'Új lap a pakliba, véglegesen: Sáncvonal. Vért mindkettőnek, és utána egy oszlop.',
+      hu: 'Új lap a pakliba, véglegesen: Sáncvonal. Vért magadnak és a legközelebbi társadnak, utána egy rúnaoszlop.',
       en: 'A new card in the deck for good: Rampart. Shield for both, then a pillar.',
     },
     cost: 4,
@@ -199,7 +199,7 @@ export const HERO_PERKS: HeroPerk[] = [
     name: { hu: 'Messzelátás', en: 'Longsight' },
     description: {
       hu:
-        'Egy oszloppal többet fejt fel a csillagtérképből minden héten — amíg az Érzékelő ' +
+        'Egy oszloppal többet fed fel a csillagtérképből minden héten — amíg az Érzékelő ' +
         'állomáson áll valaki és van rajta energia.',
       en:
         'She reads one more column of the star map every week — while somebody is standing on the ' +
@@ -257,7 +257,7 @@ export const HERO_PERKS: HeroPerk[] = [
     heroClass: 'echoreader',
     name: { hu: 'Álló hang', en: 'The still note' },
     description: {
-      hu: 'Új lap a pakliba, véglegesen: Álló hang. Területjelölés, majd visszahívott lap.',
+      hu: 'Új lap a pakliba, véglegesen: Álló hang. Területre szórt Rúnajel, és utána visszavehetsz egy eldobott lapot.',
       en: 'A new card in the deck for good: The still note. Area marking, then a card called back.',
     },
     cost: 4,
@@ -438,7 +438,7 @@ export const HERO_PERKS: HeroPerk[] = [
     name: { hu: 'Hajórúnák', en: 'Ship runes' },
     description: {
       hu:
-        'A hajótestbe is szövi, nemcsak a páncélba. Hetente +1 hajótest — magától, munka nélkül, ' +
+        'A rúnákat a hajótestbe is beleszövi, nemcsak a páncélba. Hetente +1 hajótest — magától, munka nélkül, ' +
         'a Kohón felül.',
       en:
         'He weaves them into the hull as well as the plate. +1 hull a week, on its own, on top of ' +
@@ -499,7 +499,7 @@ export const HERO_PERKS: HeroPerk[] = [
     description: {
       hu:
         'Nem beszédet tart, hanem megjegyzi, ki mit mondott, és számon is kéri. A legénység ' +
-        'hűsége mindenkinél 1-gyel feljebb tart.',
+        'hűsége mindenkinél 1-gyel magasabbra áll be.',
       en:
         'She makes no speeches; she remembers what everybody said and holds them to it. Every ' +
         'crew member’s loyalty heads 1 higher.',
@@ -514,7 +514,7 @@ export const HERO_PERKS: HeroPerk[] = [
     name: { hu: 'Konyhaügyelet', en: 'Galley watch' },
     description: {
       hu:
-        'Ő méri ki az adagokat, és ő az, aki miatt marad. Hetente +2 élelem.',
+        'Ő méri ki az adagokat, és őmiatta marad is belőle. Hetente +2 élelem.',
       en: 'She measures out the rations, and she is the reason there are any left. +2 food a week.',
     },
     cost: 2,

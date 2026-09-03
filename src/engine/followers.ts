@@ -157,9 +157,9 @@ export const FOLLOWER_ORDERS: FollowerOrder[] = ['guard', 'strike', 'hold']
 
 /** What each order is called, for the log and the buttons. */
 export const FOLLOWER_ORDER_NAMES: Record<FollowerOrder, Text> = {
-  guard: { hu: 'Fedez', en: 'Guard' },
-  strike: { hu: 'Támad', en: 'Strike' },
-  hold: { hu: 'Tartja a helyét', en: 'Hold' },
+  guard: { hu: 'Fedezzen', en: 'Guard' },
+  strike: { hu: 'Támadjon', en: 'Strike' },
+  hold: { hu: 'Maradjon a helyén', en: 'Hold' },
 }
 
 /** One line each, so a player picking an order knows what they are buying. */

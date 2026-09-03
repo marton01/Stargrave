@@ -13,7 +13,7 @@ import {
   FOLLOWER_ORDER_NAMES,
 } from '../engine/followers'
 import { HERO_TONE } from './gridStyle'
-import type { FollowerOrder } from '../engine/types'
+import type { FollowerOrder, HeroClassId } from '../engine/types'
 import { intentOf } from '../content/enemies'
 import { STATUS_NAMES } from '../content/statuses'
 import { bondActive } from '../engine/combat'
@@ -57,12 +57,15 @@ export function Sidebar({
   state,
   onOrderFollower,
   mySeats,
+  names,
 }: {
   state: BattleState
   /** Give a follower a standing order. Absent when nobody may. */
   onOrderFollower?: (followerId: string, order: FollowerOrder) => void
   /** Which seats this browser runs. Empty means hotseat: everybody. */
   mySeats?: number[]
+  /** Who is in each chair, when they have said. See `seatNames`. */
+  names?: Partial<Record<HeroClassId, string>>
 }) {
   const { t, s, lang } = useLang()
   const activeId = state.phase === 'resolution' ? state.order[state.orderIndex] : undefined
@@ -128,7 +131,9 @@ export function Sidebar({
               >
                 {s(h.name)}
               </span>
-              <span className="unit-player">{t.playerLabel(h.playerSlot)}</span>
+              <span className="unit-player">
+                {names?.[h.heroClass] ?? t.playerLabel(h.playerSlot)}
+              </span>
             </div>
             {h.alive ? (
               <>

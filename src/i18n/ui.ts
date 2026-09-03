@@ -15,6 +15,7 @@ const HU = {
   // ------------------------------------------------------------------ shell
   appTitle: 'Csillagsír',
   appSubtitle: 'kooperatív expedíció 1-4 főre',
+  homeTitle: 'Vissza a kezdőképernyőre. A futó expedíció megmarad — onnan a Folytatással jössz vissza.',
   language: 'Nyelv',
   helpTitle: 'Súgó és játékszabályok (F1)',
   soundTitle: 'Hang be- és kikapcsolása',
@@ -55,7 +56,7 @@ const HU = {
   projectionHint:
     'Ennyivel változik a hét végén, ha az energia-elosztás és a legénység-beosztás így marad.',
   bondHint:
-    'Van társ 2 mezőn belül, ezért mindkettőtök támadása +1-et sebez. Ezért sebez egy „Támadás 3" néha 4-et.',
+    'Áll melletted társ 2 mezőn belül, ezért a te támadásod ÉS az övé is +1-et sebez. Ezért sebez egy „Támadás 3" néha 4-et.',
   endingsHeading: 'Végkifejletek',
   endingsProgress: (seen: number, total: number) =>
     `${seen} / ${total} megvan. A cél nem a túlélés, hanem hogy mind az ötöt lássátok — és utána az, ami belőlük következik.`,
@@ -122,7 +123,7 @@ const HU = {
   confirm: 'Rendben',
 
   // --------------------------------------------------------- title / archive
-  titleTagline: 'Egy galaxis, ami nem háborúban halt meg. Valami befejezte.',
+  titleTagline: 'Egy galaxis, aminek a civilizációja nem háborúban halt meg. Valami kiirtotta őket.',
   buildLabel: 'Verzió:',
   buildTitle:
     'Melyik változat fut nálad. Hibabejelentésnél ezt írd meg — és ha valakinél régebbi dátum ' +
@@ -729,6 +730,14 @@ const HU = {
   joinRoom: 'Belépek',
   joinBadCode: 'Ez nem érvényes kód — nézd meg még egyszer.',
   roomsKnown: 'Szobák, amiket ez a böngésző ismer',
+  roomsKnownIntro:
+    'Ha kiléptél egy szobából, NEM veszett el semmi: itt marad, és a „Vissza ide" gombbal ' +
+    'bármikor visszaléphetsz ugyanazzal a hőssel. Ehhez viszont valakinek bent kell lennie a ' +
+    'szobában — ha mindenki kilépett, előbb valaki nyissa ki újra.',
+  roomForget: 'Törlés',
+  roomForgetTitle: 'Kiveszi a szobát ebből a listából. A többiek gépén megmarad.',
+  roomForgetConfirm: (code: string): string =>
+    `Törlöd a(z) ${code} szobát ebből a listából? A többieknél megmarad, és a kóddal később is vissza tudsz lépni.`,
   roomRowMeta: (players: number, week: number): string =>
     week > 0 ? `${players} fő · ${week}. hét` : `${players} fő · még el sem indult`,
   roomRejoin: 'Vissza ide',
@@ -760,6 +769,17 @@ const HU = {
   lobbyWaiting: 'Várunk a többiekre…',
   lobbyGuestWait: 'A házigazda indítja el, ha mindenki a helyén van.',
   lobbyLeave: 'Kilépés a szobából',
+  lobbyLeaveNote:
+    'A kilépés nem szünteti meg a szobát: megmarad, és a kezdőképernyőn a „Szobák" listából ' +
+    'vagy a kóddal bármikor visszajössz ugyanabba a székbe. Ahhoz viszont kell valaki, aki bent ' +
+    'van — ha mindenki kilép, valakinek újra ki kell nyitnia.',
+  lobbyClose: 'Szoba bezárása',
+  lobbyCloseTitle:
+    'Mindenkit kiléptet, és mindenki listájáról leveszi a szobát. Ezt csak az tudja, aki nyitotta.',
+  lobbyCloseConfirm:
+    'Bezárod a szobát? Mindenki kilép belőle, és a futó expedíció is véget ér. Ezt nem lehet visszavonni.',
+  roomClosedNotice:
+    'A szobát bezárta, aki nyitotta. Az expedíció ezzel véget ért — a szoba lekerült a listádról.',
   netOff: 'nincs kapcsolat',
   netOpening: 'kapcsolódás…',
   netHosting: (peers: number) => `te vagy a házigazda · ${peers} csatlakozott`,
@@ -897,6 +917,7 @@ const EN: Catalog = {
   // ------------------------------------------------------------------ shell
   appTitle: 'Stargrave',
   appSubtitle: 'a co-operative expedition for one to four',
+  homeTitle: 'Back to the title screen. The running expedition stays where it is — Continue brings you back.',
   language: 'Language',
   helpTitle: 'Help and rules (F1)',
   soundTitle: 'Turn sound on or off',
@@ -1585,6 +1606,14 @@ const EN: Catalog = {
   joinRoom: 'Join',
   joinBadCode: 'That is not a valid code — have another look.',
   roomsKnown: 'Rooms this browser knows',
+  roomsKnownIntro:
+    'Leaving a room loses NOTHING: it stays here, and "Back in" takes you to the same chair. ' +
+    'Somebody has to be in the room for that, though — if everybody left, one of you opens it ' +
+    'again first.',
+  roomForget: 'Remove',
+  roomForgetTitle: 'Takes the room out of this list. It stays on everybody else’s machine.',
+  roomForgetConfirm: (code: string): string =>
+    `Remove room ${code} from this list? It stays for everybody else, and the code still gets you back in.`,
   roomRowMeta: (players: number, week: number): string =>
     week > 0 ? `${players} players · week ${week}` : `${players} players · not started yet`,
   roomRejoin: 'Back to it',
@@ -1616,6 +1645,17 @@ const EN: Catalog = {
   lobbyWaiting: 'Waiting for the others…',
   lobbyGuestWait: 'The host starts it once everybody is seated.',
   lobbyLeave: 'Leave the room',
+  lobbyLeaveNote:
+    'Leaving does not end the room: it stays, and the "Rooms" list on the title screen — or the ' +
+    'code — puts you back in the same chair. Somebody has to be in it, though: if everybody ' +
+    'leaves, one of you opens it again.',
+  lobbyClose: 'Close the room',
+  lobbyCloseTitle:
+    'Turns everybody out and takes the room off all their lists. Only whoever opened it can.',
+  lobbyCloseConfirm:
+    'Close the room? Everybody is turned out and the running expedition ends with it. This cannot be undone.',
+  roomClosedNotice:
+    'Whoever opened the room has closed it. The expedition ended with it, and the room is off your list.',
   netOff: 'not connected',
   netOpening: 'connecting…',
   netHosting: (peers: number) => `you are hosting · ${peers} connected`,

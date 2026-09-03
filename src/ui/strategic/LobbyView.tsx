@@ -42,6 +42,7 @@ export function LobbyView({
   onBegin,
   onPlayLocally,
   onLeave,
+  onClose,
 }: {
   room: RoomState
   identity: PlayerIdentity
@@ -55,6 +56,8 @@ export function LobbyView({
   /** Give up on the network and carry on as a hotseat game. */
   onPlayLocally: () => void
   onLeave: () => void
+  /** Host only: end the room for everybody in it. */
+  onClose: () => void
 }) {
   const { t, s } = useLang()
   const tag = keyTag(identity.key)
@@ -238,6 +241,25 @@ export function LobbyView({
         <button className="button" data-action="leaveRoom" onClick={onLeave}>
           {t.lobbyLeave}
         </button>
+        {/* Only whoever opened the room, because closing it means letting go of
+            the address, and they are the one holding it. */}
+        {isRoomOwner && (
+          <button
+            className="button button-quiet"
+            data-action="closeRoom"
+            title={t.lobbyCloseTitle}
+            onClick={() => {
+              if (confirm(t.lobbyCloseConfirm)) onClose()
+            }}
+          >
+            {t.lobbyClose}
+          </button>
+        )}
+      </div>
+
+      {/* Leaving looked final, because nothing on the way out said otherwise. */}
+      <p className="panel-note">{t.lobbyLeaveNote}</p>
+      <div className="button-row">
       </div>
     </div>
   )

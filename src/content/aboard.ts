@@ -34,7 +34,7 @@ export const ABOARD_EVENTS: Encounter[] = [
     title: { hu: 'Verekedés a raktérben', en: 'A fight in the hold' },
     text: {
       hu:
-        'Ketten estek össze a hármas raktérben, és egyikük sem mondja meg, miért. A ' +
+        'Ketten egymásnak estek a hármas raktérben, és egyikük sem mondja meg, miért. A ' +
         'legénység többi része tudja, és nem mondja. Valamit lépni kell, mert holnap ' +
         'ugyanketten dolgoznak együtt.',
       en:
@@ -54,7 +54,7 @@ export const ABOARD_EVENTS: Encounter[] = [
         ],
         result: {
           hu:
-            'Szétrakod őket, és attól kezdve nem is nézik meg egymást. A hajón csend van, ' +
+            'Szétrakod őket, és attól kezdve rá se néznek egymásra. A hajón csend van, ' +
             'és a csend nem ugyanaz, mint a rend — de működik.',
           en:
             'You separate them, and from then on they do not look at each other. The ship is ' +
@@ -234,7 +234,7 @@ export const ABOARD_EVENTS: Encounter[] = [
             k: 'later',
             weeks: 3,
             note: {
-              hu: 'A hidropóniai szivárgás elvitte egy tartály vizét, és vele az ültetést.',
+              hu: 'A hidropóniás szivárgás elvitte egy tartály vizét, és vele az ültetést.',
               en: 'The hydroponics leak took a tank of water, and the planting with it.',
             },
             effects: [
@@ -264,7 +264,8 @@ export const ABOARD_EVENTS: Encounter[] = [
       hu:
         'Nem hangosabb és nem rosszabb: **más**. Két hete ugyanazt a négy hangot adta, ma ' +
         'egy ötödik is van benne. A mérnökök szerint minden rendben. Te viszont hallod, hogy ' +
-        'nem az idegen technológia beszél — hanem valami, ami hallgat rá.',
+        'nem az idegen technológia beszél. Valami MÁS szólal meg benne — valami, ami eddig csak ' +
+        'hallgatta a reaktort, és most válaszol neki.',
       en:
         'Not louder and not worse: **different**. For two weeks it gave the same four notes; ' +
         'today there is a fifth. Engineering says everything is fine. You can hear that it is ' +
@@ -383,7 +384,7 @@ export const ABOARD_EVENTS: Encounter[] = [
             k: 'later',
             weeks: 2,
             note: {
-              hu: 'A be nem mért ív megvolt — de a hajó egy hetet vesztegelt egy porörvényben.',
+              hu: 'A be nem mért ív sikerült — de a hajó egy hetet vesztegelt egy porörvényben.',
               en: 'The unmeasured arc held — but the ship sat a week in a dust eddy.',
             },
             effects: [
@@ -490,7 +491,7 @@ export const ABOARD_EVENTS: Encounter[] = [
         result: {
           hu:
             'Nem mondod be a menzán, de két nap múlva mindenki tudja. Ettől kezdve máshogy ' +
-            'néznek rátok — és két hét múlva a lépcsőn is érezni fogod.',
+            'néznek rátok — és két hét múlva a saját csapatodon is érezni fogod.',
           en:
             'You do not announce it in the mess, and two days later everybody knows. They look ' +
             'at you differently from then on — and in two weeks you will feel it on the stairs.',
@@ -639,8 +640,8 @@ export const ABOARD_EVENTS: Encounter[] = [
     text: {
       hu:
         'A műszereden egy hete fut egy hiba, amit senki nem jelentett — mert az, aki ' +
-        'észrevette, azt hitte, hogy a te dolgod, és nem akart beleszólni. Egy hét adat ' +
-        'ment a levesbe. És kiderült valami arról, hogyan működik ez a hajó.',
+        'észrevette, azt hitte, hogy a te dolgod, és nem akart beleszólni. Egy hétnyi mérés ' +
+        'megsemmisült. Cserébe kiderült valami arról, hogyan működik ez a hajó.',
       en:
         'An error has been running on your instrument for a week that nobody reported — because ' +
         'the person who spotted it thought it was your business and did not want to interfere. A ' +

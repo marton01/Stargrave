@@ -25,7 +25,7 @@ export const DARKENING_STEPS: DarkeningStep[] = [
     name: { hu: 'A hosszú árnyék', en: 'The long shadow' },
     text: {
       hu:
-        'A reaktor ugyanazt a kart kapja, és kevesebbet ad vissza. Senki nem tudja megmondani, ' +
+        'A reaktor ugyanannyi hajtóanyagot kap, és kevesebbet ad vissza. Senki nem tudja megmondani, ' +
         'hol vész el. A műszerek szerint nincs is veszteség.',
       en:
         'The reactor takes the same lever and gives back less. Nobody can say where it goes. ' +
@@ -49,8 +49,8 @@ export const DARKENING_STEPS: DarkeningStep[] = [
     name: { hu: 'A csend a Kapu mögött', en: 'The silence behind the Gate' },
     text: {
       hu:
-        'A Kapu felől már nem jön semmi. Nem elzárták: egyszerűen nincs mit hallani. ' +
-        'Innentől amit visztek, azt ti visszitek.',
+        'A Kapu felől már nem jön semmi. Nem zárták el: egyszerűen nincs mit hallani. ' +
+        'Innentől nem jön utánatok segítség: amit hazavisztek, azt magatoknak kell hazavinnetek.',
       en:
         'Nothing comes from the Gate any more. It has not been closed: there is simply nothing to ' +
         'hear. From here, whatever you carry, you carry.',

@@ -201,7 +201,7 @@ export const EARNED_ENDINGS: { id: EndingId; condition: Text }[] = [
   {
     id: 'custodian',
     condition: {
-      hu: 'Öt élő legénységgel, 8+ morállal, 2. megfejtés-szinttel megérkezni.',
+      hu: 'Öt élő legénységi taggal, 8+ morállal, 2. megfejtés-szinttel megérkezni.',
       en: 'Arrive with five crew alive, morale 8 or more, at understanding tier 2.',
     },
   },

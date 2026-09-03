@@ -72,8 +72,8 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
 
     case 'installationHit':
       return hu
-        ? `${pick(event.module, lang)}: szétverik. ${event.hp} tartalék maradt benne.`
-        : `${pick(event.module, lang)}: they are tearing it apart. ${event.hp} left in it.`
+        ? `${pick(event.module, lang)}: rongálják. Még ${event.hp} életereje van.`
+        : `${pick(event.module, lang)}: they are tearing it apart. ${event.hp} hit points left.`
 
     case 'installationLost':
       return hu
@@ -110,7 +110,7 @@ export function describeLogEvent(event: LogEvent, lang: Lang): string {
 
     case 'fluxSpent':
       return hu
-        ? `${pick(event.card, lang)}: -${event.amount} Töltet (marad ${event.remaining}).`
+        ? `${pick(event.card, lang)}: −${event.amount} Töltet (marad ${event.remaining}).`
         : `${pick(event.card, lang)}: -${event.amount} Flux (${event.remaining} left).`
 
     case 'fluxDrained':

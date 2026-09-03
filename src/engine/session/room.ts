@@ -383,3 +383,23 @@ export function freeHeroes(room: RoomState, all: readonly HeroClassId[]): HeroCl
   const taken = new Set(room.seats.map((seat) => seat.heroClass))
   return all.filter((id) => !taken.has(id))
 }
+
+/**
+ * Who is in each chair, by the name they gave themselves.
+ *
+ * Naming yourself always worked; the name was simply never seen again after the
+ * lobby, which is the one screen where everybody already knows who is who. This
+ * is what puts it back on the screens where the question actually comes up.
+ *
+ * A blank name is left out rather than passed through: the interface has a
+ * perfectly good fallback in the hero's own name, and an empty string would
+ * replace it with nothing at all.
+ */
+export function seatNames(room: RoomState | null | undefined): Partial<Record<HeroClassId, string>> {
+  const out: Partial<Record<HeroClassId, string>> = {}
+  for (const seat of room?.seats ?? []) {
+    const name = seat.name.trim()
+    if (name) out[seat.heroClass] = name
+  }
+  return out
+}

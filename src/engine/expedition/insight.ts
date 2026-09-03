@@ -213,7 +213,7 @@ function crewReading(s: ExpeditionState): Reading[] {
     out.push({
       tone: councilDue(s) ? 'warn' : 'plain',
       text: {
-        hu: `${tally.for} a ${tally.of} főből akar mondani valamit. ${councilDue(s) ? 'Ezen a héten ki is mondják.' : ''}`,
+        hu: `A ${tally.of} főből ${tally.for} akar mondani valamit. ${councilDue(s) ? 'Ezen a héten ki is mondják.' : ''}`,
         en: `${tally.for} of ${tally.of} have something to say. ${councilDue(s) ? 'This week they will say it.' : ''}`,
       },
     })

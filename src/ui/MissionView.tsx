@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { RESOURCES } from '../content/ship'
 import { SUPPORT_DEFS } from '../content/support'
 import { seatOfHero, supportAvailable } from '../engine/expedition/expedition'
+import { seatNames } from '../engine/session/room'
 import { ActionBar } from './ActionBar'
 import { activeUnit, atExit } from '../engine/battle'
 import { predictDamage } from '../engine/combat'
@@ -301,6 +302,8 @@ export function MissionView({
   mySeats: number[]
 }) {
   const { t, s } = useLang()
+  // Who is in each chair. The room is already here for the seat permissions.
+  const names = seatNames(room)
   const mission = state.activeMission
   // The hand can be folded away to give the board the screen. The height is what
   // limits the board — it scales to fit its box — so this is the one thing that
@@ -455,6 +458,7 @@ export function MissionView({
 
         <Sidebar
           state={battle}
+          names={names}
           mySeats={mySeats}
           onOrderFollower={(followerId, order) =>
             dispatch({ k: 'battleAction', action: { k: 'orderFollower', followerId, order } })
@@ -487,6 +491,7 @@ export function MissionView({
           <ActionBar
             state={battle}
             dispatch={(action) => dispatch({ k: 'battleAction', action })}
+            names={names}
           />
         )}
       </footer>

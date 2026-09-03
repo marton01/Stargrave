@@ -43,6 +43,8 @@ export type RoomNetwork = {
   begin: (expedition: ExpeditionState) => void
   /** Out of reconnection attempts: the line is not coming back on its own. */
   gaveUp: boolean
+  /** Host only: end the room for everybody in it. */
+  close: () => void
 }
 
 export function useRoomNetwork({
@@ -53,6 +55,7 @@ export function useRoomNetwork({
   onApply,
   onRoom,
   onExpedition,
+  onClosed,
 }: {
   room: RoomState | null
   /**
@@ -75,6 +78,8 @@ export function useRoomNetwork({
   onApply: (action: ExpeditionAction) => void
   onRoom: (room: RoomState) => void
   onExpedition: (expedition: ExpeditionState) => void
+  /** The host closed the room: this session is over for everybody. */
+  onClosed: () => void
 }): RoomNetwork {
   const [status, setStatus] = useState<NetStatus>({ k: 'off' })
   /**
@@ -202,11 +207,14 @@ export function useRoomNetwork({
           for (const action of out.ready) onApply(action)
           return
         }
+        case 'closed':
+          onClosed()
+          return
         default:
           return
       }
     },
-    [onApply, onRoom, onExpedition],
+    [onApply, onRoom, onExpedition, onClosed],
   )
 
   // Open and close the connection with the room.
@@ -395,5 +403,30 @@ export function useRoomNetwork({
     [],
   )
 
-  return { status, isHost, dispatch, sit, stand, pick, begin, gaveUp: attempt >= MAX_ATTEMPTS }
+  /**
+   * Tell everybody the room is finished, then hang up.
+   *
+   * Only the host can: they are the one holding the address, and once they let
+   * go of it the room stops existing whatever anybody else does.
+   */
+  const close = useCallback(() => {
+    transport.current?.broadcast({ k: 'closed' })
+    // Give the message a moment to leave before the socket goes.
+    setTimeout(() => {
+      transport.current?.close()
+      transport.current = null
+    }, 150)
+  }, [])
+
+  return {
+    status,
+    isHost,
+    dispatch,
+    sit,
+    stand,
+    pick,
+    begin,
+    close,
+    gaveUp: attempt >= MAX_ATTEMPTS,
+  }
 }

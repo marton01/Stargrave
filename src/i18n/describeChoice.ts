@@ -53,9 +53,9 @@ function symbolName(symbol: TrialSymbol, lang: Lang): string {
   const hu = lang === 'hu'
   switch (symbol) {
     case 'force':
-      return hu ? 'erő ⚒ jelű lapok közül' : 'from cards marked force ⚒'
+      return hu ? 'az erő (⚒) jelével megjelölt lapok közül' : 'from cards marked force ⚒'
     case 'insight':
-      return hu ? 'belátás ◈ jelű lapok közül' : 'from cards marked insight ◈'
+      return hu ? 'a belátás (◈) jelével megjelölt lapok közül' : 'from cards marked insight ◈'
   }
 }
 

@@ -37,6 +37,20 @@ export type NetMessage =
   | { k: 'room'; room: RoomState }
   /** Guest → host: I would like to do this. */
   | { k: 'intent'; action: ExpeditionAction }
+  /**
+   * Host → all: this room is finished, go home.
+   *
+   * The one thing whoever opened a room could not do was close it. Everybody
+   * could walk out of it, and the room stayed standing in a dozen browsers with
+   * no way to say "that evening is over" — so the list of rooms only ever grew,
+   * and a code you had given out stayed live for anybody who kept it.
+   *
+   * It is a courtesy, not a lock: a guest who kept their copy could open the
+   * same code again. What it does is end the session for everybody in it and
+   * take the room off their lists, which is what closing a room means at a
+   * table.
+   */
+  | { k: 'closed' }
   /** Host → all: this action, at this position in the order. */
   | { k: 'action'; step: number; action: ExpeditionAction }
   /**

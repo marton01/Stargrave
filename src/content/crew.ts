@@ -71,7 +71,7 @@ export const CREW_TRAITS: Record<CrewTraitId, CrewTrait> = {
     id: 'alienBorn',
     name: { hu: 'idegen származású', en: 'of alien descent' },
     description: {
-      hu: 'Ismerős neki, ami mindenki másnak érthetetlen. Bónusz az idegen technológiához.',
+      hu: 'Ismerős neki, ami mindenki másnak érthetetlen. Jobban boldogul az idegen technológiával.',
       en: 'Familiar with what everyone else finds unreadable. Bonus with alien technology.',
     },
     alienTech: 1,
@@ -380,7 +380,7 @@ export const LOYALTY_BANDS: { min: number; name: Text; tone: 'good' | 'plain' | 
   { min: 9, name: { hu: 'elkötelezett', en: 'committed' }, tone: 'good' },
   { min: 7, name: { hu: 'rendben van', en: 'steady' }, tone: 'plain' },
   { min: 5, name: { hu: 'fáradt', en: 'tired' }, tone: 'plain' },
-  { min: 3, name: { hu: 'visszahúzódott', en: 'withdrawn' }, tone: 'warn' },
+  { min: 3, name: { hu: 'magába zárkózott', en: 'withdrawn' }, tone: 'warn' },
   { min: 0, name: { hu: 'nem beszél senkivel', en: 'not speaking to anybody' }, tone: 'bad' },
 ]
 

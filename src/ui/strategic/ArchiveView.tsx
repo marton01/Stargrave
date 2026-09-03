@@ -65,6 +65,7 @@ export function ArchiveView({
   hasRunningExpedition,
   onStart,
   onJoin,
+  onForgetRoom,
   rooms,
   onContinue,
   onUnlock,
@@ -82,6 +83,8 @@ export function ArchiveView({
     party: HeroClassId[],
   ) => void
   onJoin: (code: string) => void
+  /** Drop a room from this browser. See `forgetRoom`. */
+  onForgetRoom: (code: string) => void
   rooms: RoomRecord[]
   onContinue: () => void
   onUnlock: (id: ArchiveUnlockId) => void
@@ -296,6 +299,10 @@ export function ArchiveView({
         {rooms.length > 0 && (
           <div className="room-list">
             <h3>{t.roomsKnown}</h3>
+            {/* How you get back in. Leaving a room looked final, because nothing
+                on the way out said that the room keeps standing and that this
+                list is the way back to it. */}
+            <p className="panel-intro">{t.roomsKnownIntro}</p>
             {rooms.map((record) => (
               <div key={record.code} className="room-row">
                 <strong>{formatRoomCode(record.code)}</strong>
@@ -309,6 +316,19 @@ export function ArchiveView({
                   onClick={() => onJoin(record.code)}
                 >
                   {t.roomRejoin}
+                </button>
+                <button
+                  className="button button-small button-quiet"
+                  data-action="forgetRoom"
+                  data-room={record.code}
+                  title={t.roomForgetTitle}
+                  onClick={() => {
+                    if (confirm(t.roomForgetConfirm(formatRoomCode(record.code)))) {
+                      onForgetRoom(record.code)
+                    }
+                  }}
+                >
+                  {t.roomForget}
                 </button>
               </div>
             ))}
