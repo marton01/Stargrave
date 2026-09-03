@@ -15,7 +15,7 @@
 // terminal or a chat message rather than a spec. It has to be read forgivingly.
 
 import { describe, expect, it } from 'vitest'
-import { brokerOptions } from './broker'
+import { brokerOptions, brokerProblem } from './broker'
 
 describe('the address somebody pasted', () => {
   it('means the default when it is empty', () => {
@@ -69,5 +69,53 @@ describe('the address somebody pasted', () => {
   it('refuses nonsense rather than half-configuring the network', () => {
     expect(brokerOptions(':9000')).toBeUndefined()
     expect(brokerOptions('peerjs.example.com:notaport')).toBeUndefined()
+  })
+})
+
+describe('an address that cannot be looked up', () => {
+  // One evening was lost to this. A player who had been told they might need a
+  // tunnel pasted the TUNNEL'S ID into the address box — a bare uuid, with no
+  // colon and no slash, which passed every check there was. The game then opened
+  // sockets to `wss://1212d1bd-61d0-.../peerjs` all evening and reported
+  // ERR_NAME_NOT_RESOLVED, which tells a player nothing whatsoever.
+  it('refuses a bare identifier, so the game falls back to the default', () => {
+    expect(brokerOptions('1212d1bd-61d0-41bb-b099-fd4771c8f6e3')).toBeUndefined()
+    expect(brokerProblem('1212d1bd-61d0-41bb-b099-fd4771c8f6e3')).toBe('host')
+  })
+
+  it('refuses anything else without a dot in it', () => {
+    for (const bad of ['peerjs', 'my-server', 'valami', 'PeerServer']) {
+      expect(brokerOptions(bad), bad).toBeUndefined()
+    }
+  })
+
+  it('accepts what a real address looks like', () => {
+    for (const good of [
+      'peerjs.example.com',
+      'https://peerjs.example.com',
+      'peerjs.example.com:9000',
+      'http://192.168.1.7:9000/myapp',
+      'localhost:9000',
+      'something.trycloudflare.com',
+    ]) {
+      expect(brokerOptions(good), good).toBeDefined()
+    }
+  })
+
+  it('says nothing is wrong when nothing is set', () => {
+    expect(brokerProblem('')).toBeNull()
+    expect(brokerProblem('   ')).toBeNull()
+  })
+
+  it('tells a bad port apart from a bad host', () => {
+    expect(brokerProblem('peerjs.example.com:0')).toBe('port')
+    expect(brokerProblem('peerjs.example.com:999999')).toBe('port')
+    expect(brokerProblem('nodots:9000')).toBe('host')
+  })
+
+  it('refuses a name with empty labels in it', () => {
+    for (const bad of ['.example.com', 'example.com.', 'a..b.com']) {
+      expect(brokerOptions(bad), bad).toBeUndefined()
+    }
   })
 })

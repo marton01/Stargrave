@@ -847,6 +847,13 @@ const HU = {
     'egy másikra — de MINDENKINEK ugyanazt kell beírnia az asztalnál. Saját szervert egy ' +
     'paranccsal lehet indítani: npx peerjs --port 9000',
   netBrokerPlaceholder: 'alapértelmezett (0.peerjs.com)',
+  netBrokerBadHost:
+    'Ez nem szervercím, ezért a játék NEM ezt használja. A címnek olyannak kell lennie, amit a ' +
+    'hálózat meg tud találni: van benne pont (például peerjs.pelda.hu vagy 192.168.1.7), vagy ' +
+    'pontosan „localhost". Egy azonosító — mint egy alagút UUID-ja — nem cím: az alagút ' +
+    'https-címét kell beírni, amit a program kiírt (például valami.trycloudflare.com).',
+  netBrokerBadPort:
+    'A cím rendben, a port viszont nem: 1 és 65535 közötti szám legyen (például :9000).',
   netBrokerReset: 'Vissza az alapértelmezettre',
   netBrokerInsecure:
     'Ez a cím http://, a játék viszont https-en fut — a böngésző az ilyen kapcsolatot letiltja. ' +
@@ -1710,6 +1717,13 @@ const EN: Catalog = {
     'another one here — but EVERYBODY at the table has to enter the same address. Running your ' +
     'own takes one command: npx peerjs --port 9000',
   netBrokerPlaceholder: 'default (0.peerjs.com)',
+  netBrokerBadHost:
+    'That is not a server address, so the game is NOT using it. An address has to be something ' +
+    'the network can look up: it has a dot in it (peerjs.example.com, 192.168.1.7) or is exactly ' +
+    '"localhost". An identifier — a tunnel’s uuid, say — is not an address: what goes here is ' +
+    'the tunnel’s https address, the one it printed (something.trycloudflare.com).',
+  netBrokerBadPort:
+    'The address is fine but the port is not: it has to be a number from 1 to 65535 (:9000, say).',
   netBrokerReset: 'Back to the default',
   netBrokerInsecure:
     'That address is http:// while the game runs on https — browsers block such a connection. ' +

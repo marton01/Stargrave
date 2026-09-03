@@ -79,6 +79,47 @@ export function setBrokerHost(host: string): void {
  * this most. Browsers refuse insecure sockets from a page served over https, so
  * that combination is the one case this cannot rescue; the lobby says so.
  */
+/**
+ * Could this string possibly be a name the network can resolve?
+ *
+ * This exists because of one evening lost to it. A player was told they might
+ * need a tunnel to reach a signalling server of their own, and they pasted the
+ * TUNNEL'S ID into the address box — a bare uuid, which has no colon and no
+ * slash and so sailed straight through every check here. The game then spent the
+ * evening opening sockets to `wss://1212d1bd-61d0-.../peerjs` and reporting
+ * `ERR_NAME_NOT_RESOLVED`, which tells a player nothing at all.
+ *
+ * A real host has a dot in it (`peerjs.example.com`, `192.168.1.7`) or is
+ * exactly `localhost`. Nothing else can be looked up, so nothing else is worth
+ * opening a socket to.
+ */
+export function hostLooksReal(host: string): boolean {
+  const name = host.toLowerCase()
+  if (name === 'localhost') return true
+  // Legal hostname characters only: letters, digits, dots and hyphens.
+  if (!/^[a-z0-9.-]+$/.test(name)) return false
+  // A label cannot be empty, so no leading, trailing or doubled dots.
+  if (name.startsWith('.') || name.endsWith('.') || name.includes('..')) return false
+  return name.includes('.')
+}
+
+/**
+ * Why a typed address was refused, for the lobby to say out loud.
+ *
+ * `null` means it is either usable or empty (the default). Anything else is a
+ * setting that is quietly doing nothing, which is worse than no setting.
+ */
+export function brokerProblem(raw = brokerHost()): 'host' | 'port' | null {
+  const text = raw.trim()
+  if (!text) return null
+  if (brokerOptions(text)) return null
+  const bare = text.replace(/^https?:\/\//i, '')
+  const authority = bare.split('/')[0] ?? ''
+  const colon = authority.lastIndexOf(':')
+  const host = colon > 0 ? authority.slice(0, colon) : authority
+  return hostLooksReal(host) ? 'port' : 'host'
+}
+
 export function brokerOptions(raw = brokerHost()): BrokerOptions | undefined {
   const text = raw.trim()
   if (!text) return undefined
@@ -102,6 +143,7 @@ export function brokerOptions(raw = brokerHost()): BrokerOptions | undefined {
   // fails as a wall of websocket errors with nothing to point at, which is the
   // exact situation this file exists to end.
   if (!host || host.includes(':') || host.includes('/')) return undefined
+  if (!hostLooksReal(host)) return undefined
   if (!Number.isInteger(port) || port <= 0 || port > 65535) return undefined
 
   return { host, port, path: path.endsWith('/') ? path : `${path}/`, secure, key: 'peerjs' }

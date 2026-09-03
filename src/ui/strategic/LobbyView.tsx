@@ -25,6 +25,7 @@ import {
   clearCooldown,
   cooldownLeft,
   brokerIsInsecureFromHttps,
+  brokerProblem,
   probeBroker,
   setBrokerHost,
 } from '../../net/broker'
@@ -293,7 +294,10 @@ function BrokerTrouble({ onPlayLocally }: { onPlayLocally: () => void }) {
   const { t } = useLang()
   const [host, setHost] = useState(brokerHost())
   const [saved, setSaved] = useState(false)
-  const shown = host.trim() || DEFAULT_BROKER
+  const problem = brokerProblem(host)
+  // What will actually be dialled. A refused setting falls back to the default,
+  // and saying otherwise is how an evening gets lost to a box nobody doubted.
+  const shown = problem || !host.trim() ? DEFAULT_BROKER : host.trim()
 
   const save = (next: string) => {
     setHost(next)
@@ -322,6 +326,8 @@ function BrokerTrouble({ onPlayLocally }: { onPlayLocally: () => void }) {
         />
       </label>
       <p className="panel-note">{t.netBrokerIntro}</p>
+      {problem === 'host' && <p className="net-warning">{t.netBrokerBadHost}</p>}
+      {problem === 'port' && <p className="net-warning">{t.netBrokerBadPort}</p>}
       {brokerIsInsecureFromHttps(host) && <p className="net-warning">{t.netBrokerInsecure}</p>}
       {saved && <p className="panel-note">{t.netBrokerSaved}</p>}
       <div className="net-trouble-actions">
